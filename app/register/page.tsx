@@ -1,18 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {useRouter} from "next/navigation";
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const router = useRouter(); // initialize router
 
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         try {
-            const res = await fetch("http://localhost:3002/api/auth/login", {
+            const res = await fetch("http://localhost:3002/api/auth/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -21,14 +20,13 @@ export default function LoginPage() {
             });
 
             if (!res.ok) {
-                throw new Error("Invalid credentials");
+                throw new Error("Registration failed");
             }
 
             const data = await res.json();
-            setError("");
-            localStorage.setItem("token", data.token);
-            window.dispatchEvent(new Event("auth-change"));
+
             router.push("/");
+
         } catch (err: any) {
             setError(err.message);
         }
@@ -36,7 +34,7 @@ export default function LoginPage() {
 
     return (
         <div className="p-8 max-w-md mx-auto mt-20 border rounded">
-            <h1 className="text-2xl mb-4">Login</h1>
+            <h1 className="text-2xl mb-4">Register</h1>
             <input
                 type="text"
                 placeholder="Username"
@@ -49,22 +47,15 @@ export default function LoginPage() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="border p-2 mb-4 w-full"
+                className="border p-2 mb-2 w-full"
             />
             {error && <p className="text-red-500">{error}</p>}
             <button
-                onClick={handleLogin}
-                className="bg-blue-500 text-white p-2 rounded w-full mb-4"
+                onClick={handleRegister}
+                className="bg-green-500 text-white p-2 rounded w-full"
             >
-                Login
+                Register
             </button>
-
-            <p className="text-center">
-                Dont have an account?{" "}
-                <Link href="/register" className="text-blue-500 underline">
-                    Register
-                </Link>
-            </p>
         </div>
     );
 }

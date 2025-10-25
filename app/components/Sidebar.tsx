@@ -49,7 +49,7 @@ const sampleNames = [
 
 export default function Sidebar() {
     const [search, setSearch] = useState("");
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
     const [sortField, setSortField] = useState<"alphabetic" | "created" | "modified">(
         "alphabetic"
     );

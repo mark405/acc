@@ -2,10 +2,23 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const userInitial = "M"; // later replace dynamically
+    const router = useRouter();
+
+    const handleLogout = () => {
+        // 1. Remove token from localStorage
+        localStorage.removeItem("token");
+
+        // 2. Optionally, trigger auth update event for reactive useAuth
+        window.dispatchEvent(new Event("auth-change"));
+
+        // 3. Redirect to login page
+        router.push("/login");
+    };
 
     return (
         <nav className="bg-gray-900 h-30 shadow-lg flex items-center px-6 relative">
@@ -53,13 +66,12 @@ export default function Navbar() {
                             >
                                 Налаштування
                             </Link>
-                            <Link
-                                href="/logout"
-                                className="block px-4 py-2 text-lg hover:bg-gray-100 transition"
-                                onClick={() => setMenuOpen(false)}
+                            <button
+                                onClick={handleLogout}
+                                className="block px-4 py-2 text-lg hover:bg-gray-100 w-full text-left transition"
                             >
                                 Вийти
-                            </Link>
+                            </button>
                         </div>
                     )}
                 </div>
