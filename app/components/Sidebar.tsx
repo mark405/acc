@@ -84,7 +84,7 @@ export default function Sidebar() {
                 </div>
 
                 {/* Divider */}
-                {!collapsed && <hr className="border-gray-600" />}
+                {!collapsed && <hr className="border-gray-600 " />}
 
                 {/* Search Input */}
                 {!collapsed && (
