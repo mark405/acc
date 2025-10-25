@@ -16,10 +16,8 @@ export function useAuth() {
             setIsLoggedIn(token ? isTokenValid(token) : false);
         };
 
-        // Listen for storage events (useful if multiple tabs)
         window.addEventListener("storage", handleStorageChange);
 
-        // Optionally, also listen to custom event for single tab updates
         window.addEventListener("auth-change", handleStorageChange);
 
         return () => {

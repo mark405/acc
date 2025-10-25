@@ -1,8 +1,13 @@
 import {jwtDecode } from "jwt-decode";
 
-export function isTokenValid(token: string) {
+interface DecodedToken {
+    exp: number;
+    [key: string]: unknown;
+}
+
+export function isTokenValid(token: string): boolean {
     try {
-        const decoded: any = jwtDecode(token);
+        const decoded = jwtDecode<DecodedToken>(token);
         const now = Date.now() / 1000;
         return decoded.exp > now;
     } catch {
