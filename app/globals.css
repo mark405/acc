@@ -24,3 +24,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* For Webkit browsers (Chrome, Edge, Safari) */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 14px; /* increased from 8px */
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: #2d2d2d; /* dark track */
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: #555; /* scrollbar handle */
+  border-radius: 6px;
+  border: 3px solid #2d2d2d; /* spacing around handle */
+}
+
+/* For Firefox */
+.sidebar-scroll {
+  scrollbar-width: auto; /* thin -> auto for slightly wider */
+  scrollbar-color: #555 #2d2d2d;
+}
+
