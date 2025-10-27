@@ -5,9 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
+import {useAuth} from "@/app/components/AuthProvider";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const { setUser,} = useAuth();
     const userInitial = "M"; // later replace dynamically
     const router = useRouter();
 
@@ -15,9 +17,7 @@ export default function Navbar() {
         const res = await instance.post("/auth/logout");
 
         if (res.status == HttpStatusCode.Accepted) {
-            // window.dispatchEvent(new Event("auth-change"));
-
-            // 3. Redirect to login page
+            setUser(null);
             router.push("/login");
         }
     };

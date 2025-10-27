@@ -18,7 +18,7 @@ export default function RegisterPage() {
             const res = await instance.post("/auth/register", { username, password });
             const data = await res.data;
 
-            if (res.status != HttpStatusCode.Ok) {
+            if (res.status != HttpStatusCode.Created) {
                 setError(errorMessages[data.message] || res.data.message);
                 return;
             }

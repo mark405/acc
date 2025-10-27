@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import {errorMessages} from "@/app/utils/errorUtils";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
+import {useAuth} from "@/app/components/AuthProvider";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const router = useRouter();
+
+    const { checkAuth } = useAuth(); // get checkAuth from context
 
     const handleLogin = async () => {
         try {
@@ -21,9 +24,9 @@ export default function LoginPage() {
                 setError(errorMessages[res.data.message] || res.data.message);
                 return;
             }
-            window.dispatchEvent(new Event("auth-change"));
 
             setError("");
+            await checkAuth();
             router.push("/");
         } catch (err: any) {
             setError(err.message);

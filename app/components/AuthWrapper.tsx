@@ -1,37 +1,42 @@
 "use client";
 import { useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import {useAuth} from "@/app/hooks/useAuth";
 import Navbar from "@/app/components/Navbar";
 import Sidebar from "@/app/components/Sidebar";
+import {useAuth} from "@/app/components/AuthProvider";
 
 interface AuthWrapperProps {
     children: ReactNode;
 }
 
-const publicPages = ["/login", "/register"];
-
 export default function AuthWrapper({ children }: AuthWrapperProps) {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, user, isAdmin } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
-    useEffect(() => {
-        if (isLoggedIn === null) return; // still loading
+    const publicPages = ["/login", "/register"];
 
-        if (!isLoggedIn && !publicPages.includes(pathname)) router.replace("/login");
+    useEffect(() => {
+        if (isLoggedIn === false && !publicPages.includes(pathname)) {
+            router.replace("/login");
+        }
     }, [isLoggedIn, pathname, router]);
 
-    if (isLoggedIn === null) return <div>Loading...</div>;
+    if (isLoggedIn === null) {
+        // Still loading
+        return (
+            <div>
 
-    // Public pages → no Navbar/Sidebar
+            </div>
+        );
+    }
+
     if (publicPages.includes(pathname)) return <>{children}</>;
-
-    // Protected pages → show layout
+    // debugger;
     return (
         <>
             <Navbar />
-            <Sidebar />
+            {isAdmin && <Sidebar />}
             {children}
         </>
     );
