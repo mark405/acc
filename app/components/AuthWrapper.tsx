@@ -24,15 +24,11 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
     if (isLoggedIn === null) {
         // Still loading
-        return (
-            <div>
-
-            </div>
-        );
+        return;
     }
 
     if (publicPages.includes(pathname)) return <>{children}</>;
-    // debugger;
+
     return (
         <>
             <Navbar />
