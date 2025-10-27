@@ -29,11 +29,6 @@ export function useAuth() {
 
     useEffect(() => {
         checkAuth();
-
-        // Listen to auth-change events
-        const handler = () => checkAuth();
-        window.addEventListener("auth-change", handler);
-        return () => window.removeEventListener("auth-change", handler);
     }, []);
 
     return { isLoggedIn, setIsLoggedIn };

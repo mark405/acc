@@ -16,11 +16,10 @@ export default function RegisterPage() {
     const handleRegister = async () => {
         try {
             const res = await instance.post("/auth/register", { username, password });
-
-            const data = await res.data.json();
+            const data = await res.data;
 
             if (res.status != HttpStatusCode.Ok) {
-                setError(errorMessages[data.message] || "Реєстрація не вдалася");
+                setError(errorMessages[data.message] || res.data.message);
                 return;
             }
             router.push("/login");

@@ -18,7 +18,7 @@ export default function LoginPage() {
             const res = await instance.post("/auth/login", { username, password });
 
             if (res.status != HttpStatusCode.Accepted) {
-                setError(errorMessages[res.data.message] || "Реєстрація не вдалася");
+                setError(errorMessages[res.data.message] || res.data.message);
                 return;
             }
             window.dispatchEvent(new Event("auth-change"));

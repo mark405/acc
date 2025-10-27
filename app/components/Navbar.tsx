@@ -15,7 +15,7 @@ export default function Navbar() {
         const res = await instance.post("/auth/logout");
 
         if (res.status == HttpStatusCode.Accepted) {
-            window.dispatchEvent(new Event("auth-change"));
+            // window.dispatchEvent(new Event("auth-change"));
 
             // 3. Redirect to login page
             router.push("/login");
