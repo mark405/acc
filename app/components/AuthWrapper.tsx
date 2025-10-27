@@ -10,7 +10,7 @@ interface AuthWrapperProps {
 }
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
-    const { isLoggedIn, user, isAdmin } = useAuth();
+    const { isLoggedIn, isAdmin } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
