@@ -3,21 +3,23 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {instance} from "@/app/api/instance";
+import {HttpStatusCode} from "axios";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const userInitial = "M"; // later replace dynamically
     const router = useRouter();
 
-    const handleLogout = () => {
-        // 1. Remove token from localStorage
-        localStorage.removeItem("token");
+    const handleLogout = async () => {
+        const res = await instance.post("/auth/logout");
 
-        // 2. Optionally, trigger auth update event for reactive useAuth
-        window.dispatchEvent(new Event("auth-change"));
+        if (res.status == HttpStatusCode.Accepted) {
+            window.dispatchEvent(new Event("auth-change"));
 
-        // 3. Redirect to login page
-        router.push("/login");
+            // 3. Redirect to login page
+            router.push("/login");
+        }
     };
 
     return (

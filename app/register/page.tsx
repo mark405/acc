@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {errorMessages} from "@/app/utils/errorUtils";
+import {instance} from "@/app/api/instance";
+import {HttpStatusCode} from "axios";
 
 export default function RegisterPage() {
     const [username, setUsername] = useState("");
@@ -13,15 +15,11 @@ export default function RegisterPage() {
 
     const handleRegister = async () => {
         try {
-            const res = await fetch("http://localhost:3002/api/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
+            const res = await instance.post("/auth/register", { username, password });
 
-            const data = await res.json();
+            const data = await res.data.json();
 
-            if (!res.ok) {
+            if (res.status != HttpStatusCode.Ok) {
                 setError(errorMessages[data.message] || "Реєстрація не вдалася");
                 return;
             }

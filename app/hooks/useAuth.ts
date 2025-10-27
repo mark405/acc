@@ -1,31 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {isTokenValid} from "@/app/utils/authUtils";
+import {instance} from "@/app/api/instance";
+import {HttpStatusCode} from "axios";
 
 export function useAuth() {
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        if (typeof window === "undefined") return false;
-        const token = localStorage.getItem("token");
-        return token ? isTokenValid(token) : false;
-    });
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+    const checkAuth = async () => {
+        try {
+            let res = await instance.get("/users/me");
+            if (res.status === HttpStatusCode.Ok) {
+                setIsLoggedIn(true);
+                return;
+            }
+
+            res = await instance.post("/auth/refresh");
+            if (res.status === HttpStatusCode.Ok) {
+                setIsLoggedIn(true);
+                return;
+            }
+
+            setIsLoggedIn(false);
+        } catch {
+            setIsLoggedIn(false);
+        }
+    };
 
     useEffect(() => {
-        const handleStorageChange = () => {
-            const token = localStorage.getItem("token");
-            setIsLoggedIn(token ? isTokenValid(token) : false);
-        };
+        checkAuth();
 
-        window.addEventListener("storage", handleStorageChange);
-
-        window.addEventListener("auth-change", handleStorageChange);
-
-        return () => {
-            window.removeEventListener("storage", handleStorageChange);
-            window.removeEventListener("auth-change", handleStorageChange);
-        };
+        // Listen to auth-change events
+        const handler = () => checkAuth();
+        window.addEventListener("auth-change", handler);
+        return () => window.removeEventListener("auth-change", handler);
     }, []);
 
     return { isLoggedIn, setIsLoggedIn };
 }
-

@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {errorMessages} from "@/app/utils/errorUtils";
+import {instance} from "@/app/api/instance";
+import {HttpStatusCode} from "axios";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -13,21 +15,14 @@ export default function LoginPage() {
 
     const handleLogin = async () => {
         try {
-            const res = await fetch("http://localhost:3002/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
+            const res = await instance.post("/auth/login", { username, password });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(errorMessages[data.message] || "Реєстрація не вдалася");
+            if (res.status != HttpStatusCode.Accepted) {
+                setError(errorMessages[res.data.message] || "Реєстрація не вдалася");
                 return;
             }
-
-            localStorage.setItem("token", data.token);
             window.dispatchEvent(new Event("auth-change"));
+
             setError("");
             router.push("/");
         } catch (err: any) {
