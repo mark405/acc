@@ -20,9 +20,13 @@ export default function Sidebar() {
     const [sortAsc, setSortAsc] = useState(true);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
     const [size] = useState(25);
 
-    const fetchEmployees = async () => {
+    const fetchEmployees = async (nextPage: number) => {
+        if (loading || nextPage >= totalPages) return;
+        setLoading(true);
         try {
             const sortByMap: Record<string, string> = {
                 alphabetic: "name",
@@ -34,20 +38,34 @@ export default function Sidebar() {
                     nameOrComment: search || undefined,
                     sortBy: sortByMap[sortField],
                     direction: sortAsc ? "asc" : "desc",
-                    page,
+                    page: nextPage,
                     size,
                 },
             });
 
-            setEmployees(res.data.content); // assuming Page<EmployeeResponse>
+            setEmployees((prev) => (nextPage === 0 ? res.data.content : [...prev, ...res.data.content]));
+            setPage(nextPage + 1); // update page state AFTER successful fetch
+            setTotalPages(res.data.totalPages);
         } catch (err) {
             console.error("Failed to fetch employees", err);
+        } finally {
+            setLoading(false);
         }
     };
 
+// useEffect for search/sort reset
     useEffect(() => {
-        fetchEmployees();
-    }, [search, sortAsc, page, sortField]);
+        setEmployees([]);
+        setTotalPages(1);  // reset totalPages so fetch works
+        fetchEmployees(0);  // always fetch first page
+    }, [search, sortField, sortAsc]);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop <= clientHeight + 50) { // 50px from bottom
+            fetchEmployees(page);
+        }
+    };
 
     const sidebarWidth = collapsed ? 80 : 340;
 
@@ -151,9 +169,11 @@ export default function Sidebar() {
                     </div>
                 )}
 
-                {/* Employee list */}
                 {!collapsed && (
-                    <div className="mt-2 flex-1 overflow-y-auto sidebar-scroll">
+                    <div
+                        className="mt-2 flex-1 overflow-y-auto sidebar-scroll"
+                        onScroll={handleScroll}
+                    >
                         {employees.map((employee) => (
                             <Link
                                 key={employee.id}
@@ -163,6 +183,8 @@ export default function Sidebar() {
                                 {employee.name}
                             </Link>
                         ))}
+
+                        {loading && <div className="px-6 py-2 text-gray-400">Loading...</div>}
                     </div>
                 )}
             </div>
