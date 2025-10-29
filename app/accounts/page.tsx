@@ -5,6 +5,7 @@ import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useRouter} from "next/navigation";
+import {RefreshCw, Trash2} from "lucide-react";
 
 interface UserResponse {
     id: number;
@@ -42,6 +43,7 @@ export default function AccountsPage() {
             let response = await instance.get("/users", {params});
 
             if (response.status === HttpStatusCode.Forbidden) {
+                debugger;
                 await checkAuth();
                 if (!isLoggedIn) {
                     router.replace("/login");
@@ -68,6 +70,14 @@ export default function AccountsPage() {
             setSortBy(field);
             setDirection("asc");
         }
+    };
+
+    const handleDelete = async (id: number) => {
+
+    };
+
+    const handleResetPassword = async (id: number) => {
+
     };
 
     return (
@@ -110,6 +120,7 @@ export default function AccountsPage() {
                             onClick={() => handleSort("createdAt")}>Створення {sortBy === "createdAt" && (direction === "asc" ? "↑" : "↓")}</th>
                         <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
                             onClick={() => handleSort("modifiedAt")}>Редагування {sortBy === "modifiedAt" && (direction === "asc" ? "↑" : "↓")}</th>
+                        <th className="w-1/4 px-4 py-2 text-left cursor-pointer">Дії</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -119,6 +130,18 @@ export default function AccountsPage() {
                             <td className="px-4 py-2 text-left">{u.role}</td>
                             <td className="px-4 py-2 text-left">{new Date(u.created_at).toLocaleString()}</td>
                             <td className="px-4 py-2 text-left">{new Date(u.modified_at).toLocaleString()}</td>
+                            <td className="px-4 py-2 text-left flex gap-2">
+                                <RefreshCw
+                                    size={18}
+                                    className="text-blue-600 hover:text-blue-400 cursor-pointer transition"
+                                    onClick={() => handleResetPassword(u.id)}
+                                />
+                                <Trash2
+                                    size={18}
+                                    className="text-red-600 hover:text-red-400 cursor-pointer transition"
+                                    onClick={() => handleDelete(u.id)}
+                                />
+                            </td>
                         </tr>
                     ))}
                     </tbody>
@@ -127,23 +150,21 @@ export default function AccountsPage() {
 
             {/* Pagination */}
             <div className="mt-4 flex space-x-2 justify-center">
+                {page > 0 && (
                 <button
-                    disabled={page <= 0}
                     onClick={() => setPage((prev) => prev - 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
+                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
                 >
-                    Prev
-                </button>
-                <span className="px-3 py-1">
-          Page {page + 1} of {totalPages}
-        </span>
+                    Минула
+                </button>)}
+                <span className="px-3 py-1">Сторінка {users.length == 0 ? 0 : page + 1} з {totalPages}</span>
+                {page + 1 < totalPages && (
                 <button
-                    disabled={page + 1 >= totalPages}
                     onClick={() => setPage((prev) => prev + 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
+                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
                 >
-                    Next
-                </button>
+                    Наступна
+                </button>)}
             </div>
         </div>
     );
