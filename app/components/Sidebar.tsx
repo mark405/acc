@@ -4,6 +4,9 @@ import {useEffect, useState} from "react";
 import Link from "next/link";
 import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpAZ, CalendarPlus,} from "lucide-react";
 import {instance} from "@/app/api/instance";
+import {HttpStatusCode} from "axios";
+import {useAuth} from "@/app/components/AuthProvider";
+import {useRouter} from "next/navigation";
 
 interface EmployeeResponse {
     id: number;
@@ -23,6 +26,8 @@ export default function Sidebar() {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(false);
     const [size] = useState(25);
+    const { isLoggedIn, checkAuth } = useAuth();
+    const router = useRouter();
 
     const fetchEmployees = async (nextPage: number) => {
         if (loading || nextPage >= totalPages) return;
@@ -33,19 +38,35 @@ export default function Sidebar() {
                 created: "id",
             };
 
-            const res = await instance.get("/employees", {
+            let res = await instance.get("/employees", {
                 params: {
-                    nameOrComment: search || undefined,
-                    sortBy: sortByMap[sortField],
+                    name_or_comment: search || undefined,
+                    sort_by: sortByMap[sortField],
                     direction: sortAsc ? "asc" : "desc",
                     page: nextPage,
                     size,
                 },
             });
 
+            if (res.status === HttpStatusCode.Forbidden) {
+                await checkAuth();
+                if (!isLoggedIn) {
+                    router.replace("/login");
+                }
+                res = await instance.get("/employees", {
+                    params: {
+                        name_or_comment: search || undefined,
+                        sort_by: sortByMap[sortField],
+                        direction: sortAsc ? "asc" : "desc",
+                        page: nextPage,
+                        size,
+                    },
+                });
+            }
+
             setEmployees((prev) => (nextPage === 0 ? res.data.content : [...prev, ...res.data.content]));
             setPage(nextPage + 1); // update page state AFTER successful fetch
-            setTotalPages(res.data.totalPages);
+            setTotalPages(res.data.total_pages);
         } catch (err) {
             console.error("Failed to fetch employees", err);
         } finally {
@@ -53,16 +74,19 @@ export default function Sidebar() {
         }
     };
 
-// useEffect for search/sort reset
     useEffect(() => {
-        setEmployees([]);
-        setTotalPages(1);  // reset totalPages so fetch works
-        fetchEmployees(0);  // always fetch first page
-    }, [search, sortField, sortAsc]);
+        if (isLoggedIn) {
+            setEmployees([]);
+            setTotalPages(1);
+            fetchEmployees(0);
+        }
+    }, [search, sortField, sortAsc, isLoggedIn]);
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-        if (scrollHeight - scrollTop <= clientHeight + 50) { // 50px from bottom
+
+        if (scrollHeight - scrollTop <= clientHeight + 50 && !loading) {
+            // pass the current page as the page to fetch
             fetchEmployees(page);
         }
     };
