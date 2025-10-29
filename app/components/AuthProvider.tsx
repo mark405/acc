@@ -36,12 +36,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const checkAuth = async () => {
         setIsLoggedIn(null); // start loading
         let currentUser = await fetchUser();
-
         if (!currentUser) {
             // Try refresh token
             try {
                 const refreshRes = await instance.post("/auth/refresh");
-                if (refreshRes.status === HttpStatusCode.Ok) {
+                if (refreshRes.status === HttpStatusCode.Accepted) {
                     currentUser = await fetchUser();
                 }
             } catch {}

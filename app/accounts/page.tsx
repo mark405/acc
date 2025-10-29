@@ -49,7 +49,6 @@ export default function AccountsPage() {
             let response = await instance.get("/users", {params});
 
             if (response.status === HttpStatusCode.Forbidden) {
-                debugger;
                 await checkAuth();
                 if (!isLoggedIn) {
                     router.replace("/login");
@@ -61,7 +60,6 @@ export default function AccountsPage() {
             setTotalPages(response.data.total_pages);
         } catch (error) {
             console.error("Error fetching users:", error);
-
         }
     };
 
@@ -168,7 +166,7 @@ export default function AccountsPage() {
                         </thead>
                         <tbody>
                         {users.map((u) => (
-                            <tr key={u.id} className="border-t border-gray-300">
+                            <tr key={u.id} className="border-t border-gray-300 ">
                                 <td className="px-4 py-2 text-left">{u.username}</td>
                                 <td className="px-4 py-2 text-left">{u.role}</td>
                                 <td className="px-4 py-2 text-left">{new Date(u.created_at).toLocaleString()}</td>
