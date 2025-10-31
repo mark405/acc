@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Try refresh token
             try {
                 const refreshRes = await instance.post("/auth/refresh");
-                if (refreshRes.status === HttpStatusCode.Accepted) {
+                if (refreshRes.status === HttpStatusCode.NoContent) {
                     currentUser = await fetchUser();
                 }
             } catch {}

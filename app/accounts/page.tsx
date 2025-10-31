@@ -86,7 +86,7 @@ export default function AccountsPage() {
 
         try {
             const response = await instance.delete(`/users/delete/${userId}`);
-            if (response.status === HttpStatusCode.Accepted) {
+            if (response.status === HttpStatusCode.NoContent) {
                 fetchUsers();
             }
         } catch (err) {
@@ -107,7 +107,7 @@ export default function AccountsPage() {
 
         try {
             const response = await instance.post(`/users/change-password/${userId}`, { password, confirm_password: confirmPassword });
-            if (response.status === HttpStatusCode.Accepted) {
+            if (response.status === HttpStatusCode.NoContent) {
                 fetchUsers();
             }
         } catch (err) {
@@ -120,7 +120,6 @@ export default function AccountsPage() {
 
     return (
         <>
-
             <div className="p-6 max-w-7xl mx-auto">
                 <h1 className="text-2xl font-bold mb-4 text-center">Облікові записи</h1>
 

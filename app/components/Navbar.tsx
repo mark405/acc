@@ -16,7 +16,7 @@ export default function Navbar() {
     const handleLogout = async () => {
         const res = await instance.post("/auth/logout");
 
-        if (res.status == HttpStatusCode.Accepted) {
+        if (res.status == HttpStatusCode.NoContent) {
             setUser(null);
             router.push("/login");
         }

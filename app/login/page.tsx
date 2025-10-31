@@ -20,7 +20,7 @@ export default function LoginPage() {
         try {
             const res = await instance.post("/auth/login", { username, password });
 
-            if (res.status != HttpStatusCode.Accepted) {
+            if (res.status != HttpStatusCode.NoContent) {
                 setError(errorMessages[res.data.message] || res.data.message);
                 return;
             }

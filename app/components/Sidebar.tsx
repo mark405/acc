@@ -1,8 +1,8 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {KeyboardEvent, useEffect, useRef, useState} from "react";
 import Link from "next/link";
-import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpAZ, CalendarPlus,} from "lucide-react";
+import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus} from "lucide-react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -11,62 +11,94 @@ import {useRouter} from "next/navigation";
 interface EmployeeResponse {
     id: number;
     name: string;
-    comment: string;
-    rating: number;
+}
+
+interface BoardResponse {
+    id: number;
+    name: string;
+    operation_type: "EXPENSE" | "INCOME";
+    level_type: "MAIN" | "CUSTOM";
 }
 
 export default function Sidebar() {
     const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
-    const [search, setSearch] = useState("");
+    const [boardsExpense, setBoardsExpense] = useState<BoardResponse[]>([]);
+    const [boardsIncome, setBoardsIncome] = useState<BoardResponse[]>([]);
     const [collapsed, setCollapsed] = useState(true);
-    const [sortField, setSortField] = useState<"alphabetic" | "created">("alphabetic");
-    const [sortAsc, setSortAsc] = useState(true);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
+    const [showEmployees, setShowEmployees] = useState(false);
+    const [expandedEmployee, setExpandedEmployee] = useState<number | null>(null);
+    const [showExpenses, setShowExpenses] = useState(false);
+    const [showIncome, setShowIncome] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [size] = useState(25);
-    const { isLoggedIn, checkAuth } = useAuth();
+
+    const [addingExpense, setAddingExpense] = useState(false);
+    const [addingIncome, setAddingIncome] = useState(false);
+    const [newBoardName, setNewBoardName] = useState("");
+    const [renamingBoard, setRenamingBoard] = useState<{ id: number; type: "EXPENSE" | "INCOME"; name: string } | null>(null);
+
+    const {isLoggedIn, checkAuth} = useAuth();
     const router = useRouter();
 
-    const fetchEmployees = async (nextPage: number) => {
-        if (loading || nextPage >= totalPages) return;
+    const expenseInputRef = useRef<HTMLInputElement>(null);
+    const incomeInputRef = useRef<HTMLInputElement>(null);
+
+    const [contextMenu, setContextMenu] = useState<{ boardId: number; type: "EXPENSE" | "INCOME" } | null>(null);
+
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        document.addEventListener("click", handleClick);
+        return () => document.removeEventListener("click", handleClick);
+    }, []);
+
+    const deleteBoard = async (id: number, type: "EXPENSE" | "INCOME") => {
+        try {
+            const res = await instance.delete(`/boards/${id}`);
+            if (res.status === HttpStatusCode.NoContent) {
+                await fetchBoards(type);
+            }
+        } catch (err) {
+            console.error("Failed to delete board", err);
+        } finally {
+            setContextMenu(null);
+        }
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (
+                addingExpense &&
+                expenseInputRef.current &&
+                !expenseInputRef.current.contains(target)
+            ) {
+                setAddingExpense(false);
+                setNewBoardName("");
+            }
+            if (
+                addingIncome &&
+                incomeInputRef.current &&
+                !incomeInputRef.current.contains(target)
+            ) {
+                setAddingIncome(false);
+                setNewBoardName("");
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [addingExpense, addingIncome]);
+
+
+    const fetchEmployees = async () => {
         setLoading(true);
         try {
-            const sortByMap: Record<string, string> = {
-                alphabetic: "name",
-                created: "id",
-            };
-
-            let res = await instance.get("/employees", {
-                params: {
-                    name_or_comment: search || undefined,
-                    sort_by: sortByMap[sortField],
-                    direction: sortAsc ? "asc" : "desc",
-                    page: nextPage,
-                    size,
-                },
-            });
-
+            let res = await instance.get("/employees", {params: {page: 0, size: 25}});
             if (res.status === HttpStatusCode.Forbidden) {
                 await checkAuth();
-                if (!isLoggedIn) {
-                    router.replace("/login");
-                }
-                res = await instance.get("/employees", {
-                    params: {
-                        name_or_comment: search || undefined,
-                        sort_by: sortByMap[sortField],
-                        direction: sortAsc ? "asc" : "desc",
-                        page: nextPage,
-                        size,
-                    },
-                });
+                if (!isLoggedIn) router.replace("/login");
+                res = await instance.get("/employees", {params: {page: 0, size: 25}});
             }
-
-            setEmployees((prev) => (nextPage === 0 ? res.data.content : [...prev, ...res.data.content]));
-            setPage(nextPage + 1); // update page state AFTER successful fetch
-            setTotalPages(res.data.total_pages);
+            setEmployees(res.data.content ?? []);
         } catch (err) {
             console.error("Failed to fetch employees", err);
         } finally {
@@ -74,46 +106,115 @@ export default function Sidebar() {
         }
     };
 
+    const fetchBoards = async (type: "EXPENSE" | "INCOME") => {
+        try {
+            const res = await instance.get(`/boards`, {params: {type}});
+            if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                if (type === "EXPENSE") setBoardsExpense(res.data);
+                else setBoardsIncome(res.data);
+            }
+        } catch (err) {
+            console.error(`Failed to fetch boards for ${type}`, err);
+        }
+    };
+
+    const createBoard = async (type: "EXPENSE" | "INCOME", name: string) => {
+        try {
+            const res = await instance.post(`/boards`, {name, type});
+            if (res.status === HttpStatusCode.Ok || res.status === 200 || res.status === HttpStatusCode.Created) {
+                await fetchBoards(type);
+            }
+        } catch (err) {
+            console.error("Failed to create board", err);
+        }
+    };
+
     useEffect(() => {
         if (isLoggedIn) {
-            setEmployees([]);
-            setTotalPages(1);
-            fetchEmployees(0);
+            fetchEmployees();
+            fetchBoards("EXPENSE");
+            fetchBoards("INCOME");
         }
-    }, [search, sortField, sortAsc, isLoggedIn]);
+    }, [isLoggedIn]);
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const toggleEmployee = (id: number) => {
+        setExpandedEmployee((prev) => (prev === id ? null : id));
+    };
 
-        if (scrollHeight - scrollTop <= clientHeight + 50 && !loading) {
-            // pass the current page as the page to fetch
-            fetchEmployees(page);
+    const handleAddBoard = (type: "EXPENSE" | "INCOME") => {
+        setNewBoardName("");
+
+        if (type === "EXPENSE") {
+            setAddingExpense(true);
+            setAddingIncome(false);
+            setShowExpenses(true);
+        } else {
+            setAddingIncome(true);
+            setAddingExpense(false);
+            setShowIncome(true);
         }
     };
+
+
+    const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>, type: "EXPENSE" | "INCOME") => {
+        if (e.key === "Enter" && newBoardName.trim()) {
+            await createBoard(type, newBoardName.trim());
+            setNewBoardName("");
+            if (type === "EXPENSE") setAddingExpense(false);
+            else setAddingIncome(false);
+        } else if (e.key === "Escape") {
+            setNewBoardName("");
+            setAddingExpense(false);
+            setAddingIncome(false);
+        }
+    };
+
+    const handleRenameKeyDown = async (
+        e: KeyboardEvent<HTMLInputElement>,
+        type: "EXPENSE" | "INCOME",
+        id: number
+    ) => {
+        if (!renamingBoard) return;
+
+        if (e.key === "Enter" && renamingBoard.name.trim()) {
+            try {
+                const res = await instance.put(`/boards/${id}`, {
+                    name: renamingBoard.name.trim(),
+                });
+
+                if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                    // Update the local state after successful rename
+                    if (type === "EXPENSE") {
+                        setBoardsExpense((prev) =>
+                            prev.map((b) => (b.id === id ? { ...b, name: renamingBoard.name.trim() } : b))
+                        );
+                    } else {
+                        setBoardsIncome((prev) =>
+                            prev.map((b) => (b.id === id ? { ...b, name: renamingBoard.name.trim() } : b))
+                        );
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to rename board", err);
+            } finally {
+                setRenamingBoard(null);
+            }
+        } else if (e.key === "Escape") {
+            setRenamingBoard(null);
+        }
+    };
+
+
 
     const sidebarWidth = collapsed ? 80 : 340;
-
-    const getSortFieldIcon = () => {
-        switch (sortField) {
-            case "alphabetic":
-                return <ArrowUpAZ size={18} />;
-            case "created":
-                return <CalendarPlus size={18} />;
-        }
-    };
-
-    const sortFieldLabels: Record<string, string> = {
-        alphabetic: "Алфавіт",
-        created: "Створено",
-    };
 
     return (
         <div className="relative">
             <div
-                className={`fixed top-0 left-0 h-full bg-gray-800 text-white shadow-xl z-50 transition-all duration-300 flex flex-col`}
-                style={{ width: `${sidebarWidth}px` }}
+                className="fixed top-0 left-0 h-full bg-gray-800 text-white shadow-xl z-50 transition-all duration-300 flex flex-col"
+                style={{width: `${sidebarWidth}px`}}
             >
-                {/* Top: Home + Title */}
+                {/* Top header */}
                 <div className="flex items-center justify-between px-4 md:px-6 py-6 relative">
                     <div className={`flex items-center ${collapsed ? "justify-center w-full" : "space-x-3"}`}>
                         <Link
@@ -127,93 +228,250 @@ export default function Sidebar() {
                                 strokeWidth="2"
                                 viewBox="0 0 24 24"
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 21V12h6v9" />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"
+                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 21V12h6v9"/>
                             </svg>
                         </Link>
 
                         {!collapsed && (
-                            <Link href="/" className="text-2xl md:text-3xl font-extrabold hover:text-gray-300 transition">
+                            <Link href="/"
+                                  className="text-2xl md:text-3xl font-extrabold hover:text-gray-300 transition">
                                 Traffgun
                             </Link>
                         )}
                     </div>
                 </div>
 
-                {!collapsed && <hr className="border-gray-600" />}
+                {!collapsed && <hr className="border-gray-600"/>}
 
-                {/* Search + Sort */}
                 {!collapsed && (
-                    <div className="px-6 py-4 flex items-center gap-2">
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="flex-1 px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-
-                        {/* Sort dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="p-2 rounded bg-gray-700 hover:bg-gray-600 transition flex items-center"
-                            >
-                                {getSortFieldIcon()}
-                            </button>
-
-                            {dropdownOpen && (
-                                <div className="absolute left-0 mt-2 w-40 bg-gray-700 border border-gray-600 rounded shadow-lg z-50">
-                                    {["alphabetic", "created"].map((field) => (
-                                        <div
-                                            key={field}
-                                            onClick={() => {
-                                                setSortField(field as typeof sortField);
-                                                setDropdownOpen(false);
-                                            }}
-                                            className={`px-4 py-2 hover:bg-gray-600 cursor-pointer flex items-center gap-2 ${
-                                                sortField === field ? "bg-gray-600" : ""
-                                            }`}                                        >
-                                            {field === "alphabetic" && <ArrowUpAZ size={22} />}
-                                            {field === "created" && <CalendarPlus size={22} />}
-                                            <span className="capitalize">{sortFieldLabels[field]}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                    <div className="flex-1 overflow-y-auto sidebar-scroll">
+                        {/* === Витрати === */}
+                        <div
+                            className="px-6 py-3 text-lg font-semibold cursor-pointer hover:bg-gray-700 transition flex justify-between items-center"
+                            onClick={() => setShowExpenses(!showExpenses)}
+                        >
+                            <span>Витрати</span>
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddBoard("EXPENSE");
+                                    }}
+                                    className="p-1 rounded-full hover:bg-gray-600 transition"
+                                >
+                                    <Plus size={18}/>
+                                </button>
+                                {showExpenses ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            </div>
                         </div>
 
-                        {/* Sort order toggle */}
-                        <button
-                            onClick={() => setSortAsc(!sortAsc)}
-                            className="p-2 rounded bg-gray-700 hover:bg-gray-600 transition"
+                        {showExpenses && (
+                            <div className="pl-10 text-gray-300 text-base">
+                                {boardsExpense.map((board) => (
+                                    <div key={board.id} className="relative">
+                                        {renamingBoard?.id === board.id && renamingBoard.type === "EXPENSE" ? (
+                                            <input
+                                                type="text"
+                                                value={renamingBoard.name}
+                                                onChange={(e) => setRenamingBoard(prev => prev ? { ...prev, name: e.target.value } : prev)}
+                                                onKeyDown={(e) => handleRenameKeyDown(e, "EXPENSE", board.id)}
+                                                autoFocus
+                                                className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                            />
+                                        ) : (
+                                            <Link
+                                                href={`/expenses/${board.id}`}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    if (board.level_type === "MAIN") return;
+                                                    setContextMenu({ boardId: board.id, type: "EXPENSE" });
+                                                }}
+                                                onDoubleClick={() => setRenamingBoard({ id: board.id, type: "EXPENSE", name: board.name })}
+                                                className="block py-1 hover:text-white transition"
+                                            >
+                                                {board.name}
+                                            </Link>
+                                        )}
+                                        {contextMenu?.boardId === board.id && contextMenu.type === "EXPENSE" && (
+                                            <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                                <button
+                                                    onClick={() => deleteBoard(board.id, "EXPENSE")}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                                >
+                                                    Видалити
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setRenamingBoard({ id: board.id, type: "EXPENSE", name: board.name });
+                                                        setContextMenu(null);
+                                                    }}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-600 transition"
+                                                >
+                                                    Редагувати
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {addingExpense && (
+                                    <input
+                                        ref={expenseInputRef}
+                                        type="text"
+                                        value={newBoardName}
+                                        onChange={(e) => setNewBoardName(e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(e, "EXPENSE")}
+                                        placeholder="Назва таблиці..."
+                                        autoFocus
+                                        className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        {/* === Доходи === */}
+                        <div
+                            className="px-6 py-3 text-lg font-semibold cursor-pointer hover:bg-gray-700 transition flex justify-between items-center"
+                            onClick={() => setShowIncome(!showIncome)}
                         >
-                            {sortAsc ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                        </button>
-                    </div>
-                )}
+                            <span>Доходи</span>
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddBoard("INCOME");
+                                    }}
+                                    className="p-1 rounded-full hover:bg-gray-600 transition"
+                                >
+                                    <Plus size={18}/>
+                                </button>
+                                {showIncome ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            </div>
+                        </div>
 
-                {!collapsed && (
-                    <div
-                        className="mt-2 flex-1 overflow-y-auto sidebar-scroll"
-                        onScroll={handleScroll}
-                    >
-                        {employees.map((employee) => (
-                            <Link
-                                key={employee.id}
-                                href={`/employee/${employee.id}`}
-                                className="block px-6 py-3 hover:bg-gray-700 cursor-pointer transition text-lg"
-                            >
-                                {employee.name}
-                            </Link>
-                        ))}
+                        {showIncome && (
+                            <div className="pl-10 text-gray-300 text-base">
+                                {boardsIncome.map((board) => (
+                                    <div key={board.id} className="relative">
+                                        {renamingBoard?.id === board.id && renamingBoard.type === "INCOME" ? (
+                                            <input
+                                                type="text"
+                                                value={renamingBoard.name}
+                                                onChange={(e) =>
+                                                    setRenamingBoard(prev => prev ? { ...prev, name: e.target.value } : prev)
+                                                }
+                                                onKeyDown={(e) => handleRenameKeyDown(e, "INCOME", board.id)}
+                                                autoFocus
+                                                className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                            />
+                                        ) : (
+                                            <Link
+                                                href={`/income/${board.id}`}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    if (board.level_type === "MAIN") return;
+                                                    setContextMenu({ boardId: board.id, type: "INCOME" });
+                                                }}
+                                                className="block py-1 hover:text-white transition"
+                                            >
+                                                {board.name}
+                                            </Link>
+                                        )}
 
-                        {loading && <div className="px-6 py-2 text-gray-400">Loading...</div>}
+                                        {/* Context menu */}
+                                        {contextMenu?.boardId === board.id && contextMenu.type === "INCOME" && (
+                                            <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                                <button
+                                                    onClick={() => deleteBoard(board.id, "INCOME")}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                                >
+                                                    Видалити
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setRenamingBoard({ id: board.id, type: "INCOME", name: board.name });
+                                                        setContextMenu(null);
+                                                    }}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-600 transition"
+                                                >
+                                                    Редагувати
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+
+                                {addingIncome && (
+                                    <input
+                                        ref={incomeInputRef}
+                                        type="text"
+                                        value={newBoardName}
+                                        onChange={(e) => setNewBoardName(e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(e, "INCOME")}
+                                        placeholder="Назва таблиці..."
+                                        autoFocus
+                                        className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                    />
+                                )}
+                            </div>
+                        )}
+                        {/* === Співробітники === */}
+                        <div
+                            className="px-6 py-3 text-lg font-semibold cursor-pointer hover:bg-gray-700 transition flex justify-between items-center"
+                            onClick={() => setShowEmployees(!showEmployees)}
+                        >
+                            <span>Співробітники</span>
+                            {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                        </div>
+
+                        {showEmployees && (
+                            <div className="pl-6">
+                                {employees.map((employee) => (
+                                    <div key={employee.id}>
+                                        <div
+                                            className="flex justify-between items-center px-6 py-2 cursor-pointer hover:bg-gray-700"
+                                            onClick={() => toggleEmployee(employee.id)}
+                                        >
+                                            <span>{employee.name}</span>
+                                            {expandedEmployee === employee.id ? (
+                                                <ChevronUp size={18}/>
+                                            ) : (
+                                                <ChevronDown size={18}/>
+                                            )}
+                                        </div>
+
+                                        {expandedEmployee === employee.id && (
+                                            <div className="pl-8 text-gray-300 text-base">
+                                                <Link
+                                                    href={`/employee/${employee.id}/expenses`}
+                                                    className="block py-1 hover:text-white transition"
+                                                >
+                                                    Витрати
+                                                </Link>
+                                                <Link
+                                                    href={`/employee/${employee.id}/income`}
+                                                    className="block py-1 hover:text-white transition"
+                                                >
+                                                    Доходи
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {loading && <div className="px-6 py-2 text-gray-400">Loading...</div>}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* Collapse/Expand arrow */}
             <button
                 onClick={() => setCollapsed(!collapsed)}
                 className="fixed top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow-lg transition-all duration-300 ease-in-out z-50"
@@ -221,7 +479,7 @@ export default function Sidebar() {
                     left: collapsed ? `${sidebarWidth}px` : `${sidebarWidth - 16}px`,
                 }}
             >
-                {collapsed ? <ArrowRight size={24} /> : <ArrowLeft size={24} />}
+                {collapsed ? <ArrowRight size={24}/> : <ArrowLeft size={24}/>}
             </button>
         </div>
     );
