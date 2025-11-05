@@ -259,11 +259,14 @@ export default function ExpenseBoardPage() {
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter") submitNewCategory();
-                                    if (e.key === "Escape") {
+                                    const trimmed = newCategoryName.trim();
+                                    if (e.key === "Enter" && trimmed) {
+                                        submitNewCategory();
+                                    } else if (e.key === "Escape") {
                                         setAddingCategory(false);
                                         setNewCategoryName("");
                                     }
+                                    // do nothing if Enter and input is empty
                                 }}
                                 placeholder="Нова категорія…"
                                 className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -283,11 +286,14 @@ export default function ExpenseBoardPage() {
                                                 )
                                             }
                                             onKeyDown={(e) => {
-                                                if (e.key === "Enter")
+                                                const trimmed = newCategoryName.trim();
+                                                if (e.key === "Enter" && trimmed) {
                                                     renameCategory(c.id, renamingCategory.name.trim());
-                                                if (e.key === "Escape") setRenamingCategory(null);
+                                                } else if (e.key === "Escape") {
+                                                    setRenamingCategory(null)
+                                                }
                                             }}
-                                            className="w-full px-2 py-1 rounded bg-gray-700 text-white"
+                                            className="w-full px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     ) : (
                                         <div
