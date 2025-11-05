@@ -36,7 +36,7 @@ export default function ExpenseBoardPage() {
     const [categoryFilter, setCategoryFilter] = useState<number[]>([]); // <-- multiple
     const [addingCategory, setAddingCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [contextMenu, setContextMenu] = useState<{ id: number } | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ id: number; position: "top" | "bottom" } | null>(null);
     const [renamingCategory, setRenamingCategory] = useState<{ id: number; name: string } | null>(null);
     const categoryInputRef = useRef<HTMLInputElement>(null);
     const [commentFilter, setCommentFilter] = useState<string>("");
@@ -222,6 +222,7 @@ export default function ExpenseBoardPage() {
                         <label className="text-white text-sm font-semibold">Дата</label>
                         <input
                             type="date"
+                            placeholder={"мм/дд/рррр"}
                             value={startDate}
                             onChange={(e) => {
                                 setStartDate(e.target.value);
@@ -269,7 +270,7 @@ export default function ExpenseBoardPage() {
                             />
                         )}
 
-                        <div className="flex flex-col space-y-1 max-h-64 overflow-y-auto">
+                        <div className="flex flex-col space-y-1 max-h-96 overflow-y-auto sidebar-scroll">
                             {categories.map((c) => (
                                 <div key={c.id} className="relative">
                                     {renamingCategory?.id === c.id ? (
@@ -282,7 +283,8 @@ export default function ExpenseBoardPage() {
                                                 )
                                             }
                                             onKeyDown={(e) => {
-                                                if (e.key === "Enter") renameCategory(c.id, renamingCategory.name.trim());
+                                                if (e.key === "Enter")
+                                                    renameCategory(c.id, renamingCategory.name.trim());
                                                 if (e.key === "Escape") setRenamingCategory(null);
                                             }}
                                             className="w-full px-2 py-1 rounded bg-gray-700 text-white"
@@ -293,7 +295,22 @@ export default function ExpenseBoardPage() {
                                             onDoubleClick={() => setRenamingCategory({id: c.id, name: c.name})}
                                             onContextMenu={(e) => {
                                                 e.preventDefault();
-                                                setContextMenu({id: c.id});
+
+                                                const container = e.currentTarget.parentElement?.parentElement;
+                                                if (!container) return;
+
+                                                const menuHeight = 80;
+                                                const elementTop = e.currentTarget.offsetTop;
+                                                const elementHeight = e.currentTarget.offsetHeight;
+                                                const containerScrollTop = container.scrollTop;
+                                                const containerHeight = container.clientHeight;
+
+                                                const spaceBelow = containerHeight - (elementTop - containerScrollTop + elementHeight);
+
+                                                setContextMenu({
+                                                    id: c.id,
+                                                    position: spaceBelow < menuHeight ? "top" : "bottom",
+                                                });
                                             }}
                                             className={`px-3 py-2 rounded-lg cursor-pointer transition-colors duration-150 ${
                                                 categoryFilter.includes(c.id)
@@ -307,7 +324,10 @@ export default function ExpenseBoardPage() {
 
                                     {contextMenu?.id === c.id && (
                                         <div
-                                            className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-50">
+                                            className={`absolute right-0 bg-gray-700 text-white rounded shadow-md w-36 z-50 ${
+                                                contextMenu.position === "top" ? "bottom-full mb-1" : "top-full mt-1"
+                                            }`}
+                                        >
                                             <button
                                                 onClick={() => setRenamingCategory({id: c.id, name: c.name})}
                                                 className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800"
@@ -326,6 +346,7 @@ export default function ExpenseBoardPage() {
                             ))}
                         </div>
                     </div>
+
                 </div>
 
                 {/* Table */}
