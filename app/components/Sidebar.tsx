@@ -300,19 +300,19 @@ export default function Sidebar() {
                                         {contextMenu?.boardId === board.id && contextMenu.type === "EXPENSE" && (
                                             <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
                                                 <button
-                                                    onClick={() => deleteBoard(board.id, "EXPENSE")}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
-                                                >
-                                                    Видалити
-                                                </button>
-                                                <button
                                                     onClick={() => {
                                                         setRenamingBoard({ id: board.id, type: "EXPENSE", name: board.name });
                                                         setContextMenu(null);
                                                     }}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-600 transition"
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
                                                 >
                                                     Редагувати
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteBoard(board.id, "EXPENSE")}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                                >
+                                                    Видалити
                                                 </button>
                                             </div>
                                         )}
@@ -387,19 +387,19 @@ export default function Sidebar() {
                                         {contextMenu?.boardId === board.id && contextMenu.type === "INCOME" && (
                                             <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
                                                 <button
-                                                    onClick={() => deleteBoard(board.id, "INCOME")}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
-                                                >
-                                                    Видалити
-                                                </button>
-                                                <button
                                                     onClick={() => {
                                                         setRenamingBoard({ id: board.id, type: "INCOME", name: board.name });
                                                         setContextMenu(null);
                                                     }}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-600 transition"
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
                                                 >
                                                     Редагувати
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteBoard(board.id, "INCOME")}
+                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                                >
+                                                    Видалити
                                                 </button>
                                             </div>
                                         )}
