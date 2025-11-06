@@ -44,8 +44,8 @@ export default function CategoryFilters({
     };
 
     return (
-        <div className="flex flex-col space-y-2">
-            <div className="flex justify-between items-center">
+        <div className="flex-1 flex flex-col mt-4 overflow-y-hidden">
+            <div className="flex justify-between items-center mb-3">
                 <span className="text-white text-sm font-semibold">Категорії</span>
                 <Plus
                     size={20}
@@ -76,7 +76,7 @@ export default function CategoryFilters({
                             }
                         }}
                         placeholder="Нова категорія…"
-                        className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        className="w-[97%] ml-1 my-1 px-1 py-1 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     />
                 )}
 

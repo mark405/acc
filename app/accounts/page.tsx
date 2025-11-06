@@ -64,6 +64,10 @@ export default function AccountsPage() {
     };
 
     useEffect(() => {
+        setPage(0);
+    }, [username, role]);
+
+    useEffect(() => {
         fetchUsers();
     }, [username, role, sortBy, direction, page, isLoggedIn]);
 

@@ -7,7 +7,8 @@ interface CommentFilterProps {
 
 export default function CommentFilter({ commentFilter, setCommentFilter }: Readonly<CommentFilterProps>) {
     return (
-        <div className="flex flex-col space-y-1">
+        <div className="flex flex-col space-y-1 mb-4">
+            <label className="text-white text-sm font-semibold">Коментар</label>
             <input
                 type="text"
                 value={commentFilter}

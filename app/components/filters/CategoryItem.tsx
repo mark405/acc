@@ -61,7 +61,7 @@ export default function CategoryItem({
                     else if (e.key === "Escape") setRenamingCategory(null);
 
                 }}
-                className="w-full px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-[97%] ml-1 my-1 px-1 py-1 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
         );
     }
