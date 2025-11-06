@@ -19,14 +19,13 @@ export default function ExpenseBoardPage() {
     const [addingCategory, setAddingCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [renamingCategory, setRenamingCategory] = useState<{ id: number; name: string } | null>(null);
-    const categoryInputRef = useRef<HTMLInputElement>(null);
     const [commentFilter, setCommentFilter] = useState<string>("");
     const [startDate, setStartDate] = useState<string | "">("");
     const [endDate, setEndDate] = useState<string | "">("");
     const [sortBy, setSortBy] = useState("date");
     const [direction, setDirection] = useState<"asc" | "desc">("desc");
     const [page, setPage] = useState(0);
-    const [size] = useState(25);
+    const [size] = useState(20);
     const [totalPages, setTotalPages] = useState(1);
 
     const fetchBoard = async () => {
@@ -112,12 +111,21 @@ export default function ExpenseBoardPage() {
     };
 
     useEffect(() => {
+        setPage(0);
+    }, [categoryFilter, commentFilter, startDate, endDate]);
+
+    useEffect(() => {
         if (boardId) {
-            fetchBoard();
-            fetchCategories();
             fetchOperations();
         }
     }, [boardId, page, sortBy, direction, categoryFilter, commentFilter, startDate, endDate]);
+
+    useEffect(() => {
+        if (boardId) {
+            fetchBoard();
+            fetchCategories();
+        }
+    }, [boardId]);
 
     const handleSort = (field: string) => {
         if (sortBy === field) {
@@ -174,6 +182,8 @@ export default function ExpenseBoardPage() {
                 />
 
                 <Board
+                    boardId={boardId}
+                    categories={categories}
                     operations={operations}
                     sortBy={sortBy}
                     direction={direction}
@@ -181,6 +191,7 @@ export default function ExpenseBoardPage() {
                     page={page}
                     totalPages={totalPages}
                     onPageChange={setPage}
+                    fetchOperations={fetchOperations}
                 />
             </div>
         </div>

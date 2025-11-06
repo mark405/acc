@@ -66,7 +66,7 @@ export default function BoardFilters({
     }, [addingCategory]);
 
     return (
-        <div className="w-64 flex-shrink-0 space-y-4 bg-gray-900 p-4 rounded-lg shadow-lg">
+        <div className="w-64 flex-shrink-0 space-y-4 bg-gray-900 p-4 rounded-lg shadow-lg max-h-140">
             {/* Comment Filter */}
             <CommentFilter commentFilter={commentFilter} setCommentFilter={setCommentFilter}/>
 
