@@ -1,10 +1,10 @@
 "use client";
 
 import {useEffect, useRef} from "react";
-import CategoryFilters from "@/app/components/filters/CategoryFilters";
 import {CategoryResponse} from "@/app/types";
-import DateFilters from "@/app/components/filters/DateFilters";
-import CommentFilter from "@/app/components/filters/CommentFilters";
+import CommentFilter from "@/app/components/board/filters/CommentFilters";
+import CategoryFilters from "@/app/components/board/filters/CategoryFilters";
+import DateFilters from "@/app/components/board/filters/DateFilters";
 
 interface BoardFiltersProps {
     categories: CategoryResponse[];

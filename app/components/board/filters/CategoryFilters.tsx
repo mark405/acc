@@ -3,7 +3,7 @@
 import {useRef} from "react";
 import {CategoryResponse} from "@/app/types";
 import {Plus} from "lucide-react";
-import CategoryItem from "@/app/components/filters/CategoryItem";
+import CategoryItem from "@/app/components/board/filters/CategoryItem";
 
 interface CategoryFiltersProps {
     categories: CategoryResponse[];

@@ -6,7 +6,7 @@ import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus} from "lucide-react"
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
-import {useRouter} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 
 interface EmployeeResponse {
     id: number;
@@ -21,6 +21,7 @@ interface BoardResponse {
 }
 
 export default function Sidebar() {
+    const params = useParams();
     const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
     const [boardsExpense, setBoardsExpense] = useState<BoardResponse[]>([]);
     const [boardsIncome, setBoardsIncome] = useState<BoardResponse[]>([]);
@@ -55,6 +56,9 @@ export default function Sidebar() {
             const res = await instance.delete(`/boards/${id}`);
             if (res.status === HttpStatusCode.NoContent) {
                 await fetchBoards(type);
+                if (params.boardId === id.toString()) {
+                    router.push("/");
+                }
             }
         } catch (err) {
             console.error("Failed to delete board", err);
@@ -182,7 +186,7 @@ export default function Sidebar() {
                     name: renamingBoard.name.trim(),
                 });
 
-                if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                if (res.status === HttpStatusCode.Ok) {
                     // Update the local state after successful rename
                     if (type === "EXPENSE") {
                         setBoardsExpense((prev) =>
@@ -371,7 +375,7 @@ export default function Sidebar() {
                                             />
                                         ) : (
                                             <Link
-                                                href={`/income/${board.id}`}
+                                                href={`/incomes/${board.id}`}
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     if (board.level_type === "MAIN") return;

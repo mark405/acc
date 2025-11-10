@@ -14,4 +14,5 @@ export interface CategoryResponse {
 export interface BoardResponse {
     id: number;
     name: string;
+    operation_type: "EXPENSE" | "INCOME";
 }

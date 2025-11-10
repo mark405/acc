@@ -1,12 +1,14 @@
 "use client";
 
+import "react-datepicker/dist/react-datepicker.css";
 import React, {useState} from "react";
-import {CategoryResponse, OperationResponse} from "@/app/types";
+import {BoardResponse, CategoryResponse, OperationResponse} from "@/app/types";
 import {instance} from "@/app/api/instance";
 import {Check, Edit2, Plus, Trash, X} from "lucide-react";
+import DatePicker from "react-datepicker";
 
 interface BoardProps {
-    boardId: number;
+    board: BoardResponse;
     categories: CategoryResponse[];
     operations: OperationResponse[];
     sortBy: string;
@@ -28,7 +30,7 @@ const columnLabels: Record<string, string> = {
 const columns = ["amount", "category", "comment", "date"];
 
 export default function Board({
-                                  boardId,
+                                  board,
                                   operations,
                                   categories,
                                   sortBy,
@@ -45,9 +47,16 @@ export default function Board({
         categoryId: 0,
         comment: "",
         amount: 0,
-        operationType: "EXPENSE",
+        operationType: board.operation_type,
     });
     const [errors, setErrors] = useState<{ amount?: boolean; categoryId?: boolean }>({});
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingOperation, setEditingOperation] = useState({
+        amount: 0,
+        categoryId: 0,
+        comment: "",
+        date: null as Date | null,
+    });
 
 
     const handleCreate = async () => {
@@ -59,10 +68,10 @@ export default function Board({
 
         // Stop execution if there are errors
         if (newErrors.amount || newErrors.categoryId) return;
-
+        debugger;
         try {
             await instance.post("/operations/create", {
-                board_id: boardId,
+                board_id: board.id,
                 category_id: newOperation.categoryId,
                 comment: newOperation.comment,
                 amount: Number(newOperation.amount),
@@ -74,6 +83,42 @@ export default function Board({
             fetchOperations();
         } catch (err) {
             console.error("Failed to create operation", err);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            await instance.delete(`/operations/${id}`);
+            fetchOperations();
+        } catch (err) {
+            console.error("Failed to create operation", err);
+        }
+    };
+
+    const handleEdit = (op: OperationResponse) => {
+        setEditingId(op.id);
+        setEditingOperation({
+            amount: op.amount,
+            categoryId: op.category?.id || 0,
+            comment: op.comment || "",
+            date: new Date(op.date),
+        });
+    };
+
+    const handleSave = async (id: number) => {
+        try {
+            await instance.put(`/operations/${id}`, {
+                board_id: board.id,
+                operation_type: board.operation_type,
+                amount: editingOperation.amount,
+                category_id: editingOperation.categoryId,
+                comment: editingOperation.comment,
+                date: editingOperation.date?.toISOString(),
+            });
+            setEditingId(null);
+            fetchOperations();
+        } catch (err) {
+            console.error("Failed to update operation", err);
         }
     };
 
@@ -147,11 +192,16 @@ export default function Board({
                             />
                         </td>
                         <td className="px-2 py-1">
-                            <input
-                                type="date"
-                                value={newOperation.date}
-                                onChange={(e) => setNewOperation({...newOperation, date: e.target.value})}
-                                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            <DatePicker
+                                selected={newOperation.date ? new Date(newOperation.date) : null}
+                                onChange={(date: Date | null) =>
+                                    setNewOperation({ ...newOperation, date: date ? date.toISOString() : "" })
+                                }
+                                showTimeSelect
+                                timeFormat="HH:mm"
+                                timeIntervals={1}
+                                dateFormat="yyyy-MM-dd HH:mm"
+                                className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 "
                             />
                         </td>
                         <td className="px-2 py-1 flex gap-2 justify-center">
@@ -174,40 +224,88 @@ export default function Board({
                 {operations.length > 0 ? (
                     operations.map((op) => (
                         <tr key={op.id} className="border-t border-gray-300 hover:bg-gray-800 hover:text-white transition">
-                            <td
-                                className={"px-4 py-2 text-left font-semibold "}
-                            >
-                                {op.amount.toFixed(2)}
-                            </td>
-                            <td className="px-4 py-2 text-left">{op.category?.name}</td>
-                            <td className="px-4 py-2 text-left ">
-                                {op.comment || <span className="italic text-gray-500">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-left">
-                                {new Date(op.date).toLocaleString("en-GB", {
-                                    year: "numeric",
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                    timeZone: "Europe/Kiev",
-                                })}
-                            </td>
-                            <td className="px-4 py-2 flex gap-2 justify-center">
-                                <button
-                                    // onClick={() => handleEdit(op)}
-                                    className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500 flex items-center justify-center"
-                                >
-                                    <Edit2 size={18} />
-                                </button>
-                                <button
-                                    // onClick={() => handleDelete(op.id)}
-                                    className="p-2 bg-red-950 text-white rounded hover:bg-red-800 flex items-center justify-center"
-                                >
-                                    <Trash size={18} />
-                                </button>
-                            </td>
+                            {editingId === op.id ? (
+                                <>
+                                    <td className="px-4 py-2">
+                                        <input
+                                            type="number"
+                                            value={editingOperation.amount}
+                                            onChange={(e) => setEditingOperation({...editingOperation, amount: Number(e.target.value)})}
+                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <select
+                                            value={editingOperation.categoryId}
+                                            onChange={(e) => setEditingOperation({...editingOperation, categoryId: Number(e.target.value)})}
+                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        >
+                                            {categories.map((cat) => (
+                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                            ))}
+                                        </select>
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <input
+                                            type="text"
+                                            value={editingOperation.comment}
+                                            onChange={(e) => setEditingOperation({...editingOperation, comment: e.target.value})}
+                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <DatePicker
+                                            selected={editingOperation.date} // keep as Date
+                                            onChange={(date: Date | null) =>
+                                                setEditingOperation({ ...editingOperation, date })
+                                            }
+                                            showTimeSelect
+                                            timeFormat="HH:mm"
+                                            timeIntervals={1}
+                                            dateFormat="yyyy-MM-dd HH:mm"
+                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 flex gap-2 justify-center">
+                                        <button
+                                            onClick={() => handleSave(op.id)}
+                                            className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500 flex items-center justify-center"
+                                        >
+                                            <Check size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingId(null)}
+                                            className="p-2 bg-red-950 text-white rounded hover:bg-red-800 flex items-center justify-center"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </td>
+                                </>
+                            ) : (
+                                <>
+                                    <td className="px-4 py-2 ">{op.amount.toFixed(2)}</td>
+                                    <td className="px-4 py-2">{op.category?.name}</td>
+                                    <td className="px-4 py-2">{op.comment || <span className="italic text-gray-500">—</span>}</td>
+                                    <td className="px-4 py-2">
+                                        {new Date(op.date).toLocaleString("en-GB", {
+                                            year: "numeric",
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: false,
+                                            timeZone: "Europe/Kiev",
+                                        })}
+                                    </td>                                    <td className="px-4 py-2 flex gap-2 justify-center">
+                                        <button onClick={() => handleEdit(op)} className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button onClick={() => handleDelete(op.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
+                                            <Trash size={18} />
+                                        </button>
+                                    </td>
+                                </>
+                            )}
                         </tr>
                     ))
                 ) : (

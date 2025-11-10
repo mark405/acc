@@ -2,8 +2,8 @@
 
 import BoardPage from "@/app/components/board/BoardPage";
 
-export default function ExpenseBoardPage() {
+export default function IncomeBoardPage() {
     return (
-        <BoardPage boardType={"EXPENSE"}/>
+        <BoardPage boardType={"INCOME"}/>
     );
 }
