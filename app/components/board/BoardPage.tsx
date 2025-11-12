@@ -48,7 +48,7 @@ export default function BoardPage({
 
     const fetchCategories = async () => {
         try {
-            const res = await instance.get("/categories");
+            const res = await instance.get(`/categories?board_id=${boardId}`);
             if (res.status === HttpStatusCode.Ok) {
                 setCategories(res.data ?? []);
             }
@@ -148,7 +148,7 @@ export default function BoardPage({
         if (!name) return;
 
         try {
-            const res = await instance.post("/categories", {name});
+            const res = await instance.post("/categories", {name, board_id: boardId});
             if (res.status === HttpStatusCode.Created) {
                 setNewCategoryName("");
                 setAddingCategory(false);

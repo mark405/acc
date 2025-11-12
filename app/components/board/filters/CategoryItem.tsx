@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import { createPortal } from "react-dom";
 
 interface CategoryItemProps {
     category: { id: number; name: string };
@@ -10,6 +11,8 @@ interface CategoryItemProps {
     toggleCategoryFilter: (id: number) => void;
     renameCategory: (id: number, name: string) => void;
     deleteCategory: (id: number) => void;
+    contextMenu: { categoryId: number; position: "top" | "bottom"; rect: DOMRect } | null;
+    setContextMenu: (val: { categoryId: number; position: "top" | "bottom"; rect: DOMRect } | null) => void;
 }
 
 export default function CategoryItem({
@@ -20,8 +23,9 @@ export default function CategoryItem({
                                          toggleCategoryFilter,
                                          renameCategory,
                                          deleteCategory,
+                                         contextMenu,
+                                         setContextMenu,
                                      }: Readonly<CategoryItemProps>) {
-    const [contextMenu, setContextMenu] = useState<{ position: "top" | "bottom" } | null>(null);
 
     useEffect(() => {
         const close = () => setContextMenu(null);
@@ -31,17 +35,14 @@ export default function CategoryItem({
 
     const handleContextMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const container = e.currentTarget.parentElement?.parentElement;
-        if (!container) return;
+        const rect = e.currentTarget.getBoundingClientRect();
         const menuHeight = 80;
-        const elementTop = e.currentTarget.offsetTop;
-        const elementHeight = e.currentTarget.offsetHeight;
-        const containerScrollTop = container.scrollTop;
-        const containerHeight = container.clientHeight;
-        const spaceBelow = containerHeight - (elementTop - containerScrollTop + elementHeight);
+        const spaceBelow = window.innerHeight - rect.bottom;
 
         setContextMenu({
+            categoryId: category.id,
             position: spaceBelow < menuHeight ? "top" : "bottom",
+            rect,
         });
     };
 
@@ -80,26 +81,58 @@ export default function CategoryItem({
                 {category.name}
             </button>
 
-            {contextMenu && (
-                <div
-                    className={`absolute right-0 bg-gray-700 text-white rounded shadow-md w-36 z-50 ${
-                        contextMenu.position === "top" ? "bottom-full mb-1" : "top-full mt-1"
-                    }`}
-                >
-                    <button
-                        onClick={() => setRenamingCategory({id: category.id, name: category.name})}
-                        className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800"
+            {/*{contextMenu && (*/}
+            {/*    <div*/}
+            {/*        className={`absolute right-0 bg-gray-700 text-white rounded shadow-md w-36 z-50 ${*/}
+            {/*            contextMenu.position === "top" ? "bottom-full mb-1" : "top-full mt-1"*/}
+            {/*        }`}*/}
+            {/*    >*/}
+            {/*        <button*/}
+            {/*            onClick={() => setRenamingCategory({id: category.id, name: category.name})}*/}
+            {/*            className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800"*/}
+            {/*        >*/}
+            {/*            Редагувати*/}
+            {/*        </button>*/}
+            {/*        <button*/}
+            {/*            onClick={() => deleteCategory(category.id)}*/}
+            {/*            className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600"*/}
+            {/*        >*/}
+            {/*            Видалити*/}
+            {/*        </button>*/}
+            {/*    </div>*/}
+            {/*)}*/}
+            {contextMenu?.categoryId === category.id &&
+                createPortal(
+                    <div
+                        style={{
+                            position: "fixed",
+                            top:
+                                contextMenu.position === "bottom"
+                                    ? contextMenu.rect.bottom
+                                    : contextMenu.rect.top - 80,
+                            left: contextMenu.rect.right - 144,
+                            width: 144, // matches w-36
+                            zIndex: 50,
+                        }}
+                        className="bg-gray-700 text-white rounded shadow-md"
                     >
-                        Редагувати
-                    </button>
-                    <button
-                        onClick={() => deleteCategory(category.id)}
-                        className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600"
-                    >
-                        Видалити
-                    </button>
-                </div>
-            )}
+                        <button
+                            onClick={() =>
+                                setRenamingCategory({ id: category.id, name: category.name })
+                            }
+                            className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800"
+                        >
+                            Редагувати
+                        </button>
+                        <button
+                            onClick={() => deleteCategory(category.id)}
+                            className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600"
+                        >
+                            Видалити
+                        </button>
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 }

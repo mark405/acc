@@ -56,6 +56,12 @@ export default function Navbar() {
                 {isAdmin && (
                     <>
                         <Link
+                            href="/"
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Статистика
+                        </Link>
+                        <Link
                             href="/accounts"
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >

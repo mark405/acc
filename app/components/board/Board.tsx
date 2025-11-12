@@ -296,7 +296,8 @@ export default function Board({
                                             hour12: false,
                                             timeZone: "Europe/Kiev",
                                         })}
-                                    </td>                                    <td className="px-4 py-2 flex gap-2 justify-center">
+                                    </td>
+                                    <td className="px-4 py-2 flex gap-2 justify-center">
                                         <button onClick={() => handleEdit(op)} className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
                                             <Edit2 size={18} />
                                         </button>

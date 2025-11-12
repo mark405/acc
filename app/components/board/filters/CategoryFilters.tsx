@@ -1,6 +1,6 @@
 "use client";
 
-import {useRef} from "react";
+import {useRef, useState} from "react";
 import {CategoryResponse} from "@/app/types";
 import {Plus} from "lucide-react";
 import CategoryItem from "@/app/components/board/filters/CategoryItem";
@@ -42,6 +42,12 @@ export default function CategoryFilters({
             : [...categoryFilter, id];
         setCategoryFilter(newFilter);
     };
+
+    const [contextMenu, setContextMenu] = useState<{
+        categoryId: number;
+        position: "top" | "bottom";
+        rect: DOMRect;
+    } | null>(null);
 
     return (
         <div className="flex-1 flex flex-col mt-4 overflow-y-hidden">
@@ -90,6 +96,8 @@ export default function CategoryFilters({
                         toggleCategoryFilter={toggleCategoryFilter}
                         renameCategory={renameCategory}
                         deleteCategory={deleteCategory}
+                        contextMenu={contextMenu}
+                        setContextMenu={setContextMenu}
                     />
                 ))}
             </div>
