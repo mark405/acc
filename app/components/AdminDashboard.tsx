@@ -142,6 +142,7 @@ export default function AdminDashboard() {
                             {/* Bars */}
                             <Bar
                                 dataKey="amount"
+                                name={"Сума"}
                                 fill="#4f46e5"
                                 radius={[4, 4, 0, 0]}
                                 barSize={20}

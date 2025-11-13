@@ -46,15 +46,7 @@ export default function AccountsPage() {
                 size,
             };
 
-            let response = await instance.get("/users", {params});
-
-            if (response.status === HttpStatusCode.Forbidden) {
-                await checkAuth();
-                if (!isLoggedIn) {
-                    router.replace("/login");
-                }
-                response = await instance.get("/users", {params});
-            }
+            const response = await instance.get("/users", {params});
 
             setUsers(response.data.content);
             setTotalPages(response.data.total_pages);
