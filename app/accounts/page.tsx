@@ -1,13 +1,13 @@
 "use client";
 
-import {SetStateAction, useEffect, useState} from "react";
+import React, {SetStateAction, useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
-import {useRouter} from "next/navigation";
 import {RefreshCw, Trash2} from "lucide-react";
 import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
+import {UserResponse} from "@/app/types";
 
 const roles = ["USER", "ADMIN"];
 
@@ -20,8 +20,7 @@ export default function AccountsPage() {
     const [page, setPage] = useState(0);
     const [size] = useState(25);
     const [totalPages, setTotalPages] = useState(1);
-    const {isLoggedIn, checkAuth} = useAuth();
-    const router = useRouter();
+    const {isLoggedIn} = useAuth();
     const [userId, setUserId] = useState<number | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -94,7 +93,10 @@ export default function AccountsPage() {
         if (userId === null) return;
 
         try {
-            const response = await instance.post(`/users/change-password/${userId}`, { password, confirm_password: confirmPassword });
+            const response = await instance.post(`/users/change-password/${userId}`, {
+                password,
+                confirm_password: confirmPassword
+            });
             if (response.status === HttpStatusCode.NoContent) {
                 fetchUsers();
             }
@@ -156,21 +158,41 @@ export default function AccountsPage() {
                             <tr key={u.id} className="border-t border-gray-300 ">
                                 <td className="px-4 py-2 text-left">{u.username}</td>
                                 <td className="px-4 py-2 text-left">{u.role}</td>
-                                <td className="px-4 py-2 text-left">{new Date(u.created_at).toLocaleString()}</td>
-                                <td className="px-4 py-2 text-left">{new Date(u.modified_at).toLocaleString()}</td>
-                                {u.role === "USER" && (
-                                <td className="px-4 py-2 text-left flex gap-2">
-                                    <RefreshCw
-                                        size={18}
-                                        className="text-blue-600 hover:text-blue-400 cursor-pointer transition"
-                                        onClick={() => handleChangePasswordClick(u.id)}
-                                    />
-                                    <Trash2
-                                        size={18}
-                                        className="text-red-600 hover:text-red-400 cursor-pointer transition"
-                                        onClick={() => handleDeleteClick(u.id)}
-                                    />
+                                <td className="px-4 py-2 text-left">
+                                    {new Date(u.created_at).toLocaleString("en-GB", {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: false,
+                                        timeZone: "Europe/Kiev",
+                                    })}
                                 </td>
+                                <td className="px-4 py-2 text-left">
+                                    {new Date(u.modified_at).toLocaleString("en-GB", {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: false,
+                                        timeZone: "Europe/Kiev",
+                                    })}
+                                </td>
+                                {u.role === "USER" && (
+                                    <td className="px-4 py-2 text-left flex gap-2">
+                                        <RefreshCw
+                                            size={18}
+                                            className="text-blue-600 hover:text-blue-400 cursor-pointer transition"
+                                            onClick={() => handleChangePasswordClick(u.id)}
+                                        />
+                                        <Trash2
+                                            size={18}
+                                            className="text-red-600 hover:text-red-400 cursor-pointer transition"
+                                            onClick={() => handleDeleteClick(u.id)}
+                                        />
+                                    </td>
                                 )}
                             </tr>
                         ))}
