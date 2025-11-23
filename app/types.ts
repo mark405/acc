@@ -16,3 +16,19 @@ export interface BoardResponse {
     name: string;
     operation_type: "EXPENSE" | "INCOME";
 }
+
+export interface UserResponse {
+    id: number;
+    username: string;
+    role: string;
+    created_at: number;
+    modified_at: number;
+}
+
+export interface HistoryResponse {
+    id: number;
+    user: UserResponse;
+    type: string;
+    body: string;
+    date: number;
+}

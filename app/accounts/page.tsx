@@ -9,14 +9,6 @@ import {RefreshCw, Trash2} from "lucide-react";
 import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 
-interface UserResponse {
-    id: number;
-    username: string;
-    role: string;
-    created_at: number;
-    modified_at: number;
-}
-
 const roles = ["USER", "ADMIN"];
 
 export default function AccountsPage() {

@@ -68,7 +68,6 @@ export default function Board({
 
         // Stop execution if there are errors
         if (newErrors.amount || newErrors.categoryId) return;
-        debugger;
         try {
             await instance.post("/operations/create", {
                 board_id: board.id,
