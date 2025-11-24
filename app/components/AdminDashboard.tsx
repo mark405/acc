@@ -58,13 +58,13 @@ export default function AdminDashboard() {
     const chartData = Array.from({ length: 12 }, (_, i) => {
         const m = stats.find((s) => s.month === i + 1);
         return {
-            monthName: monthNames[i].slice(0, 3),
+            monthName: monthNames[i],
             amount: m?.amount ?? 0,
         };
     });
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="p-6 max-w-7xl mx-auto">
             <h1 className="text-4xl font-bold mb-6 text-center">Статистика</h1>
 
             {/* Tabs */}
@@ -118,10 +118,10 @@ export default function AdminDashboard() {
                             {/* X Axis */}
                             <XAxis
                                 dataKey="monthName"
-                                angle={-30}
-                                textAnchor="end"
-                                height={60}
-                                stroke="#D1D5DB" // light gray labels
+                                angle={0}
+                                height={80}
+                                interval={0}
+                                stroke="#D1D5DB"
                                 tick={{ fill: "#D1D5DB", fontSize: 12 }}
                             />
 
@@ -136,7 +136,8 @@ export default function AdminDashboard() {
                                 contentStyle={{ backgroundColor: "#1F2937", border: "none", borderRadius: 6 }}
                                 itemStyle={{ color: "#D1D5DB" }}       // color of value
                                 labelStyle={{ color: "#D1D5DB" }}      // color of month (label)
-                                formatter={(v: number) => `${v.toFixed(2)} ₴`}
+                                formatter={(v: number) => `${v.toFixed(2)} $`}
+                                cursor={{ fill: "rgba(17, 24, 39, 0.6)" }}  // темный, полупрозрачный
                             />
 
                             {/* Bars */}
@@ -146,6 +147,8 @@ export default function AdminDashboard() {
                                 fill="#4f46e5"
                                 radius={[4, 4, 0, 0]}
                                 barSize={20}
+                                isAnimationActive={false}
+                                activeBar={{ fill: "#6366f1" }}   // более светлый фиолетовый, но не белый
                             />
                         </BarChart>
                     </ResponsiveContainer>
