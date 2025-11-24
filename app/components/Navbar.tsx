@@ -9,8 +9,8 @@ import {useAuth} from "@/app/components/AuthProvider";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const {setUser, isAdmin} = useAuth();
-    const userInitial = "M"; // later replace dynamically
+    const {user, setUser, isAdmin} = useAuth();
+    const userInitial = user?.username.at(0)?.toUpperCase();
     const router = useRouter();
 
     const handleLogout = async () => {
