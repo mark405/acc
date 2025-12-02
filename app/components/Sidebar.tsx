@@ -8,18 +8,6 @@ import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useParams, useRouter} from "next/navigation";
 
-interface EmployeeResponse {
-    id: number;
-    name: string;
-}
-
-interface BoardResponse {
-    id: number;
-    name: string;
-    operation_type: "EXPENSE" | "INCOME";
-    level_type: "MAIN" | "CUSTOM";
-}
-
 export default function Sidebar() {
     const params = useParams();
     const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
@@ -27,15 +15,17 @@ export default function Sidebar() {
     const [boardsIncome, setBoardsIncome] = useState<BoardResponse[]>([]);
     const [collapsed, setCollapsed] = useState(true);
     const [showEmployees, setShowEmployees] = useState(false);
-    const [expandedEmployee, setExpandedEmployee] = useState<number | null>(null);
     const [showExpenses, setShowExpenses] = useState(false);
     const [showIncome, setShowIncome] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const [addingExpense, setAddingExpense] = useState(false);
     const [addingIncome, setAddingIncome] = useState(false);
     const [newBoardName, setNewBoardName] = useState("");
-    const [renamingBoard, setRenamingBoard] = useState<{ id: number; type: "EXPENSE" | "INCOME"; name: string } | null>(null);
+    const [renamingBoard, setRenamingBoard] = useState<{
+        id: number;
+        type: "EXPENSE" | "INCOME";
+        name: string
+    } | null>(null);
 
     const {isLoggedIn, checkAuth} = useAuth();
     const router = useRouter();
@@ -94,7 +84,6 @@ export default function Sidebar() {
 
 
     const fetchEmployees = async () => {
-        setLoading(true);
         try {
             let res = await instance.get("/employees", {params: {page: 0, size: 25}});
             if (res.status === HttpStatusCode.Forbidden) {
@@ -105,8 +94,6 @@ export default function Sidebar() {
             setEmployees(res.data.content ?? []);
         } catch (err) {
             console.error("Failed to fetch employees", err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -140,10 +127,6 @@ export default function Sidebar() {
             fetchBoards("INCOME");
         }
     }, [isLoggedIn]);
-
-    const toggleEmployee = (id: number) => {
-        setExpandedEmployee((prev) => (prev === id ? null : id));
-    };
 
     const handleAddBoard = (type: "EXPENSE" | "INCOME") => {
         setNewBoardName("");
@@ -190,11 +173,11 @@ export default function Sidebar() {
                     // Update the local state after successful rename
                     if (type === "EXPENSE") {
                         setBoardsExpense((prev) =>
-                            prev.map((b) => (b.id === id ? { ...b, name: renamingBoard.name.trim() } : b))
+                            prev.map((b) => (b.id === id ? {...b, name: renamingBoard.name.trim()} : b))
                         );
                     } else {
                         setBoardsIncome((prev) =>
-                            prev.map((b) => (b.id === id ? { ...b, name: renamingBoard.name.trim() } : b))
+                            prev.map((b) => (b.id === id ? {...b, name: renamingBoard.name.trim()} : b))
                         );
                     }
                 }
@@ -207,7 +190,6 @@ export default function Sidebar() {
             setRenamingBoard(null);
         }
     };
-
 
 
     const sidebarWidth = collapsed ? 80 : 340;
@@ -282,7 +264,10 @@ export default function Sidebar() {
                                             <input
                                                 type="text"
                                                 value={renamingBoard.name}
-                                                onChange={(e) => setRenamingBoard(prev => prev ? { ...prev, name: e.target.value } : prev)}
+                                                onChange={(e) => setRenamingBoard(prev => prev ? {
+                                                    ...prev,
+                                                    name: e.target.value
+                                                } : prev)}
                                                 onKeyDown={(e) => handleRenameKeyDown(e, "EXPENSE", board.id)}
                                                 autoFocus
                                                 className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
@@ -293,19 +278,28 @@ export default function Sidebar() {
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     if (board.level_type === "MAIN") return;
-                                                    setContextMenu({ boardId: board.id, type: "EXPENSE" });
+                                                    setContextMenu({boardId: board.id, type: "EXPENSE"});
                                                 }}
-                                                onDoubleClick={() => setRenamingBoard({ id: board.id, type: "EXPENSE", name: board.name })}
+                                                onDoubleClick={() => setRenamingBoard({
+                                                    id: board.id,
+                                                    type: "EXPENSE",
+                                                    name: board.name
+                                                })}
                                                 className="block py-1 hover:text-white transition"
                                             >
                                                 {board.name}
                                             </Link>
                                         )}
                                         {contextMenu?.boardId === board.id && contextMenu.type === "EXPENSE" && (
-                                            <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                            <div
+                                                className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
                                                 <button
                                                     onClick={() => {
-                                                        setRenamingBoard({ id: board.id, type: "EXPENSE", name: board.name });
+                                                        setRenamingBoard({
+                                                            id: board.id,
+                                                            type: "EXPENSE",
+                                                            name: board.name
+                                                        });
                                                         setContextMenu(null);
                                                     }}
                                                     className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
@@ -367,7 +361,10 @@ export default function Sidebar() {
                                                 type="text"
                                                 value={renamingBoard.name}
                                                 onChange={(e) =>
-                                                    setRenamingBoard(prev => prev ? { ...prev, name: e.target.value } : prev)
+                                                    setRenamingBoard(prev => prev ? {
+                                                        ...prev,
+                                                        name: e.target.value
+                                                    } : prev)
                                                 }
                                                 onKeyDown={(e) => handleRenameKeyDown(e, "INCOME", board.id)}
                                                 autoFocus
@@ -379,7 +376,7 @@ export default function Sidebar() {
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     if (board.level_type === "MAIN") return;
-                                                    setContextMenu({ boardId: board.id, type: "INCOME" });
+                                                    setContextMenu({boardId: board.id, type: "INCOME"});
                                                 }}
                                                 className="block py-1 hover:text-white transition"
                                             >
@@ -389,10 +386,15 @@ export default function Sidebar() {
 
                                         {/* Context menu */}
                                         {contextMenu?.boardId === board.id && contextMenu.type === "INCOME" && (
-                                            <div className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                            <div
+                                                className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
                                                 <button
                                                     onClick={() => {
-                                                        setRenamingBoard({ id: board.id, type: "INCOME", name: board.name });
+                                                        setRenamingBoard({
+                                                            id: board.id,
+                                                            type: "INCOME",
+                                                            name: board.name
+                                                        });
                                                         setContextMenu(null);
                                                     }}
                                                     className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
@@ -434,44 +436,38 @@ export default function Sidebar() {
                             {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
                         </div>
 
+                        {/*{showEmployees && (*/}
+                        {/*    <div className="pl-6">*/}
+                        {/*        {employees.map((employee) => (*/}
+                        {/*            <div key={employee.id}>*/}
+                        {/*                <div*/}
+                        {/*                    className="flex justify-between items-center px-6 py-2 cursor-pointer hover:bg-gray-700"*/}
+                        {/*                >*/}
+                        {/*                    <Link*/}
+                        {/*                        href={`/employees/${employee.id}`}*/}
+                        {/*                        className="block py-1 hover:text-white transition"*/}
+                        {/*                    >*/}
+                        {/*                        <span>{employee.name}</span>*/}
+                        {/*                    </Link>*/}
+                        {/*                </div>*/}
+                        {/*            </div>*/}
+                        {/*        ))}*/}
+                        {/*    </div>*/}
+                        {/*)}*/}
                         {showEmployees && (
-                            <div className="pl-6">
+                            <div className="pl-6 text-gray-300">
                                 {employees.map((employee) => (
-                                    <div key={employee.id}>
-                                        <div
-                                            className="flex justify-between items-center px-6 py-2 cursor-pointer hover:bg-gray-700"
-                                            onClick={() => toggleEmployee(employee.id)}
-                                        >
-                                            <span>{employee.name}</span>
-                                            {expandedEmployee === employee.id ? (
-                                                <ChevronUp size={18}/>
-                                            ) : (
-                                                <ChevronDown size={18}/>
-                                            )}
-                                        </div>
-
-                                        {expandedEmployee === employee.id && (
-                                            <div className="pl-8 text-gray-300 text-base">
-                                                <Link
-                                                    href={`/employee/${employee.id}/expenses`}
-                                                    className="block py-1 hover:text-white transition"
-                                                >
-                                                    Витрати
-                                                </Link>
-                                                <Link
-                                                    href={`/employee/${employee.id}/income`}
-                                                    className="block py-1 hover:text-white transition"
-                                                >
-                                                    Доходи
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Link
+                                        key={employee.id}
+                                        href={`/employees/${employee.id}`}
+                                        className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
+                                    >
+                                        <span>{employee.name}</span>
+                                    </Link>
                                 ))}
-
-                                {loading && <div className="px-6 py-2 text-gray-400">Loading...</div>}
                             </div>
                         )}
+
                     </div>
                 )}
             </div>

@@ -111,7 +111,7 @@ export default function AccountsPage() {
     return (
         <>
             <div className="p-6 max-w-7xl mx-auto">
-                <h1 className="text-2xl font-bold mb-4 text-center">Облікові записи</h1>
+                <h1 className="text-4xl font-bold mb-4 text-center">Облікові записи</h1>
 
                 {/* Filters */}
                 <div className="flex items-center space-x-4 mb-4 justify-center">
