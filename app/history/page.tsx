@@ -10,7 +10,7 @@ const historyTypes = ["USER", "OPERATION"];
 
 export default function HistoryPage() {
     const router = useRouter();
-    const { isAdmin } = useAuth();
+    const {isAdmin} = useAuth();
 
     if (!isAdmin) {
         router.back()
@@ -73,19 +73,50 @@ export default function HistoryPage() {
                 case "OPERATION_CREATED": {
                     const operationName = body.operationType === "EXPENSE" ? "Витрати" : "Доходи";
                     return (
-                        <>Операція <strong>{operationName}</strong> створена на дошці <strong>{body.board}</strong> в категорії <strong>{body.category}</strong></>
+                        <>Операція <strong>{operationName}</strong> створена на дошці <strong>{body.board}</strong> в
+                            категорії <strong>{body.category}</strong></>
                     );
                 }
                 case "OPERATION_UPDATED": {
                     const operationName = body.operationType === "EXPENSE" ? "Витрати" : "Доходи";
                     return (
-                        <>Операція <strong>{operationName}</strong> оновлена на дошці <strong>{body.board}</strong> в категорії <strong>{body.category}</strong></>
+                        <>Операція <strong>{operationName}</strong> оновлена на дошці <strong>{body.board}</strong> в
+                            категорії <strong>{body.category}</strong></>
                     );
                 }
                 case "OPERATION_DELETED": {
                     const operationName = body.operationType === "EXPENSE" ? "Витрати" : "Доходи";
                     return (
-                        <>Операція <strong>{operationName}</strong> видалена на дошці <strong>{body.board}</strong> в категорії <strong>{body.category}</strong></>
+                        <>Операція <strong>{operationName}</strong> видалена на дошці <strong>{body.board}</strong> в
+                            категорії <strong>{body.category}</strong></>
+                    );
+                }
+                case "EMPLOYEE_INFO_CREATED": {
+                    return (
+                        <>Інформація по співробітнику <strong>{body.employee}</strong> в
+                            період <strong>{`${formatLocalDate(body.startDate)} - ${formatLocalDate(body.endDate)}`}</strong> була створена</>
+                    );
+                }
+                case "EMPLOYEE_INFO_UPDATED": {
+                    return (
+                        <>Інформація по співробітнику <strong>{body.employee}</strong> в
+                            період <strong>{`${formatLocalDate(body.startDate)} - ${formatLocalDate(body.endDate)}`}</strong> була оновлена</>
+                    );
+                }
+                case "EMPLOYEE_INFO_DELETED": {
+                    return (
+                        <>Інформація по співробітнику <strong>{body.employee}</strong> в
+                            період <strong>{`${formatLocalDate(body.startDate)} - ${formatLocalDate(body.endDate)}`}</strong> була видалена</>
+                    );
+                }
+                case "EMPLOYEE_ADVANCE_CREATED": {
+                    return (
+                        <>Аванс співробітнику <strong>{body.employee}</strong> за <strong>{formatDate(body.date)}</strong> був доданий</>
+                    );
+                }
+                case "EMPLOYEE_ADVANCE_DELETED": {
+                    return (
+                        <>Аванс співробітнику <strong>{body.employee}</strong> за <strong>{formatDate(body.date)}</strong> був видалений</>
                     );
                 }
                 default:
@@ -96,6 +127,26 @@ export default function HistoryPage() {
         }
     };
 
+    const formatLocalDate = (arr: number[]) => {
+        if (!Array.isArray(arr) || arr.length !== 3) return "";
+        const [y, m, d] = arr;
+        return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
+    };
+
+    const formatDate = (v: number | string) => {
+        const n = Number(v);
+
+        // микросекунды → миллисекунды
+        const date = new Date(n / 1000);
+
+        return date.toLocaleString("uk-UA", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    };
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
