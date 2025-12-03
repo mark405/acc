@@ -8,10 +8,17 @@ import {RefreshCw, Trash2} from "lucide-react";
 import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 import {UserResponse} from "@/app/types";
+import {useRouter} from "next/navigation";
 
 const roles = ["USER", "ADMIN"];
 
 export default function AccountsPage() {
+    const router = useRouter();
+    const { isAdmin } = useAuth();
+
+    if (!isAdmin) {
+        router.back()
+    }
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [username, setUserName] = useState("");
     const [role, setRole] = useState("");

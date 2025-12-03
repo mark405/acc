@@ -4,10 +4,17 @@ import React, {SetStateAction, useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {useAuth} from "@/app/components/AuthProvider";
 import {HistoryResponse} from "@/app/types";
+import {useRouter} from "next/navigation";
 
 const historyTypes = ["USER", "OPERATION"];
 
 export default function HistoryPage() {
+    const router = useRouter();
+    const { isAdmin } = useAuth();
+
+    if (!isAdmin) {
+        router.back()
+    }
     const [histories, setHistories] = useState<HistoryResponse[]>([]);
     const [username, setUsername] = useState("");
     const [type, setType] = useState("");
