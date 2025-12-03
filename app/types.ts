@@ -42,11 +42,11 @@ export interface BoardResponse {
 
 export interface EmployeeFinanceResponse {
     id: number;
-    startDate: string;
-    endDate: string;
-    incomeQFD: number;
-    paidRef: number;
-    percentQFD: number;
+    start_date: number[];
+    end_date: number[];
+    income_qfd: number;
+    paid_ref: number;
+    percent_qfd: number;
     advances: [EmployeeAdvanceResponse]
 }
 

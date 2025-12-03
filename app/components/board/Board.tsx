@@ -90,7 +90,7 @@ export default function Board({
             await instance.delete(`/operations/${id}`);
             fetchOperations();
         } catch (err) {
-            console.error("Failed to create operation", err);
+            console.error("Failed to delete operation", err);
         }
     };
 
