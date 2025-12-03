@@ -50,6 +50,51 @@ export default function EmployeePage() {
         percentQFD: 0,
     });
 
+    const [isAdvanceModalOpen, setAdvanceModalOpen] = useState(false);
+    const [advanceAmount, setAdvanceAmount] = useState(0);
+    const [advanceDate, setAdvanceDate] = useState("");
+    const [advanceDateError, setAdvanceDateError] = useState<string | null>(null);
+
+    const openAdvanceModal = () => setAdvanceModalOpen(true);
+    const closeAdvanceModal = () => setAdvanceModalOpen(false);
+
+    const isAdvanceDateValid = (date: string) => {
+        if (!date) return false;
+        const selected = new Date(date);
+        const selectedDateOnly = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate()).getTime();
+
+        return finances.some(f => {
+            const [sy, sm, sd] = f.start_date; // assuming [year, month, day]
+            const [ey, em, ed] = f.end_date;
+
+            const start = new Date(sy, sm - 1, sd).getTime();
+            const end = new Date(ey, em - 1, ed).getTime();
+
+            return selectedDateOnly >= start && selectedDateOnly <= end;
+        });
+    };
+
+
+    const submitAdvance = async () => {
+        if (!advanceDate || advanceDateError) return;
+
+        try {
+            await instance.post("/employee-advances", {
+                employee_id: employeeId,
+                amount: advanceAmount,
+                date: advanceDate,
+            });
+            fetchFinances();
+            setAdvanceAmount(0);
+            setAdvanceDate("");
+            setAdvanceDateError(null);
+        } catch (err) {
+            console.error("Failed to create finance", err);
+        }
+        closeAdvanceModal();
+    };
+
+
     const fetchEmployee = async () => {
         try {
             const res = await instance.get(`/employees/${employeeId}`);
@@ -399,19 +444,21 @@ export default function EmployeePage() {
 
                                     {/* Advances */}
                                     <td className="px-4 py-2 relative text-left whitespace-nowrap">
-                                        <button
-                                            onClick={() => toggle(i)}
-                                            className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
-                                        >
-                                            Показати ({f.advances.length})
-                                        </button>
+                                        {f.advances.length !== 0 &&
+                                            <button
+                                                onClick={() => toggle(i)}
+                                                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+                                            >
+                                                Показати ({f.advances.length})
+                                            </button>
+                                        }
                                         {openIndex === i && (
                                             <div
                                                 className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-52 z-50">
                                                 {f.advances.map((a) => (
                                                     <div key={a.id}
                                                          className="px-2 py-1 border-b border-gray-700 last:border-none">
-                                                        {a.amount} –{" "}
+                                                        {a.amount} {" "} | {" "}
                                                         {new Date(a.date).toLocaleString("en-GB", {
                                                             year: "numeric",
                                                             month: "2-digit",
@@ -452,25 +499,61 @@ export default function EmployeePage() {
                                     <td className="px-4 py-2">{f.paid_ref}</td>
                                     <td className="px-4 py-2">{f.percent_qfd}</td>
                                     <td className="px-4 py-2 relative text-left whitespace-nowrap">
-                                        <button onClick={() => toggle(i)}
-                                                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Показати
-                                            ({f.advances.length})
-                                        </button>
-                                        {openIndex === i && <div
-                                            className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-52 z-50">{f.advances.map(a =>
-                                            <div key={a.id}
-                                                 className="px-2 py-1 border-b border-gray-700 last:border-none">{a.amount} – {new Date(a.date).toLocaleString("en-GB", {
-                                                year: "numeric",
-                                                month: "2-digit",
-                                                day: "2-digit",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                                hour12: false,
-                                                timeZone: "Europe/Kiev"
-                                            })}</div>)}</div>}
+                                        {f.advances.length !== 0 &&
+                                            <button
+                                                onClick={() => toggle(i)}
+                                                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+                                            >
+                                                Показати ({f.advances.length})
+                                            </button>}
+                                        {openIndex === i && f.advances.length !== 0 && (
+                                            <div
+                                                className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-64 z-50"
+                                            >
+                                                {f.advances.map((a) => (
+                                                    <div
+                                                        key={a.id}
+                                                        className="flex items-center px-2 py-1 border-b border-gray-700 last:border-none"
+                                                    >
+        <span className="flex-1">
+          {a.amount} |{" "}
+            {new Date(a.date).toLocaleString("en-GB", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+                timeZone: "Europe/Kiev",
+            })}
+        </span>
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await instance.delete(`/employee-advances/${a.id}`);
+                                                                    fetchFinances(); // обновляем таблицу
+                                                                } catch (err) {
+                                                                    console.error("Failed to delete advance", err);
+                                                                }
+                                                            }}
+                                                            className="p-1 bg-red-700 hover:bg-red-600 text-white rounded ml-auto"
+                                                        >
+                                                            <Trash size={14}/>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                     </td>
                                     <td className="px-2 py-1 align-middle">
                                         <div className="flex items-center justify-center gap-2 h-full">
+                                            <button
+                                                className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
+                                                onClick={openAdvanceModal}
+                                            >
+                                                <Plus size={18}/>
+                                            </button>
                                             <button onClick={() => handleEdit(f)}
                                                     className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
                                                 <Edit2 size={18}/>
@@ -485,54 +568,6 @@ export default function EmployeePage() {
                             )}
                         </tr>
                     ))}
-                    {/*{finances.length > 0 && finances.map((finance, index) => (*/}
-                    {/*    <tr key={finance.id} className="border-t border-gray-300">*/}
-                    {/*        <td className="px-4 py-2">*/}
-                    {/*            {formatBackendDate(finance.start_date)} – {formatBackendDate(finance.end_date)}*/}
-                    {/*        </td>*/}
-                    {/*        <td className="px-4 py-2 text-left">{finance.income_qfd}</td>*/}
-                    {/*        <td className="px-4 py-2 text-left">{finance.paid_ref}</td>*/}
-                    {/*        <td className="px-4 py-2 text-left">{finance.percent_qfd}</td>*/}
-                    {/*        <td className="px-4 py-2 relative text-left whitespace-nowrap">*/}
-                    {/*            <button*/}
-                    {/*                onClick={() => toggle(index)}*/}
-                    {/*                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"*/}
-                    {/*            >*/}
-                    {/*                Показати ({finance.advances.length})*/}
-                    {/*            </button>*/}
-                    {/*            {openIndex === index && (*/}
-                    {/*                <div*/}
-                    {/*                    className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-52 z-50">*/}
-                    {/*                    {finance.advances.map((a: EmployeeAdvanceResponse) => (*/}
-                    {/*                        <div key={a.id}*/}
-                    {/*                             className="px-2 py-1 border-b border-gray-700 last:border-none">*/}
-                    {/*                            {a.amount} –{" "}*/}
-                    {/*                            {new Date(a.date).toLocaleString("en-GB", {*/}
-                    {/*                                year: "numeric",*/}
-                    {/*                                month: "2-digit",*/}
-                    {/*                                day: "2-digit",*/}
-                    {/*                                hour: "2-digit",*/}
-                    {/*                                minute: "2-digit",*/}
-                    {/*                                hour12: false,*/}
-                    {/*                                timeZone: "Europe/Kiev",*/}
-                    {/*                            })}*/}
-                    {/*                        </div>*/}
-                    {/*                    ))}*/}
-                    {/*                </div>*/}
-                    {/*            )}*/}
-                    {/*        </td>*/}
-                    {/*        <td className="px-2 py-1 align-middle">*/}
-                    {/*            <div className="flex items-center justify-center gap-2 h-full">*/}
-                    {/*                <button  className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">*/}
-                    {/*                <Edit2 size={18} />*/}
-                    {/*            </button>*/}
-                    {/*            <button onClick={() => handleDelete(finance.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">*/}
-                    {/*                <Trash size={18} />*/}
-                    {/*            </button>*/}
-                    {/*            </div>*/}
-                    {/*        </td>*/}
-                    {/*    </tr>*/}
-                    {/*))}*/}
                     </tbody>
                 </table>
 
@@ -557,6 +592,73 @@ export default function EmployeePage() {
                             Наступна
                         </button>)}
                 </div>
+                {isAdvanceModalOpen && (
+                    <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-4">
+                        <div
+                            className="bg-gray-800 text-white p-6 rounded-md shadow-lg w-[300px] border border-gray-700"
+                        >
+                            <h2 className="text-xl font-semibold mb-4">Додати аванс</h2>
+
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col">
+                                    <label className="mb-1">Сума</label>
+                                    <input
+                                        type="text"
+                                        value={advanceAmount}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (/^\d*\.?\d*$/.test(value)) {
+                                                setAdvanceAmount(value === "" ? 0 : Number(value))
+                                            }
+                                        }}
+                                        placeholder="0.00"
+                                        className="px-3 py-2 rounded border border-gray-600  focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <label className="mb-1">Дата та час</label>
+                                    <DatePicker
+                                        selected={advanceDate ? new Date(advanceDate) : null}
+                                        onChange={(date: Date | null) => {
+                                            const isoDate = date ? date.toISOString() : "";
+                                            setAdvanceDate(isoDate);
+
+                                            if (isoDate && !isAdvanceDateValid(isoDate)) {
+                                                setAdvanceDateError("Обраний час не входить в період");
+                                            } else {
+                                                setAdvanceDateError(null);
+                                            }
+                                        }}
+                                        showTimeSelect
+                                        timeFormat="HH:mm"
+                                        timeIntervals={1}
+                                        dateFormat="yyyy-MM-dd HH:mm"
+                                        className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    />
+                                </div>
+
+                                <div className="flex gap-2 mt-4">
+                                    <button
+                                        onClick={submitAdvance}
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded transition"
+                                    >
+                                        Зберегти
+                                    </button>
+                                    <button
+                                        onClick={closeAdvanceModal}
+                                        className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded transition"
+                                    >
+                                        Відмінити
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {advanceDateError && (
+                            <span className="text-red-500 text-sm mt-1">{advanceDateError}</span>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

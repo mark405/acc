@@ -47,7 +47,7 @@ export interface EmployeeFinanceResponse {
     income_qfd: number;
     paid_ref: number;
     percent_qfd: number;
-    advances: [EmployeeAdvanceResponse]
+    advances: EmployeeAdvanceResponse[]
 }
 
 export interface EmployeeAdvanceResponse {
