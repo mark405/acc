@@ -7,6 +7,7 @@ import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useParams, useRouter} from "next/navigation";
+import {BoardResponse, EmployeeResponse} from "@/app/types";
 
 export default function Sidebar() {
     const params = useParams();
