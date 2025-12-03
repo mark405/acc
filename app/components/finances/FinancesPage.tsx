@@ -184,7 +184,7 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
         }
     };
 
-    const toggle = (i) => {
+    const toggle = (i: number) => {
         setOpenIndex(openIndex === i ? null : i);
     };
 
