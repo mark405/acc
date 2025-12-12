@@ -11,7 +11,7 @@ import {useAuth} from "@/app/components/AuthProvider";
 
 
 export default function FinancesPage({employeeId}: { employeeId: number }) {
-    const { isAdmin } = useAuth();
+    const {isAdmin} = useAuth();
 
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
     const [finances, setFinances] = useState<EmployeeFinanceResponse[]>([]);
@@ -226,7 +226,6 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
             console.error("Failed to delete finance", err);
         }
     };
-
     return (
         <div className="p-6 max-w-5xl mx-auto">
             {isAdmin && <h1 className="text-4xl font-bold mb-4 text-center">Співробітник {employee?.name}</h1>}
@@ -447,58 +446,6 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
                                         />
                                     </td>
 
-                                    {/* Advances */}
-                                    <td className="px-4 py-2 relative text-left whitespace-nowrap">
-                                        {f.advances.length !== 0 &&
-                                            <button
-                                                onClick={() => toggle(i)}
-                                                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
-                                            >
-                                                Показати ({f.advances.length})
-                                            </button>
-                                        }
-                                        {openIndex === i && f.advances.length !== 0 && (
-                                            <div
-                                                className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-64 z-50"
-                                            >
-                                                {f.advances.map((a) => (
-                                                    <div
-                                                        key={a.id}
-                                                        className="flex justify-between items-center px-2 py-1 border-b border-gray-700 last:border-none"
-                                                    >
-                                                        <span>
-                                                          {a.amount} |{" "}
-                                                            {new Date(a.date).toLocaleString("en-GB", {
-                                                                year: "numeric",
-                                                                month: "2-digit",
-                                                                day: "2-digit",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                                hour12: false,
-                                                                timeZone: "Europe/Kiev",
-                                                            })}
-                                                        </span>
-                                                        {isAdmin &&
-                                                            <button
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await instance.delete(`/employee-advances/${a.id}`);
-                                                                        fetchFinances(); // обновляем таблицу
-                                                                    } catch (err) {
-                                                                        console.error("Failed to delete advance", err);
-                                                                    }
-                                                                }}
-                                                                className="p-1 bg-red-700 hover:bg-red-600 text-white rounded ml-auto"
-                                                            >
-                                                                <Trash size={14}/>
-                                                            </button>
-                                                        }
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </td>
-
                                     {/* Actions */}
                                     <td className="px-2 py-1 align-middle">
                                         <div className="flex items-center justify-center gap-2 h-full">
@@ -573,6 +520,12 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
                                                         }
                                                     </div>
                                                 ))}
+                                                <div className="flex justify-between items-center px-2 py-1 font-bold">
+                                                    <span>Сума:</span>
+                                                    <span>
+                                                        {f.advances.reduce((sum, a) => sum + a.amount, 0)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         )}
 
