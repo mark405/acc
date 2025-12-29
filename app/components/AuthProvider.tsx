@@ -35,7 +35,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkAuth = async () => {
         setIsLoggedIn(null); // start loading
-        const currentUser = await fetchUser();
+        let currentUser = await fetchUser();
+        if (!currentUser) {
+            // Try refresh token
+            try {
+                const refreshRes = await instance.post("/auth/refresh");
+                if (refreshRes.status === HttpStatusCode.NoContent) {
+                    currentUser = await fetchUser();
+                }
+            } catch {}
+        }
 
         if (currentUser) {
             setUser(currentUser);
