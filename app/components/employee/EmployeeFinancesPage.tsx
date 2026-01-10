@@ -10,7 +10,7 @@ import DatePicker from "react-datepicker";
 import {useAuth} from "@/app/components/AuthProvider";
 
 
-export default function FinancesPage({employeeId}: { employeeId: number }) {
+export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
     const {isAdmin} = useAuth();
 
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
@@ -226,6 +226,10 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
             console.error("Failed to delete finance", err);
         }
     };
+
+    const [editingQFDHeader, setEditingQFDHeader] = useState(false);
+    const [qfdHeaderValue, setQfdHeaderValue] = useState<number | null>(employee?.qfd ?? null);
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
             {isAdmin && <h1 className="text-4xl font-bold mb-4 text-center">Співробітник {employee?.name}</h1>}
@@ -247,11 +251,50 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
                         >
                             Виплачено реф% {sortBy === "paidRef" && (direction === "asc" ? "↑" : "↓")}
                         </th>
-                        <th
-                            className="px-4 py-2 text-left cursor-pointer"
-                            onClick={() => handleSort("percentQFD")}
-                        >
-                            QFD (10% мінус реф%) {sortBy === "percentQFD" && (direction === "asc" ? "↑" : "↓")}
+                        <th className="px-4 py-2 text-left cursor-pointer">
+                            {editingQFDHeader ? (
+                                <input
+                                    type="number"
+                                    className={`border rounded px-1 py-1 w-16 text-center text-black ${
+                                        qfdHeaderValue === null || qfdHeaderValue < 0
+                                            ? "border-red-500 bg-red-100"
+                                            : "border-gray-400 bg-white"
+                                    }`}
+                                    value={qfdHeaderValue ?? ""}
+                                    min={0}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setQfdHeaderValue(val === "" ? null : Number(val));
+                                    }}
+                                    onKeyDown={async (e) => {
+                                        if (e.key === "Enter") {
+                                            if (qfdHeaderValue === null || qfdHeaderValue < 0) {
+                                                return; // stay in edit mode
+                                            }
+                                            await instance.put(`/employees/${employeeId}`, { qfd: qfdHeaderValue });
+                                            setEditingQFDHeader(false);
+                                            await fetchEmployee();
+                                        } else if (e.key === "Escape") {
+                                            setEditingQFDHeader(false);
+                                        }
+                                    }}
+                                    autoFocus
+                                />
+                            ) : (
+                                <span
+                                    className="hover:text-indigo-400 select-none" // add select-none
+                                    onClick={() => handleSort("percentQFD")}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation(); // stop bubbling
+                                        setQfdHeaderValue(employee?.qfd ?? null);
+                                        setEditingQFDHeader(true);
+                                    }}
+                                >
+      QFD ({employee?.qfd != null ? `${employee.qfd}%` : "-"} мінус реф%){" "}
+                                    {sortBy === "percentQFD" && (direction === "asc" ? "↑" : "↓")}
+    </span>
+                            )}
                         </th>
                         <th className="px-4 py-2 text-left">Аванси</th>
                         <th className="w-12 px-4 py-2 text-left">
@@ -266,6 +309,7 @@ export default function FinancesPage({employeeId}: { employeeId: number }) {
                     </tr>
                     </thead>
                     <tbody>
+
                     {adding && (
                         <tr className="border-t border-gray-300 align-middle  transition">
                             {/* Start Date */}

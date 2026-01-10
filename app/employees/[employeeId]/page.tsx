@@ -3,10 +3,10 @@
 import React from "react";
 import {useParams} from "next/navigation";
 import "react-datepicker/dist/react-datepicker.css";
-import FinancesPage from "@/app/components/finances/FinancesPage";
+import EmployeeFinancesPage from "@/app/components/employee/EmployeeFinancesPage";
 
 export default function EmployeePage() {
     const params = useParams();
     const employeeId = Number(params.employeeId);
-    return (<FinancesPage employeeId={employeeId}/>);
+    return (<EmployeeFinancesPage employeeId={employeeId}/>);
 }

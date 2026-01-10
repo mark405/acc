@@ -4,11 +4,12 @@ import React, {SetStateAction, useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
-import {RefreshCw, Trash2} from "lucide-react";
+import {RefreshCw, Trash2, UserStar} from "lucide-react";
 import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 import {UserResponse} from "@/app/types";
 import {useRouter} from "next/navigation";
+import {MakeAdminModal} from "@/app/components/MakeAdminModal";
 
 const roles = ["USER", "ADMIN"];
 
@@ -31,6 +32,7 @@ export default function AccountsPage() {
     const [userId, setUserId] = useState<number | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isMakeAdminModalOpen, setIsMakeAdminModalOpen] = useState(false);
 
 
     const fetchUsers = async () => {
@@ -74,6 +76,27 @@ export default function AccountsPage() {
         setUserId(id);
         setIsDeleteModalOpen(true);
     };
+
+    const handleMakeAdminClick = (id: number) => {
+        setUserId(id);
+        setIsMakeAdminModalOpen(true);
+    };
+
+    const handleConfirmMakeAdmin = async () => {
+        if (userId === null) return;
+
+        try {
+            const response = await instance.put(`/users/make-admin/${userId}`);
+            if (response.status === HttpStatusCode.NoContent) {
+                fetchUsers();
+            }
+        } catch (err) {
+            console.error("Failed to make admin user", err);
+        } finally {
+            setIsMakeAdminModalOpen(false);
+            setUserId(null);
+        }
+    }
 
     const handleConfirmDelete = async () => {
         if (userId === null) return;
@@ -189,6 +212,11 @@ export default function AccountsPage() {
                                 </td>
                                 {u.role === "USER" && (
                                     <td className="px-4 py-2 text-left flex gap-2">
+                                        <UserStar
+                                            size={18}
+                                            className="text-blue-600 hover:text-red-400 cursor-pointer transition"
+                                            onClick={() => handleMakeAdminClick(u.id)}
+                                        />
                                         <RefreshCw
                                             size={18}
                                             className="text-blue-600 hover:text-blue-400 cursor-pointer transition"
@@ -231,6 +259,12 @@ export default function AccountsPage() {
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 title="Ви точно хочете видалити цей обліковий запис?"
+            />
+            <MakeAdminModal
+                isOpen={isMakeAdminModalOpen}
+                onClose={() => setIsMakeAdminModalOpen(false)}
+                onConfirm={handleConfirmMakeAdmin}
+                title="Ви точно хочете зробити цього юзера адміном?"
             />
             <ChangePasswordModal
                 isOpen={isPasswordModalOpen}

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {EmployeeResponse} from "@/app/types";
-import FinancesPage from "@/app/components/finances/FinancesPage";
+import EmployeeFinancesPage from "@/app/components/employee/EmployeeFinancesPage";
 
 export default function UserDashboard() {
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
@@ -23,5 +23,5 @@ export default function UserDashboard() {
     })
 
     if (!employee) return;
-    return (<FinancesPage employeeId={employee.id}/>);
+    return (<EmployeeFinancesPage employeeId={employee.id}/>);
 }

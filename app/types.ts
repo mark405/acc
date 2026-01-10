@@ -31,6 +31,7 @@ export interface HistoryResponse {
 export interface EmployeeResponse {
     id: number;
     name: string;
+    qfd: number;
 }
 
 export interface BoardResponse {
