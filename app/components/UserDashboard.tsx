@@ -20,7 +20,7 @@ export default function UserDashboard() {
 
     useEffect(() => {
         fetchEmployee();
-    })
+    }, []);
 
     if (!employee) return;
     return (<EmployeeFinancesPage employeeId={employee.id}/>);
