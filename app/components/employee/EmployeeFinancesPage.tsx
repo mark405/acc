@@ -285,6 +285,9 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     className="hover:text-indigo-400 select-none" // add select-none
                                     onClick={() => handleSort("percentQFD")}
                                     onContextMenu={(e) => {
+                                        if (!isAdmin) {
+                                            return;
+                                        }
                                         e.preventDefault();
                                         e.stopPropagation(); // stop bubbling
                                         setQfdHeaderValue(employee?.qfd ?? null);
