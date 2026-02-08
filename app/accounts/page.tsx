@@ -9,9 +9,9 @@ import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 import {UserResponse} from "@/app/types";
 import {useRouter} from "next/navigation";
-import {MakeAdminModal} from "@/app/components/MakeAdminModal";
+import {ChangeRoleModal} from "@/app/components/ChangeRoleModal";
 
-const roles = ["USER", "ADMIN"];
+const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER"];
 
 export default function AccountsPage() {
     const router = useRouter();
@@ -32,7 +32,7 @@ export default function AccountsPage() {
     const [userId, setUserId] = useState<number | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    const [isMakeAdminModalOpen, setIsMakeAdminModalOpen] = useState(false);
+    const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
 
     const fetchUsers = async () => {
         try {
@@ -76,9 +76,9 @@ export default function AccountsPage() {
         setIsDeleteModalOpen(true);
     };
 
-    const handleMakeAdminClick = (id: number) => {
+    const handleChangeRoleClick = (id: number) => {
         setUserId(id);
-        setIsMakeAdminModalOpen(true);
+        setIsChangeRoleModalOpen(true);
     };
 
     const handleConfirmMakeAdmin = async () => {
@@ -92,7 +92,7 @@ export default function AccountsPage() {
         } catch (err) {
             console.error("Failed to make admin user", err);
         } finally {
-            setIsMakeAdminModalOpen(false);
+            setIsChangeRoleModalOpen(false);
             setUserId(null);
         }
     }
@@ -209,12 +209,12 @@ export default function AccountsPage() {
                                         timeZone: "Europe/Kiev",
                                     })}
                                 </td>
-                                {u.role === "USER" && (
+                                {u.role === "MANAGER" && (
                                     <td className="px-4 py-2 text-left flex gap-2">
                                         <UserStar
                                             size={18}
                                             className="text-blue-600 hover:text-red-400 cursor-pointer transition"
-                                            onClick={() => handleMakeAdminClick(u.id)}
+                                            onClick={() => handleChangeRoleClick(u.id)}
                                         />
                                         <RefreshCw
                                             size={18}
@@ -259,12 +259,26 @@ export default function AccountsPage() {
                 onConfirm={handleConfirmDelete}
                 title="Ви точно хочете видалити цей обліковий запис?"
             />
-            <MakeAdminModal
-                isOpen={isMakeAdminModalOpen}
-                onClose={() => setIsMakeAdminModalOpen(false)}
-                onConfirm={handleConfirmMakeAdmin}
-                title="Ви точно хочете зробити цього юзера адміном?"
+            <ChangeRoleModal
+                isOpen={isChangeRoleModalOpen}
+                onClose={() => setIsChangeRoleModalOpen(false)}
+                onConfirm={async (newRole) => {
+                    if (userId === null) return;
+                    try {
+                        await instance.put(`/users/change-role/${userId}`, { role: newRole });
+                        fetchUsers();
+                    } catch (err) {
+                        console.error("Failed to change role", err);
+                    } finally {
+                        setIsChangeRoleModalOpen(false);
+                        setUserId(null);
+                    }
+                }}
+                currentRole={users.find(u => u.id === userId)?.role}
+                roles={roles}
+                title="Змінити роль користувача"
             />
+
             <ChangePasswordModal
                 isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}
