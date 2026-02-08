@@ -73,3 +73,11 @@ export interface FileResponse {
     file_name: string;
     file_url: string;
 }
+
+export interface CommentResponse {
+    id: number;
+    text: string;
+    created_at: number;
+    created_by: UserResponse;
+    attachments: FileResponse[];
+}

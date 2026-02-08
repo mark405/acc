@@ -94,8 +94,9 @@ export default function Navbar() {
                     </>
                 )}
 
-                {/* Profile circle */}
-                <div className="relative">
+                {/* Profile */}
+                <div className="relative flex flex-col items-center">
+                    {/* Avatar */}
                     <div
                         onClick={() => setMenuOpen(!menuOpen)}
                         className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
@@ -103,10 +104,18 @@ export default function Navbar() {
                         {userInitial}
                     </div>
 
-                    {/* Dropdown menu */}
+                    {/* ROLE UNDER AVATAR */}
+                    {user?.role && (
+                        <span className="mt-1 text-xs text-gray-300 whitespace-nowrap">
+      {user.role}
+    </span>
+                    )}
+
+                    {/* Dropdown */}
                     {menuOpen && (
                         <div
-                            className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg py-2 text-gray-800 z-50">
+                            className="absolute top-full mt-2 right-0 w-40 bg-white rounded-lg shadow-lg py-2 text-gray-800 z-50"
+                        >
                             <Link
                                 href="/settings"
                                 className="block px-4 py-2 text-lg hover:bg-gray-100 transition"
@@ -123,6 +132,7 @@ export default function Navbar() {
                         </div>
                     )}
                 </div>
+
             </div>
         </nav>
     );
