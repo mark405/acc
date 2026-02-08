@@ -56,3 +56,20 @@ export interface EmployeeAdvanceResponse {
     date: string;
     amount: number;
 }
+
+export interface TicketResponse {
+    id: number;
+    text: string;
+    type: "TECH_GOAL" | "ADVERTISER_REQUEST";
+    status: "OPENED" | "CLOSED";
+    assigned_to: UserResponse[];
+    created_by: UserResponse;
+    created_at: number;
+    files: FileResponse[];
+}
+
+export interface FileResponse {
+    id: number;
+    file_name: string;
+    file_url: string;
+}

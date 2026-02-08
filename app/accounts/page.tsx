@@ -34,7 +34,6 @@ export default function AccountsPage() {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isMakeAdminModalOpen, setIsMakeAdminModalOpen] = useState(false);
 
-
     const fetchUsers = async () => {
         try {
             const params = {
