@@ -11,6 +11,8 @@ interface EditTicketModalProps {
     onUpdate: () => void;
 }
 
+type Status = "OPENED" | "CLOSED";
+
 export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicketModalProps) => {
     const [text, setText] = useState(ticket.text);
     const [status, setStatus] = useState(ticket.status);
@@ -87,7 +89,7 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
 
                 <select
                     value={status}
-                    onChange={e => setStatus(e.target.value)}
+                    onChange={e => setStatus(e.target.value as Status)}
                     className="border border-gray-600 rounded px-2 py-1 mb-3 bg-gray-700 text-white w-full"
                 >
                     <option value="OPENED">Відкрито</option>
