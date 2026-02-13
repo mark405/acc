@@ -29,11 +29,24 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
         }
     };
 
-    // Обновляем список пользователей при открытии модалки и смене type
     useEffect(() => {
-        if (isOpen) {
-            const role = type === "TECH_GOAL" ? "TECH_MANAGER" : "OFFERS_MANAGER";
-            fetchUsers(role);
+        if (!isOpen) return;
+
+        if (type === "TECH_GOAL") {
+            const fetchTechManagers = async () => {
+                try {
+                    const res = await instance.get("/users", { params: { role: "TECH_MANAGER" } });
+                    setUsers(res.data.content);
+                    setAssignedTo(res.data.content.map((u: UserResponse) => u.id));
+                } catch (err) {
+                    console.error("Failed to fetch TECH_MANAGER", err);
+                }
+            };
+            fetchTechManagers();
+        } else {
+            // Для ADVERTISER_REQUEST загружаем OFFERS_MANAGER для выбора
+            fetchUsers("OFFERS_MANAGER");
+            setAssignedTo([]); // сброс выбранных пользователей
         }
     }, [isOpen, type]);
 
@@ -84,40 +97,46 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                         className="border border-gray-600 rounded px-2 py-1 mb-3 bg-gray-700 text-white"
                     >
                         <option value="TECH_GOAL">Tech Goal</option>
-                        <option value="ADVERTISER_REQUEST">Запит на рекламу</option>
+                        <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
                     </select>
 
-                    <div className="relative">
-                        <button
-                            onClick={() => setDropdownOpen(prev => !prev)}
-                            className="w-full text-left px-2 py-1 border border-gray-600 rounded bg-gray-700 cursor-pointer"
-                        >
-                            {assignedTo.length === 0
-                                ? "Кому ▾"
-                                : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
-                        </button>
-
-                        {dropdownOpen && (
-                            <div
-                                ref={dropdownRef}
-                                className="absolute mt-1 w-full max-h-64 overflow-auto bg-gray-700 border border-gray-600 rounded shadow-lg z-50"
+                    {type === "ADVERTISER_REQUEST" ? (
+                        <div className="relative">
+                            <button
+                                onClick={() => setDropdownOpen(prev => !prev)}
+                                className="w-full text-left px-2 py-1 border border-gray-600 rounded bg-gray-700 cursor-pointer"
                             >
-                                {users.map(user => (
-                                    <div
-                                        key={user.id}
-                                        className={`px-2 py-1 cursor-pointer hover:bg-gray-600 flex justify-between items-center
+                                {assignedTo.length === 0
+                                    ? "Кому ▾"
+                                    : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
+                            </button>
+
+                            {dropdownOpen && (
+                                <div
+                                    ref={dropdownRef}
+                                    className="absolute mt-1 w-full max-h-64 overflow-auto bg-gray-700 border border-gray-600 rounded shadow-lg z-50"
+                                >
+                                    {users.map(user => (
+                                        <div
+                                            key={user.id}
+                                            className={`px-2 py-1 cursor-pointer hover:bg-gray-600 flex justify-between items-center
                                         ${assignedTo.includes(user.id) ? "bg-gray-600" : ""}`}
-                                        onClick={() => toggleUser(user.id)}
-                                    >
-                                        <span>{user.username}</span>
-                                        {assignedTo.includes(user.id) && (
-                                            <span className="text-green-400 font-bold">✓</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                            onClick={() => toggleUser(user.id)}
+                                        >
+                                            <span>{user.username}</span>
+                                            {assignedTo.includes(user.id) && (
+                                                <span className="text-green-400 font-bold">✓</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-sm text-gray-400 mb-2">
+                            Призначено: {users.filter(u => assignedTo.includes(u.id)).map(u => u.username).join(", ")}
+                        </div>
+                    )}
                     <div className="mt-2">
                         <label className="text-sm mb-1 block">Додати файли:</label>
                         <div className="relative">

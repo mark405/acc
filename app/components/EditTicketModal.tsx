@@ -97,34 +97,42 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                 </select>
 
                 <div className="relative mb-3">
-                    <button
-                        onClick={() => setDropdownOpen(prev => !prev)}
-                        className="w-full text-left px-2 py-1 border border-gray-600 rounded bg-gray-700 cursor-pointer"
-                    >
-                        {assignedTo.length === 0
-                            ? "Кому ▾"
-                            : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
-                    </button>
-
-                    {dropdownOpen && (
-                        <div
-                            ref={dropdownRef}
-                            className="absolute mt-1 w-full max-h-48 overflow-auto bg-gray-700 border border-gray-600 rounded shadow-lg z-50"
-                        >
-                            {users.map(user => (
-                                <div
-                                    key={user.id}
-                                    className={`px-2 py-1 cursor-pointer hover:bg-gray-600 flex justify-between items-center
-                                        ${assignedTo.includes(user.id) ? "bg-gray-600" : ""}`}
-                                    onClick={() => toggleUser(user.id)}
-                                >
-                                    <span>{user.username}</span>
-                                    {assignedTo.includes(user.id) && (
-                                        <span className="text-green-400 font-bold">✓</span>
-                                    )}
-                                </div>
-                            ))}
+                    {ticket.type === "TECH_GOAL" ? (
+                        <div className="px-2 py-1 border border-gray-600 rounded bg-gray-700 text-gray-200">
+                            Призначено: {users.map(u => u.username).join(", ")}
                         </div>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setDropdownOpen(prev => !prev)}
+                                className="w-full text-left px-2 py-1 border border-gray-600 rounded bg-gray-700 cursor-pointer"
+                            >
+                                {assignedTo.length === 0
+                                    ? "Кому ▾"
+                                    : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
+                            </button>
+
+                            {dropdownOpen && (
+                                <div
+                                    ref={dropdownRef}
+                                    className="absolute mt-1 w-full max-h-48 overflow-auto bg-gray-700 border border-gray-600 rounded shadow-lg z-50"
+                                >
+                                    {users.map(user => (
+                                        <div
+                                            key={user.id}
+                                            className={`px-2 py-1 cursor-pointer hover:bg-gray-600 flex justify-between items-center
+                                ${assignedTo.includes(user.id) ? "bg-gray-600" : ""}`}
+                                            onClick={() => toggleUser(user.id)}
+                                        >
+                                            <span>{user.username}</span>
+                                            {assignedTo.includes(user.id) && (
+                                                <span className="text-green-400 font-bold">✓</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
