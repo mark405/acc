@@ -77,6 +77,7 @@ export default function TicketsPage() {
 
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",
+        IN_PROGRESS: "В роботі",
         CLOSED: "Закрито",
     };
 
@@ -123,11 +124,18 @@ export default function TicketsPage() {
                                 <span className="font-bold text-lg">#{ticket.id}</span>
                                 <span
                                     className={`px-2 py-1 rounded text-sm font-semibold ${
-                                        ticket.status === "OPENED" ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-800"
+                                        ticket.status === "OPENED"
+                                            ? "bg-green-200 text-green-800"
+                                            : ticket.status === "IN_PROGRESS"
+                                                ? "bg-yellow-200 text-yellow-800"
+                                                : "bg-gray-200 text-gray-800"
                                     }`}
                                 >
-                                  {statusLabels[ticket.status]}
-                                </span>
+                        {statusLabels[ticket.status]}
+                                    {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
+                                        <> · {ticket.operated_by.username}</>
+                                    )}
+                    </span>
                             </div>
                             <div className="text-sm text-gray-600">
                                 Тип: <b>

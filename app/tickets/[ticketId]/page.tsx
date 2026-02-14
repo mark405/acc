@@ -89,7 +89,13 @@ export default function TicketDetailsPage() {
 
     const handleChangeStatusTicket = async (ticket: TicketResponse) => {
         try {
-            const newStatus = ticket.status === "OPENED" ? "CLOSED" : "OPENED";
+            const statusMap = {
+                OPENED: "IN_PROGRESS",
+                IN_PROGRESS: "CLOSED",
+                CLOSED: "OPENED",
+            } as const;
+
+            const newStatus = statusMap[ticket.status];
             await instance.put(`/tickets/status/${ticket.id}`, {status: newStatus});
             load();
         } catch (err) {
@@ -107,8 +113,18 @@ export default function TicketDetailsPage() {
     };
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",
+        IN_PROGRESS: "В роботі",
         CLOSED: "Закрито",
     };
+
+    const isWorker = user?.role === "OFFERS_MANAGER" || user?.role === "TECH_MANAGER";
+
+    const statusButtonMap: Record<string, string> = {
+        OPENED: "Взяти в роботу",
+        IN_PROGRESS: "Закрити",
+        CLOSED: "Відкрити",
+    };
+
     if (!ticket) {
         return <div></div>;
     }
@@ -122,11 +138,19 @@ export default function TicketDetailsPage() {
                     <span className="font-bold text-lg">#{ticket.id}</span>
                     <span
                         className={`px-2 py-1 rounded text-sm font-semibold ${
-                            ticket.status === "OPENED" ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-800"
+                            ticket.status === "OPENED"
+                                ? "bg-green-200 text-green-800"
+                                : ticket.status === "IN_PROGRESS"
+                                    ? "bg-yellow-200 text-yellow-800"
+                                    : "bg-gray-200 text-gray-800"
                         }`}
                     >
-                                  {statusLabels[ticket.status]}
-                                </span>
+                        {statusLabels[ticket.status]}
+                                            {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
+                                                <> · {ticket.operated_by.username}</>
+                                            )}
+                    </span>
+
                 </div>
                 <div className="text-gray-800">{ticket.text}</div>
                 <div className="mt-4">
@@ -180,22 +204,15 @@ export default function TicketDetailsPage() {
                         </button>
                     </>
                 }
-                {user?.role == 'OFFERS_MANAGER' || user?.role === 'TECH_MANAGER' && ticket.status === 'OPENED' &&
+                {isWorker && statusButtonMap[ticket.status] && (
                     <button
                         onClick={() => handleChangeStatusTicket(ticket)}
                         className="absolute cursor-pointer bottom-9 right-2 px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-gray-900"
                     >
-                        Закрити
+                        {statusButtonMap[ticket.status]}
                     </button>
-                }
-                {user?.role == 'OFFERS_MANAGER' || user?.role === 'TECH_MANAGER' && ticket.status === 'CLOSED' &&
-                    <button
-                        onClick={() => handleChangeStatusTicket(ticket)}
-                        className="absolute cursor-pointer bottom-9 right-2 px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-gray-900"
-                    >
-                        Відкрити
-                    </button>
-                }
+                )}
+
                 {editModalTicket && (
                     <EditTicketModal
                         isOpen={!!editModalTicket}     // <-- new prop

@@ -61,9 +61,10 @@ export interface TicketResponse {
     id: number;
     text: string;
     type: "TECH_GOAL" | "ADVERTISER_REQUEST";
-    status: "OPENED" | "CLOSED";
+    status: "OPENED" | "CLOSED" | "IN_PROGRESS";
     assigned_to: UserResponse[];
     created_by: UserResponse;
+    operated_by?: UserResponse;
     created_at: number;
     files: FileResponse[];
 }
