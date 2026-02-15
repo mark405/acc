@@ -10,6 +10,7 @@ import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 import {UserResponse} from "@/app/types";
 import {useRouter} from "next/navigation";
 import {ChangeRoleModal} from "@/app/components/ChangeRoleModal";
+import Pagination from "@/app/components/Pagination";
 
 const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER"];
 
@@ -235,23 +236,11 @@ export default function AccountsPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-4 flex space-x-2 justify-center">
-                    {page > 0 && (
-                        <button
-                            onClick={() => setPage((prev) => prev - 1)}
-                            className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                        >
-                            Минула
-                        </button>)}
-                    <span className="px-3 py-1">Сторінка {users.length == 0 ? 0 : page + 1} з {totalPages}</span>
-                    {page + 1 < totalPages && (
-                        <button
-                            onClick={() => setPage((prev) => prev + 1)}
-                            className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                        >
-                            Наступна
-                        </button>)}
-                </div>
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onChange={setPage}
+                />
             </div>
             <DeleteModal
                 isOpen={isDeleteModalOpen}

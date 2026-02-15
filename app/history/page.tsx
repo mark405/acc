@@ -5,6 +5,7 @@ import {instance} from "@/app/api/instance";
 import {useAuth} from "@/app/components/AuthProvider";
 import {HistoryResponse} from "@/app/types";
 import {useRouter} from "next/navigation";
+import Pagination from "@/app/components/Pagination";
 
 const historyTypes = ["USER", "OPERATION"];
 
@@ -226,27 +227,11 @@ export default function HistoryPage() {
             </div>
 
             {/* Pagination */}
-            <div className="mt-4 flex space-x-2 justify-center">
-                {page > 0 && (
-                    <button
-                        onClick={() => setPage((prev) => prev - 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                    >
-                        Минула
-                    </button>
-                )}
-                <span className="px-3 py-1">
-                    Сторінка {histories.length === 0 ? 0 : page + 1} з {totalPages}
-                </span>
-                {page + 1 < totalPages && (
-                    <button
-                        onClick={() => setPage((prev) => prev + 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                    >
-                        Наступна
-                    </button>
-                )}
-            </div>
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+            />
         </div>
     );
 }

@@ -6,6 +6,7 @@ import {instance} from "@/app/api/instance";
 import {TicketResponse, CommentResponse, FileResponse} from "@/app/types";
 import {useAuth} from "@/app/components/AuthProvider";
 import {EditTicketModal} from "@/app/components/EditTicketModal";
+import {motion} from "framer-motion";
 
 export default function TicketDetailsPage() {
     const {ticketId} = useParams();
@@ -130,109 +131,157 @@ export default function TicketDetailsPage() {
     }
 
     return (
-        <div className="p-6 max-w-3xl mx-auto space-y-6">
-
-            {/* Тикет */}
-            <div className="border rounded p-4 shadow relative">
-                <div className="flex justify-between items-center">
-                    <span className="font-bold text-lg">#{ticket.id}</span>
-                    <span
-                        className={`px-2 py-1 rounded text-sm font-semibold ${
-                            ticket.status === "OPENED"
-                                ? "bg-green-200 text-green-800"
-                                : ticket.status === "IN_PROGRESS"
-                                    ? "bg-yellow-200 text-yellow-800"
-                                    : "bg-gray-200 text-gray-800"
-                        }`}
-                    >
-                        {statusLabels[ticket.status]}
-                                            {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
-                                                <> · {ticket.operated_by.username}</>
-                                            )}
-                    </span>
-
-                </div>
-                <div className="text-gray-800">{ticket.text}</div>
-                <div className="mt-4">
-                    <div className="text-sm text-gray-700">
-                        Створив <b>{ticket.created_by.username}</b>
-                    </div>
-                    {ticket.assigned_to.length > 0 && (
-                        <div className="text-sm text-gray-600 mt-1">
-                            Призначений для:{" "}
-                            {ticket.assigned_to.map((user, idx) => (
-                                <span key={user.id}>
-            <b>{user.username}</b>
-                                    {idx < ticket.assigned_to.length - 1 ? ", " : ""}
-        </span>
-                            ))}
+        <div className="max-w-4xl mx-auto p-6 space-y-8">
+            {/* Ticket Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="border-3 border-gray-600rounded-2xl shadow rounded-2xl p-6 relative"
+            >
+                {/* header */}
+                <div className="flex flex-wrap justify-between gap-4 mb-4">
+                    <div>
+                        <div className="text-2xl font-bold">#{ticket.id}</div>
+                        <div className="text-xs text-gray-500">
+                            {new Date(ticket.created_at).toLocaleString("uk-UA")}
                         </div>
+                    </div>
 
-                    )}
+                    <div className="flex flex-col items-end gap-2">
+        <span
+            className={`px-3 py-1 rounded-full text-md font-semibold tracking-wide
+          ${
+                ticket.status === "OPENED"
+                    ? "bg-green-100 text-green-700"
+                    : ticket.status === "IN_PROGRESS"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-gray-200 text-gray-700"
+            }`}
+        >
+          {statusLabels[ticket.status]}
+            {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
+                <span className="ml-1 text-gray-600">
+              · {ticket.operated_by.username}
+            </span>
+            )}
+        </span>
+                        <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
+                  ${
+                                ticket.type === "ADVERTISER_REQUEST"
+                                    ? "bg-purple-100 text-purple-700"
+                                    : ticket.type === "TECH_GOAL"
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-gray-100 text-gray-700"
+                            }`}
+                        >
+                  {ticket.type === "ADVERTISER_REQUEST"
+                      ? "Запити рекламодавцям"
+                      : ticket.type === "TECH_GOAL"
+                          ? "🛠 Tech Goal"
+                          : ticket.type}
+                </span>
+                    </div>
                 </div>
-                <div
-                    className="text-xs text-gray-500 mt-2">Коли: {new Date(ticket.created_at).toLocaleString("uk-UA")}
+
+                {/* text */}
+                <div className="text-gray-900 text-lg font-semibold whitespace-pre-wrap leading-relaxed">
+                    {ticket.text}
                 </div>
                 {ticket.files?.length > 0 && (
-                    <ul className="mt-3 space-y-1">
-                        {ticket.files.map((file: FileResponse) => (
-                            <li key={file.id}>
+                    <div className="mt-6 border-t pt-4">
+                        <div className="text-xs uppercase text-gray-500 font-semibold mb-2">
+                            Файли
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {ticket.files.map((file) => (
                                 <a
+                                    key={file.id}
                                     href={process.env.NEXT_PUBLIC_API_URL + "/" + file.file_url}
-                                    className="underline"
                                     download
+                                    className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm transition"
                                 >
                                     {file.file_name}
                                 </a>
-                            </li>
-                        ))}
-                    </ul>
+                            ))}
+                        </div>
+                    </div>
                 )}
-                {user?.role == 'MANAGER' &&
-                    <>
-                        <button
-                            onClick={() => setEditModalTicket(ticket)}
-                            className="absolute bottom-9 right-2 px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-gray-900"
-                        >
-                            Редагувати
-                        </button>
-                        <button
-                            onClick={() => handleDeleteTicket(ticket.id)}
-                            className="absolute bottom-2 right-2 px-2 py-1 text-xs bg-red-800 text-white rounded hover:bg-red-900"
-                        >
-                            Видалити
-                        </button>
-                    </>
-                }
-                {isWorker && statusButtonMap[ticket.status] && (
-                    <button
-                        onClick={() => handleChangeStatusTicket(ticket)}
-                        className="absolute cursor-pointer bottom-9 right-2 px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-gray-900"
-                    >
-                        {statusButtonMap[ticket.status]}
-                    </button>
-                )}
+                {/* footer карточки */}
+                <div className="mt-6 flex justify-between border-t items-center pt-4">
+                    {/* слева: информация о создателе и назначенных */}
+                    <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+        <span>
+            Створив <b>{ticket.created_by.username}</b>
+        </span>
+
+                        {ticket.assigned_to.length > 0 && (
+                            <span>
+                Для{" "}
+                                {ticket.assigned_to.map((u, i) => (
+                                    <span key={u.id}>
+                        <b>{u.username}</b>
+                                        {i < ticket.assigned_to.length - 1 && ", "}
+                    </span>
+                                ))}
+            </span>
+                        )}
+                    </div>
+
+                    {/* справа: кнопки */}
+                    <div className="flex gap-2">
+                        {user?.role === "MANAGER" && (
+                            <>
+                                <button
+                                    onClick={() => setEditModalTicket(ticket)}
+                                    className="px-3 py-1 text-xs rounded-lg bg-purple-50 text-blue-700 hover:scale-105 active:scale-95 transition"
+                                >
+                                    Редагувати
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
+                                >
+                                    Видалити
+                                </button>
+                            </>
+                        )}
+
+                        {isWorker && statusButtonMap[ticket.status] && (
+                            <button
+                                onClick={() => handleChangeStatusTicket(ticket)}
+                                className="px-3 py-1 text-xs rounded-lg bg-gray-700 text-white hover:scale-105 active:scale-95 transition"
+                            >
+                                {statusButtonMap[ticket.status]}
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 {editModalTicket && (
                     <EditTicketModal
-                        isOpen={!!editModalTicket}     // <-- new prop
+                        isOpen={!!editModalTicket}
                         ticket={editModalTicket}
-                        onClose={() => setEditModalTicket(null)} // <-- rename from onCancel
+                        onClose={() => setEditModalTicket(null)}
                         onUpdate={load}
                     />
                 )}
-            </div>
+            </motion.div>
 
-            {/* Комментарии */}
+            {/* Comments */}
             <div>
-                <h2 className="font-semibold mb-3">Коментарі</h2>
-                <div className="space-y-3">
-                    {comments.map(c => (
-                        <div key={c.id} className={`border rounded p-3 text-sm relative ${editingId === c.id ? "bg-yellow-50" : ""}`}>
+                <h2 className="text-lg font-bold mb-4">Коментарі</h2>
 
-                            {/* Кнопки редактирования и удаления */}
+                <div className="space-y-4">
+                    {comments.map((c) => (
+                        <div
+                            key={c.id}
+                            className={`relative rounded-xl border p-4 shadow-sm  transition
+            ${editingId === c.id ? "ring-2 ring-yellow-300" : ""}`}
+                        >
+                            {/* actions */}
                             {user?.id === c.created_by.id && (
-                                <div className="absolute top-2 right-2 flex gap-2">
+                                <div className="absolute right-3 top-3 flex gap-2">
                                     {editingId !== c.id && (
                                         <button
                                             onClick={() => {
@@ -241,67 +290,65 @@ export default function TicketDetailsPage() {
                                                 setFilesToAdd([]);
                                                 setFilesToDelete([]);
                                             }}
-                                            className="text-xs text-blue-600"
+                                            className="text-xs px-2 py-1 rounded bg-purple-50 text-blue-700 hover:scale-105 active:scale-95 transition"
                                         >
-                                            ✎
+                                            Редагувати
                                         </button>
                                     )}
+
                                     <button
                                         onClick={() => deleteComment(c.id)}
-                                        className="text-xs text-red-600"
+                                        className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
                                     >
-                                        ✕
+                                        Видалити
                                     </button>
                                 </div>
                             )}
 
-                            {/* Редактирование */}
+                            {/* edit mode */}
                             {editingId === c.id ? (
-                                <div className="space-y-2">
-                                    <textarea
-                                        value={editText}
-                                        onChange={e => setEditText(e.target.value)}
-                                        className="w-full border rounded p-2 text-sm"
+                                <div className="space-y-3">
+              <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="w-full border rounded-lg p-2 text-sm"
+              />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 w-full text-left"
+                                    >
+                                        {filesToAdd.length === 0
+                                            ? "Додати файли"
+                                            : filesToAdd.map((f) => f.name).join(", ")}
+                                    </button>
+
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        hidden
+                                        onChange={(e) => {
+                                            const selected = Array.from(e.target.files || []);
+                                            setFilesToAdd((prev) => [...prev, ...selected]);
+                                        }}
                                     />
 
-                                    {/* Добавление файлов */}
-                                    <div>
-                                        <label className="block text-xs mb-1">Додати файли:</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="w-full text-left px-2 py-2 border rounded bg-gray-100 text-sm"
-                                        >
-                                            {filesToAdd.length === 0
-                                                ? "Виберіть файли..."
-                                                : filesToAdd.map(f => f.name).join(", ")}
-                                        </button>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            multiple
-                                            hidden
-                                            onChange={(e) => {
-                                                const selected = Array.from(e.target.files || []);
-                                                setFilesToAdd(prev => [...prev, ...selected]);
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Удаление существующих файлов */}
                                     {c.attachments?.length > 0 && (
-                                        <div>
-                                            <span className="text-xs">Видалити файли:</span>
-                                            {c.attachments.map(f => (
-                                                <label key={f.id} className="flex items-center gap-2 text-xs">
+                                        <div className="text-xs space-y-1">
+                                            <div className="font-medium">Видалити файли</div>
+                                            {c.attachments.map((f) => (
+                                                <label key={f.id} className="flex gap-2">
                                                     <input
                                                         type="checkbox"
-                                                        onChange={e => {
-                                                            if (e.target.checked) {
-                                                                setFilesToDelete(prev => [...prev, f.id]);
-                                                            } else {
-                                                                setFilesToDelete(prev => prev.filter(id => id !== f.id));
-                                                            }
+                                                        onChange={(e) => {
+                                                            if (e.target.checked)
+                                                                setFilesToDelete((p) => [...p, f.id]);
+                                                            else
+                                                                setFilesToDelete((p) =>
+                                                                    p.filter((id) => id !== f.id)
+                                                                );
                                                         }}
                                                     />
                                                     {f.file_name}
@@ -310,72 +357,105 @@ export default function TicketDetailsPage() {
                                         </div>
                                     )}
 
-                                    {/* Действия */}
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => saveEdit(c.id)}
-                                            className="px-2 py-1 text-xs bg-gray-800 text-white rounded"
+                                            className="px-3 py-1 rounded-lg bg-gray-900 text-white text-xs"
                                         >
                                             Зберегти
                                         </button>
                                         <button
                                             onClick={() => setEditingId(null)}
-                                            className="px-2 py-1 text-xs border rounded"
+                                            className="px-3 py-1 rounded-lg border text-xs"
                                         >
                                             Скасувати
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div>{c.text}</div>
+                                <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                                    {c.text}
+                                </div>
                             )}
 
-                            {/* Существующие файлы */}
+                            {/* attachments */}
                             {c.attachments?.length > 0 && (
-                                <ul className="mt-2">
-                                    {c.attachments.map(a => (
-                                        <li key={a.id}>
-                                            <a
-                                                href={process.env.NEXT_PUBLIC_API_URL + "/" + a.file_url}
-                                                download
-                                                className="underline"
-                                            >
-                                                {a.file_name}
-                                            </a>
-                                        </li>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {c.attachments.map((a) => (
+                                        <a
+                                            key={a.id}
+                                            href={process.env.NEXT_PUBLIC_API_URL + "/" + a.file_url}
+                                            download
+                                            className="px-2 py-1 rounded bg-gray-100 text-xs"
+                                        >
+                                            {a.file_name}
+                                        </a>
                                     ))}
-                                </ul>
+                                </div>
                             )}
 
-                            <div className="text-xs text-gray-500 mt-2">
-                                {c.created_by.username} · {new Date(c.created_at).toLocaleString("uk-UA")}
+                            <div className="text-xs text-gray-500 mt-3">
+                                <b>{c.created_by.username}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Добавление нового комментария */}
-                <div className="border rounded p-3 mt-4">
-                    <textarea
-                        value={text}
-                        onChange={e => setText(e.target.value)}
-                        className="w-full border rounded p-2 text-sm"
-                        placeholder="Коментар..."
-                    />
+                {/* add comment */}
+                <div className="mt-6  border rounded-xl p-4 shadow-sm space-y-3">
+  <textarea
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-300 outline-none"
+      placeholder="Написати коментар..."
+  />
+
+                    {/* hidden input */}
                     <input
                         type="file"
                         multiple
-                        onChange={e => setFiles(Array.from(e.target.files || []))}
-                        className="mt-2"
+                        hidden
+                        id="comment-files"
+                        onChange={(e) => setFiles(Array.from(e.target.files || []))}
                     />
+
+                    {/* custom uploader */}
+                    <label
+                        htmlFor="comment-files"
+                        className="flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-lg p-3 text-sm bg-gray-100 hover:bg-gray-100 cursor-pointer transition"
+                    >
+                        📎 Додати файли
+                    </label>
+
+                    {/* selected files preview */}
+                    {files.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {files.map((f, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs"
+                                >
+                                    {f.name}
+                                    <button
+                                        onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                                        className="text-red-500 hover:text-red-700"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     <button
                         onClick={addComment}
-                        className="mt-2 px-3 py-1 bg-gray-800 text-white rounded text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:scale-[1.02] active:scale-95 transition"
                     >
-                        Додати
+                        Додати коментар
                     </button>
                 </div>
             </div>
         </div>
     );
 }
+

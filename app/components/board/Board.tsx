@@ -6,6 +6,7 @@ import {BoardResponse, CategoryResponse, OperationResponse} from "@/app/types";
 import {instance} from "@/app/api/instance";
 import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import DatePicker from "react-datepicker";
+import Pagination from "@/app/components/Pagination";
 
 interface BoardProps {
     board: BoardResponse;
@@ -319,23 +320,11 @@ export default function Board({
             </table>
 
             {/* Pagination */}
-            <div className="mt-4 flex space-x-2 justify-center">
-                {page > 0 && (
-                    <button onClick={() => onPageChange(page - 1)}
-                            className="px-3 py-1 border rounded bg-gray-800 text-white">
-                        Минула
-                    </button>
-                )}
-                <span className="px-3 py-1">
-                    Сторінка {operations.length === 0 ? 0 : page + 1} з {totalPages}
-                </span>
-                {page + 1 < totalPages && (
-                    <button onClick={() => onPageChange(page + 1)}
-                            className="px-3 py-1 border rounded bg-gray-800 text-white">
-                        Наступна
-                    </button>
-                )}
-            </div>
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={onPageChange}
+            />
         </div>
     );
 }

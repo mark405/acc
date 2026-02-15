@@ -11,11 +11,8 @@ interface EditTicketModalProps {
     onUpdate: () => void;
 }
 
-type Status = "OPENED" | "CLOSED";
-
 export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicketModalProps) => {
     const [text, setText] = useState(ticket.text);
-    const [status, setStatus] = useState(ticket.status);
     const [assignedTo, setAssignedTo] = useState<number[]>(ticket.assigned_to.map(u => u.id));
     const [users, setUsers] = useState<UserResponse[]>(ticket.assigned_to);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -59,7 +56,7 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
         try {
             const formData = new FormData();
             formData.append("text", text);
-            formData.append("status", status);
+            formData.append("status", ticket.status);
             assignedTo.forEach(id => formData.append("assignedTo", id.toString()));
             filesToAdd.forEach(f => formData.append("filesToAdd", f));
             filesToDelete.forEach(id => formData.append("filesToDelete", id.toString()));
@@ -77,56 +74,58 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="bg-gray-800 text-white rounded shadow-lg p-6 w-[768px] pointer-events-auto">
-                <h2 className="text-lg font-bold mb-4">Редагувати тікет #{ticket.id}</h2>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 pointer-events-auto">
+            <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-6 w-full max-w-2xl pointer-events-auto">
 
-                <textarea
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    className="border border-gray-600 rounded px-2 py-2 bg-gray-700 text-white resize-none h-64 w-full mb-3"
-                />
+                {/* Заголовок */}
+                <h2 className="text-2xl font-bold mb-6 text-center border-b border-gray-700 pb-3">
+                    Редагувати тікет #{ticket.id}
+                </h2>
 
-                <select
-                    value={status}
-                    onChange={e => setStatus(e.target.value as Status)}
-                    className="border border-gray-600 rounded px-2 py-1 mb-3 bg-gray-700 text-white w-full"
-                >
-                    <option value="OPENED">Відкрито</option>
-                    <option value="CLOSED">Закрито</option>
-                </select>
+                {/* Текст тикета */}
+                <div className="mb-4 flex flex-col gap-1">
+                    <label className="text-sm font-medium">Текст</label>
+                    <textarea
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        className="w-full h-48 p-3 rounded-lg border border-gray-700 bg-gray-800 resize-none text-sm placeholder-gray-400 focus:ring-2 focus:ring-purple-900 outline-none transition"
+                    />
+                </div>
 
-                <div className="relative mb-3">
+                {/* Призначення */}
+                <div className="mb-4 relative flex flex-col gap-1">
+                    <label className="text-sm font-medium">Призначення</label>
                     {ticket.type === "TECH_GOAL" ? (
-                        <div className="px-2 py-1 border border-gray-600 rounded bg-gray-700 text-gray-200">
-                            Призначено: {users.map(u => u.username).join(", ")}
+                        <div className="px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-200 text-sm">
+                            {users.map(u => u.username).join(", ")}
                         </div>
                     ) : (
                         <>
                             <button
                                 onClick={() => setDropdownOpen(prev => !prev)}
-                                className="w-full text-left px-2 py-1 border border-gray-600 rounded bg-gray-700 cursor-pointer"
+                                className="w-full text-left px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 flex justify-between items-center text-sm transition"
                             >
                                 {assignedTo.length === 0
                                     ? "Кому ▾"
                                     : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
+                                <span className="ml-2 text-gray-400">▾</span>
                             </button>
 
                             {dropdownOpen && (
                                 <div
                                     ref={dropdownRef}
-                                    className="absolute mt-1 w-full max-h-48 overflow-auto bg-gray-700 border border-gray-600 rounded shadow-lg z-50"
+                                    className="absolute top-full mt-1 w-full max-h-48 overflow-auto bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
                                 >
                                     {users.map(user => (
                                         <div
                                             key={user.id}
-                                            className={`px-2 py-1 cursor-pointer hover:bg-gray-600 flex justify-between items-center
-                                ${assignedTo.includes(user.id) ? "bg-gray-600" : ""}`}
+                                            className={`px-3 py-2 cursor-pointer hover:bg-gray-700 flex justify-between items-center rounded
+                      ${assignedTo.includes(user.id) ? "bg-purple-900" : ""}`}
                                             onClick={() => toggleUser(user.id)}
                                         >
                                             <span>{user.username}</span>
                                             {assignedTo.includes(user.id) && (
-                                                <span className="text-green-400 font-bold">✓</span>
+                                                <span className="text-purple-900 font-bold">✓</span>
                                             )}
                                         </div>
                                     ))}
@@ -136,14 +135,18 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                     )}
                 </div>
 
-                <div className="mb-3">
-                    <label className="block text-sm mb-1">Додати файли:</label>
+                {/* Файлы */}
+                <div className="mb-4 flex flex-col gap-2">
+                    <label className="text-sm font-medium">Додати файли</label>
                     <button
                         type="button"
-                        className="w-full text-left px-2 py-2 border border-gray-500 rounded bg-gray-700 text-sm text-gray-200 hover:border-blue-400"
+                        className="w-full text-left px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 flex justify-between items-center text-sm transition"
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        {filesToAdd.length === 0 ? "Виберіть файли..." : filesToAdd.map(f => f.name).join(", ")}
+                        {filesToAdd.length === 0
+                            ? "Виберіть файли..."
+                            : filesToAdd.map(f => f.name).join(", ")}
+                        <span className="ml-2 text-gray-400">📎</span>
                     </button>
                     <input
                         ref={fileInputRef}
@@ -155,36 +158,39 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                             setFilesToAdd(prev => [...prev, ...selectedFiles]);
                         }}
                     />
+
+                    {/* Файлы для удаления */}
+                    {ticket.files.length > 0 && (
+                        <div className="flex flex-col gap-1 mt-2 text-sm">
+                            <span>Видалити файли:</span>
+                            {ticket.files.map(f => (
+                                <label key={f.id} className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        onChange={e =>
+                                            e.target.checked
+                                                ? setFilesToDelete(prev => [...prev, f.id])
+                                                : setFilesToDelete(prev => prev.filter(id => id !== f.id))
+                                        }
+                                        className="accent-purple-900"
+                                    />
+                                    {f.file_name}
+                                </label>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {ticket.files.length > 0 && (
-                    <div className="mb-3">
-                        <span>Видалити файли:</span>
-                        {ticket.files.map(f => (
-                            <label key={f.id} className="flex items-center gap-1">
-                                <input
-                                    type="checkbox"
-                                    onChange={e =>
-                                        e.target.checked
-                                            ? setFilesToDelete(prev => [...prev, f.id])
-                                            : setFilesToDelete(prev => prev.filter(id => id !== f.id))
-                                    }
-                                />
-                                {f.file_name}
-                            </label>
-                        ))}
-                    </div>
-                )}
-
-                <div className="flex justify-end gap-4 mt-4">
+                {/* Кнопки */}
+                <div className="flex justify-end gap-4 mt-6">
                     <button
-                        className="px-4 py-2 bg-gray-500 rounded hover:bg-gray-400"
+                        className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition shadow-sm"
                         onClick={onClose}
                     >
                         Скасувати
                     </button>
                     <button
-                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm"
                         onClick={handleSubmit}
                     >
                         Зберегти

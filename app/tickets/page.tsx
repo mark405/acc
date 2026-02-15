@@ -6,6 +6,8 @@ import {TicketResponse} from "@/app/types";
 import {instance} from "@/app/api/instance";
 import {CreateTicketModal} from "@/app/components/CreateTicketModal";
 import {useAuth} from "@/app/components/AuthProvider";
+import {motion} from "framer-motion";
+import Pagination from "@/app/components/Pagination";
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -82,129 +84,168 @@ export default function TicketsPage() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Тікети</h1>
-                {user?.role === "ADMIN" && (
-                    <div className="mb-4 flex items-center gap-2">
-                        <label className="text-gray-700 font-medium">Фільтр по типу:</label>
-                        <select
-                            value={filterType}
-                            onChange={(e) => {
-                                setFilterType(e.target.value as "TECH_GOAL" | "ADVERTISER_REQUEST" | "ALL");
-                                setPage(0); // reset page
-                            }}
-                            className="border border-gray-400 rounded px-2 py-1"
-                        >
-                            <option value="ALL">Всі</option>
-                            <option value="TECH_GOAL">Tech Goal</option>
-                            <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
-                        </select>
-                    </div>
-                )}
 
-                {user?.role == 'MANAGER' && <button
-                    onClick={() => setShowModal(true)}
-                    className="text-white bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-full text-xl font-bold"
-                >
-                    +
-                </button>}
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
+
+                <div className="flex items-center gap-3">
+                    {user?.role === "ADMIN" && (
+                        <div className="flex items-center gap-2 bg-white shadow rounded-xl px-4 py-2">
+                            <label className="text-gray-600 text-sm">Тип</label>
+                            <select
+                                value={filterType}
+                                onChange={(e) => {
+                                    setFilterType(
+                                        e.target.value as
+                                            | "TECH_GOAL"
+                                            | "ADVERTISER_REQUEST"
+                                            | "ALL"
+                                    );
+                                    setPage(0);
+                                }}
+                                className="outline-none bg-transparent font-medium"
+                            >
+                                <option value="ALL">Всі</option>
+                                <option value="TECH_GOAL">Tech Goal</option>
+                                <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {user?.role === "MANAGER" && (
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="h-12 w-12 rounded-2xl text-2xl font-bold text-white bg-gradient-to-br bg-gray-700 shadow hover:scale-105 active:scale-95 transition"
+                        >
+                            +
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Tickets list */}
-            <div className="space-y-4">
-                {tickets.map((ticket) => (
-                    <React.Fragment key={ticket.id}>
-                        <div
-                            key={ticket.id}
-                            onDoubleClick={() => window.location.href = `/tickets/${ticket.id}`}
-                            className="border rounded-lg p-4 shadow flex flex-col gap-2 relative"
-                        >
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold text-lg">#{ticket.id}</span>
+            {/* Tickets */}
+            <div className="grid gap-6">
+                {tickets.map((ticket, i) => (
+                    <motion.div
+                        key={ticket.id}
+                        initial={{opacity: 0, y: 15}}
+                        animate={{opacity: 1, y: 0}}
+                        transition={{delay: i * 0.03}}
+                        onDoubleClick={() =>
+                            (window.location.href = `/tickets/${ticket.id}`)
+                        }
+                        className="group border-3 border-gray-600  rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
+                    >
+                        {/* top */}
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                            <div className="space-y-1">
+                                <div className="text-xl font-bold">#{ticket.id}</div>
+
+                                <div className="text-sm text-gray-500">
+                                    {new Date(ticket.created_at).toLocaleString("uk-UA")}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2">
+            <span
+                className={`px-3 py-1 rounded-full text-md font-semibold tracking-wide
+              ${
+                    ticket.status === "OPENED"
+                        ? "bg-green-100 text-green-700"
+                        : ticket.status === "IN_PROGRESS"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-200 text-gray-700"
+                }`}
+            >
+              {statusLabels[ticket.status]}
+                {ticket.status === "IN_PROGRESS" &&
+                    ticket.operated_by && (
+                        <span className="ml-1 text-gray-600">
+                    · {ticket.operated_by.username}
+                  </span>
+                    )}
+            </span>
+
                                 <span
-                                    className={`px-2 py-1 rounded text-sm font-semibold ${
-                                        ticket.status === "OPENED"
-                                            ? "bg-green-200 text-green-800"
-                                            : ticket.status === "IN_PROGRESS"
-                                                ? "bg-yellow-200 text-yellow-800"
-                                                : "bg-gray-200 text-gray-800"
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
+                  ${
+                                        ticket.type === "ADVERTISER_REQUEST"
+                                            ? "bg-purple-100 text-purple-700"
+                                            : ticket.type === "TECH_GOAL"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-gray-100 text-gray-700"
                                     }`}
                                 >
-                        {statusLabels[ticket.status]}
-                                    {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
-                                        <> · {ticket.operated_by.username}</>
-                                    )}
-                    </span>
+                  {ticket.type === "ADVERTISER_REQUEST"
+                      ? "Запити рекламодавцям"
+                      : ticket.type === "TECH_GOAL"
+                          ? "🛠 Tech Goal"
+                          : ticket.type}
+                </span>
                             </div>
-                            <div className="text-sm text-gray-600">
-                                Тип: <b>
-                                {ticket.type === "ADVERTISER_REQUEST" ? "Запити рекламодавцям" :
-                                    ticket.type === "TECH_GOAL" ? "Tech Goal" : ticket.type}
-                            </b>
-                            </div>
-                            <div className="mt-2 text-gray-800">{ticket.text}</div>
-                            <div className="mt-4">
-                                <div className="text-sm text-gray-700">
-                                    Створив <b>{ticket.created_by.username}</b>
-                                </div>
-                                {ticket.assigned_to.length > 0 && (
-                                    <div className="text-sm text-gray-600 mt-1">
-                                        Призначений для:{" "}
-                                        {ticket.assigned_to.map((user, idx) => (
-                                            <span key={user.id}>
-            <b>{user.username}</b>
-                                                {idx < ticket.assigned_to.length - 1 ? ", " : ""}
-        </span>
-                                        ))}
-                                    </div>
+                        </div>
 
-                                )}
+                        {/* body */}
+                        <div className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">
+                            {ticket.text}
+                        </div>
+                        {/* files */}
+                        {ticket.files?.length > 0 && (
+                            <div className="mt-5 border-t pt-4">
+                                <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                                    Файли
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {ticket.files.map((file) => (
+                                        <a
+                                            key={file.id}
+                                            href={
+                                                process.env.NEXT_PUBLIC_API_URL +
+                                                "/" +
+                                                file.file_url
+                                            }
+                                            download={file.file_name}
+                                            className="px-3 py-1 rounded-lg text-sm bg-gray-100 hover:bg-gray-200 transition"
+                                        >
+                                            {file.file_name}
+                                        </a>
+                                    ))}
+                                </div>
                             </div>
-                            <div
-                                className="text-xs text-gray-500 mt-2">Коли: {new Date(ticket.created_at).toLocaleString("uk-UA")}
-                            </div>
-                            <div className="mt-2">
-                                {ticket.files && ticket.files.length > 0 && (
-                                    <div className="text-sm text-gray-800">
-                                        Файли:
-                                        <ul className="mt-1 space-y-1">
-                                            {ticket.files.map((file) => (
-                                                <li key={file.id}>
-                                                    <a
-                                                        href={process.env.NEXT_PUBLIC_API_URL + "/" + file.file_url}        // URL to download the file
-                                                        download={file.file_name}   // Suggests filename for download
-                                                        className="underline hover:text-gray-900"
-                                                    >
-                                                        {file.file_name}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
+                        )}
+                        <div className="mt-6 flex justify-between border-t items-center pt-4">
+                            {/* слева: информация о создателе и назначенных */}
+                            <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+        <span>
+            Створив <b>{ticket.created_by.username}</b>
+        </span>
+
+                                {ticket.assigned_to.length > 0 && (
+                                    <span>
+                Для{" "}
+                                        {ticket.assigned_to.map((u, i) => (
+                                            <span key={u.id}>
+                        <b>{u.username}</b>
+                                                {i < ticket.assigned_to.length - 1 && ", "}
+                    </span>
+                                        ))}
+            </span>
                                 )}
                             </div>
                         </div>
-                    </React.Fragment>
+                    </motion.div>
                 ))}
             </div>
-            {tickets.length > 0 && <div className="mt-4 flex space-x-2 justify-center">
-                {page > 0 && (
-                    <button
-                        onClick={() => setPage((prev) => prev - 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                    >
-                        Минула
-                    </button>)}
-                <span className="px-3 py-1">Сторінка {tickets.length == 0 ? 0 : page + 1} з {totalPages}</span>
-                {page + 1 < totalPages && (
-                    <button
-                        onClick={() => setPage((prev) => prev + 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
-                    >
-                        Наступна
-                    </button>)}
-            </div>}
+            {/* Pagination */}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+            />
+            {/* Modal */}
             <CreateTicketModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

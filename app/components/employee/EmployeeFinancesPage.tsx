@@ -8,6 +8,7 @@ import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import {useAuth} from "@/app/components/AuthProvider";
+import Pagination from "@/app/components/Pagination";
 
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
@@ -606,27 +607,11 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                     </tbody>
                 </table>
 
-                <div className="mt-4 flex space-x-2 justify-center">
-                    {page > 0 && (
-                        <button
-                            onClick={() => onPageChange(page - 1)}
-                            disabled={page <= 0}
-                            className="px-3 py-1 border rounded bg-gray-800 text-white disabled:opacity-50"
-                        >
-                            Минула
-                        </button>)}
-                    <span className="px-3 py-1">
-                        Сторінка {finances.length === 0 ? 0 : page + 1} з {totalPages}
-                    </span>
-                    {page + 1 < totalPages && (
-                        <button
-                            onClick={() => onPageChange(page + 1)}
-                            disabled={page + 1 >= totalPages}
-                            className="px-3 py-1 border rounded bg-gray-800 text-white disabled:opacity-50"
-                        >
-                            Наступна
-                        </button>)}
-                </div>
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onChange={setPage}
+                />
                 {isAdvanceModalOpen && (
                     <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-4">
                         <div
