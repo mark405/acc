@@ -92,20 +92,16 @@ export default function TicketsPage() {
 
                 <div className="flex items-center gap-3">
                     {user?.role === "ADMIN" && (
-                        <div className="flex items-center gap-2 bg-white shadow rounded-xl px-4 py-2">
-                            <label className="text-gray-600 text-sm">Тип</label>
+                        <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
                                 onChange={(e) => {
                                     setFilterType(
-                                        e.target.value as
-                                            | "TECH_GOAL"
-                                            | "ADVERTISER_REQUEST"
-                                            | "ALL"
+                                        e.target.value as "TECH_GOAL" | "ADVERTISER_REQUEST" | "ALL"
                                     );
                                     setPage(0);
                                 }}
-                                className="outline-none bg-transparent font-medium"
+                                className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                             >
                                 <option value="ALL">Всі</option>
                                 <option value="TECH_GOAL">Tech Goal</option>
