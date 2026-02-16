@@ -246,6 +246,16 @@ export default function TicketDetailsPage() {
                                 </button>
                             </>
                         )}
+                        {user?.role === "ADMIN" && (
+                            <>
+                                <button
+                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
+                                >
+                                    Видалити
+                                </button>
+                            </>
+                        )}
 
                         {isWorker && statusButtonMap[ticket.status] && (
                             <button
