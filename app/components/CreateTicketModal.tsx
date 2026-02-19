@@ -7,12 +7,12 @@ import { instance } from "@/app/api/instance";
 interface CreateTicketModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (text: string, type: "TECH_GOAL" | "ADVERTISER_REQUEST", assignedTo: number[], files: File[]) => void;
+    onCreate: (text: string, type: "TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST", assignedTo: number[], files: File[]) => void;
 }
 
 export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketModalProps) => {
     const [text, setText] = useState("");
-    const [type, setType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST">("TECH_GOAL");
+    const [type, setType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST">("TECH_GOAL");
     const [assignedTo, setAssignedTo] = useState<number[]>([]);
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -106,17 +106,18 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                         <select
                             value={type}
                             onChange={(e) =>
-                                setType(e.target.value as "TECH_GOAL" | "ADVERTISER_REQUEST")
+                                setType(e.target.value as "TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST")
                             }
                             className="w-full p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white focus:ring-2 focus:ring-purple-900  outline-none"
                         >
                             <option value="TECH_GOAL">Tech Goal</option>
                             <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
+                            <option value="OFFERS_REQUEST">Запити на офери</option>
                         </select>
                     </div>
 
                     {/* Назначение */}
-                    {type === "ADVERTISER_REQUEST" ? (
+                    {type === "ADVERTISER_REQUEST" || type === "OFFERS_REQUEST" ? (
                         <div className="relative flex flex-col gap-1">
                             <label className="text-sm font-medium">Призначено:</label>
                             <button

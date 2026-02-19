@@ -12,7 +12,8 @@ import Pagination from "@/app/components/Pagination";
 export default function TicketsPage() {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
     const [showModal, setShowModal] = useState(false);
-    const [filterType, setFilterType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "ALL">("ALL");
+    const [filterType, setFilterType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST" | "ALL">("ALL");
+    const [statusType, setStatusType] = useState<"OPENED" | "CLOSED" | "ALL">("ALL");
 
     const [sortBy, setSortBy] = useState("id");
     const [direction, setDirection] = useState("desc");
@@ -25,15 +26,17 @@ export default function TicketsPage() {
     const fetchTickets = async () => {
         let createdBy;
         let assignedTo;
-        let type;
+        let types;
 
         if (user?.role == "MANAGER") {
             createdBy = user?.id;
-        } else if (user?.role == "OFFERS_MANAGER" || user?.role == "TECH_MANAGER") {
+        }
+        if (user?.role == "OFFERS_MANAGER" || user?.role == "TECH_MANAGER") {
             assignedTo = user?.id;
-            type = user?.role == "OFFERS_MANAGER" ? "ADVERTISER_REQUEST" : "TECH_GOAL";
-        } else if (user?.role == "ADMIN") {
-            type = filterType !== "ALL" ? filterType : undefined;
+            types = user?.role == "OFFERS_MANAGER" ? ["ADVERTISER_REQUEST", "OFFERS_REQUEST"] : ["TECH_GOAL"];
+        }
+        if (user?.role == "ADMIN" || user?.role == "MANAGER" || user?.role == "HEAD_OF_AFFILIATE") {
+            types = filterType !== "ALL" ? [filterType] : undefined;
         }
 
         const params: any = {
@@ -45,7 +48,8 @@ export default function TicketsPage() {
             assigned_to: assignedTo,
         };
 
-        if (type) params.type = type;
+        if (types) params.types = types;
+        if (statusType !== "ALL") params.status = statusType;
 
         const response = await instance.post("/tickets", params);
         setTickets(response.data.content);
@@ -55,7 +59,7 @@ export default function TicketsPage() {
 
     const handleCreateTicket = async (
         text: string,
-        type: "TECH_GOAL" | "ADVERTISER_REQUEST",
+        type: "TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST",
         assignedTo: number[],
         files: File[]
     ) => {
@@ -75,7 +79,7 @@ export default function TicketsPage() {
 
     useEffect(() => {
         fetchTickets();
-    }, [page, filterType]);
+    }, [page, filterType, statusType]);
 
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",
@@ -91,7 +95,7 @@ export default function TicketsPage() {
                 <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
 
                 <div className="flex items-center gap-3">
-                    {user?.role === "ADMIN" && (
+                    {user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER" && (
                         <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
@@ -103,9 +107,28 @@ export default function TicketsPage() {
                                 }}
                                 className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                             >
-                                <option value="ALL">Всі</option>
+                                <option value="ALL">Всі типи</option>
                                 <option value="TECH_GOAL">Tech Goal</option>
                                 <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
+                                <option value="OFFERS_REQUEST">Запити на офери</option>
+                            </select>
+                        </div>
+                    )}
+                    {user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER" && (
+                        <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                            <select
+                                value={statusType}
+                                onChange={(e) => {
+                                    setStatusType(
+                                        e.target.value as "OPENED" | "CLOSED" | "ALL"
+                                    );
+                                    setPage(0);
+                                }}
+                                className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                            >
+                                <option value="ALL">Всі статуси</option>
+                                <option value="OPENED">Відкриті</option>
+                                <option value="CLOSED">Закриті</option>
                             </select>
                         </div>
                     )}
@@ -145,41 +168,43 @@ export default function TicketsPage() {
                             </div>
 
                             <div className="flex flex-col items-end gap-2">
-            <span
-                className={`px-3 py-1 rounded-full text-md font-semibold tracking-wide
-              ${
-                    ticket.status === "OPENED"
-                        ? "bg-green-100 text-green-700"
-                        : ticket.status === "IN_PROGRESS"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-200 text-gray-700"
-                }`}
-            >
-              {statusLabels[ticket.status]}
-                {ticket.status === "IN_PROGRESS" &&
-                    ticket.operated_by && (
-                        <span className="ml-1 text-gray-600">
-                    · {ticket.operated_by.username}
-                  </span>
-                    )}
-            </span>
-
                                 <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
-                  ${
+                                    className={`px-3 py-1 rounded-full text-md font-semibold tracking-wide
+                                  ${
+                                        ticket.status === "OPENED"
+                                            ? "bg-green-100 text-green-700"
+                                            : ticket.status === "IN_PROGRESS"
+                                                ? "bg-yellow-100 text-yellow-700"
+                                                : "bg-gray-200 text-gray-700"
+                                    }`}
+                                >
+                                  {statusLabels[ticket.status]}
+                                    {ticket.status === "IN_PROGRESS" &&
+                                        ticket.operated_by && (
+                                            <span className="ml-1 text-gray-600">
+                                        · {ticket.operated_by.username}
+                                      </span>
+                                        )}
+                                </span>
+                                <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide${
                                         ticket.type === "ADVERTISER_REQUEST"
                                             ? "bg-purple-100 text-purple-700"
                                             : ticket.type === "TECH_GOAL"
                                                 ? "bg-blue-100 text-blue-700"
-                                                : "bg-gray-100 text-gray-700"
+                                                : ticket.type === "OFFERS_REQUEST"
+                                                    ? "bg-green-100 text-orange-400"
+                                                    : "bg-gray-100 text-gray-700"
                                     }`}
                                 >
-                  {ticket.type === "ADVERTISER_REQUEST"
-                      ? "Запити рекламодавцям"
-                      : ticket.type === "TECH_GOAL"
-                          ? "🛠 Tech Goal"
-                          : ticket.type}
-                </span>
+                                  {ticket.type === "ADVERTISER_REQUEST"
+                                      ? "Запити рекламодавцям"
+                                      : ticket.type === "TECH_GOAL"
+                                          ? "🛠 Tech Goal"
+                                          : ticket.type === "OFFERS_REQUEST"
+                                              ? "📦 Запити на офери"
+                                              : ticket.type}
+                                </span>
                             </div>
                         </div>
 

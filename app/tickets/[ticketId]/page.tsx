@@ -166,21 +166,24 @@ export default function TicketDetailsPage() {
             )}
         </span>
                         <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
-                  ${
+                            className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide${
                                 ticket.type === "ADVERTISER_REQUEST"
                                     ? "bg-purple-100 text-purple-700"
                                     : ticket.type === "TECH_GOAL"
                                         ? "bg-blue-100 text-blue-700"
-                                        : "bg-gray-100 text-gray-700"
+                                        : ticket.type === "OFFERS_REQUEST"
+                                            ? "bg-green-100 text-orange-400"
+                                            : "bg-gray-100 text-gray-700"
                             }`}
                         >
-                  {ticket.type === "ADVERTISER_REQUEST"
-                      ? "Запити рекламодавцям"
-                      : ticket.type === "TECH_GOAL"
-                          ? "🛠 Tech Goal"
-                          : ticket.type}
-                </span>
+                                  {ticket.type === "ADVERTISER_REQUEST"
+                                      ? "Запити рекламодавцям"
+                                      : ticket.type === "TECH_GOAL"
+                                          ? "🛠 Tech Goal"
+                                          : ticket.type === "OFFERS_REQUEST"
+                                              ? "📦 Запити на офери"
+                                              : ticket.type}
+                                </span>
                     </div>
                 </div>
 
