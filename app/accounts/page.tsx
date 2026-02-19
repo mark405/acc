@@ -12,7 +12,7 @@ import {useRouter} from "next/navigation";
 import {ChangeRoleModal} from "@/app/components/ChangeRoleModal";
 import Pagination from "@/app/components/Pagination";
 
-const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER"];
+const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER", "HEAD_OF_AFFILIATE"];
 
 export default function AccountsPage() {
     const router = useRouter();
@@ -81,22 +81,6 @@ export default function AccountsPage() {
         setUserId(id);
         setIsChangeRoleModalOpen(true);
     };
-
-    const handleConfirmMakeAdmin = async () => {
-        if (userId === null) return;
-
-        try {
-            const response = await instance.put(`/users/make-admin/${userId}`);
-            if (response.status === HttpStatusCode.NoContent) {
-                fetchUsers();
-            }
-        } catch (err) {
-            console.error("Failed to make admin user", err);
-        } finally {
-            setIsChangeRoleModalOpen(false);
-            setUserId(null);
-        }
-    }
 
     const handleConfirmDelete = async () => {
         if (userId === null) return;

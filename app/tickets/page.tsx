@@ -14,6 +14,7 @@ export default function TicketsPage() {
     const [showModal, setShowModal] = useState(false);
     const [filterType, setFilterType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST" | "ALL">("ALL");
     const [statusType, setStatusType] = useState<"OPENED" | "CLOSED" | "ALL">("ALL");
+    const [preview, setPreview] = useState<string | null>(null);
 
     const [sortBy, setSortBy] = useState("id");
     const [direction, setDirection] = useState("desc");
@@ -95,7 +96,7 @@ export default function TicketsPage() {
                 <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
 
                 <div className="flex items-center gap-3">
-                    {user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER" && (
+                    {(user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER") && (
                         <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
@@ -114,7 +115,7 @@ export default function TicketsPage() {
                             </select>
                         </div>
                     )}
-                    {user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER" && (
+                    {(user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER") && (
                         <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={statusType}
@@ -219,22 +220,40 @@ export default function TicketsPage() {
                                     Файли
                                 </div>
 
-                                <div className="flex flex-wrap gap-2">
-                                    {ticket.files.map((file) => (
-                                        <a
-                                            key={file.id}
-                                            href={
-                                                process.env.NEXT_PUBLIC_API_URL +
-                                                "/" +
-                                                file.file_url
-                                            }
-                                            download={file.file_name}
-                                            className="px-3 py-1 rounded-lg text-sm bg-gray-100 hover:bg-gray-200 transition"
-                                        >
-                                            {file.file_name}
-                                        </a>
-                                    ))}
+                                <div className="flex flex-wrap gap-3">
+                                    {ticket.files.map((file) => {
+                                        const url = process.env.NEXT_PUBLIC_API_URL + "/" + file.file_url;
+                                        const fileName = file.file_name;
+
+                                        const isImage = /\.(png|jpe?g)$/i.test(fileName);
+
+                                        if (isImage) {
+                                            return (
+                                                <img
+                                                    key={file.id}
+                                                    src={url}
+                                                    alt={fileName}
+                                                    onClick={() => setPreview(url)}
+                                                    className="w-24 h-24 object-cover rounded-lg border cursor-pointer hover:scale-105 transition"
+                                                />
+                                            );
+                                        }
+
+                                        return (
+                                            <a
+                                                key={file.id}
+                                                href={url}
+                                                download={fileName}
+                                                className="w-24 h-24 flex flex-col items-center justify-center border rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer p-2 text-xs text-center overflow-hidden"
+                                                title={fileName}
+                                            >
+                                                <span className="text-2xl mb-1">📝</span>
+                                                <span className="truncate w-full">{fileName}</span>
+                                            </a>
+                                        );
+                                    })}
                                 </div>
+
                             </div>
                         )}
                         <div className="mt-6 flex justify-between border-t items-center pt-4">
@@ -272,6 +291,17 @@ export default function TicketsPage() {
                 onClose={() => setShowModal(false)}
                 onCreate={handleCreateTicket}
             />
+            {preview && (
+                <div
+                    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                    onClick={() => setPreview(null)}
+                >
+                    <img
+                        src={preview}
+                        className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl"
+                    />
+                </div>
+            )}
         </div>
     );
 }
