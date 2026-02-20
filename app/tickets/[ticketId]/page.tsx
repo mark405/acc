@@ -25,6 +25,7 @@ export default function TicketDetailsPage() {
     const [filesToAdd, setFilesToAdd] = useState<File[]>([]);
     const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
 
     const [editModalTicket, setEditModalTicket] = useState<TicketResponse | null>(null);
 
@@ -196,17 +197,38 @@ export default function TicketDetailsPage() {
                         <div className="text-xs uppercase text-gray-500 font-semibold mb-2">
                             Файли
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {ticket.files.map((file) => (
-                                <a
-                                    key={file.id}
-                                    href={process.env.NEXT_PUBLIC_API_URL + "/" + file.file_url}
-                                    download
-                                    className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm transition"
-                                >
-                                    {file.file_name}
-                                </a>
-                            ))}
+                        <div className="flex flex-wrap gap-3">
+                            {ticket.files.map((file) => {
+                                const url = process.env.NEXT_PUBLIC_API_URL + "/" + file.file_url;
+                                const fileName = file.file_name;
+
+                                const isImage = /\.(png|jpe?g)$/i.test(fileName);
+
+                                if (isImage) {
+                                    return (
+                                        <img
+                                            key={file.id}
+                                            src={url}
+                                            alt={fileName}
+                                            onClick={() => setPreview(url)}
+                                            className="w-24 h-24 object-cover rounded-lg border cursor-pointer hover:scale-105 transition"
+                                        />
+                                    );
+                                }
+
+                                return (
+                                    <a
+                                        key={file.id}
+                                        href={url}
+                                        download={fileName}
+                                        className="w-24 h-24 flex flex-col items-center justify-center border rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer p-2 text-xs text-center overflow-hidden"
+                                        title={fileName}
+                                    >
+                                        <span className="text-2xl mb-1">📝</span>
+                                        <span className="truncate w-full">{fileName}</span>
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -393,18 +415,52 @@ export default function TicketDetailsPage() {
 
                             {/* attachments */}
                             {c.attachments?.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    {c.attachments.map((a) => (
-                                        <a
-                                            key={a.id}
-                                            href={process.env.NEXT_PUBLIC_API_URL + "/" + a.file_url}
-                                            download
-                                            className="px-2 py-1 rounded bg-gray-100 text-xs"
-                                        >
-                                            {a.file_name}
-                                        </a>
-                                    ))}
+                                <div className="flex flex-wrap gap-3">
+                                    {c.attachments.map((a) => {
+                                        const url = process.env.NEXT_PUBLIC_API_URL + "/" + a.file_url;
+                                        const fileName = a.file_name;
+
+                                        const isImage = /\.(png|jpe?g)$/i.test(fileName);
+
+                                        if (isImage) {
+                                            return (
+                                                <img
+                                                    key={a.id}
+                                                    src={url}
+                                                    alt={fileName}
+                                                    onClick={() => setPreview(url)}
+                                                    className="w-24 h-24 object-cover rounded-lg border cursor-pointer hover:scale-105 transition"
+                                                />
+                                            );
+                                        }
+
+                                        return (
+                                            <a
+                                                key={a.id}
+                                                href={url}
+                                                download={fileName}
+                                                className="w-24 h-24 flex flex-col items-center justify-center border rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer p-2 text-xs text-center overflow-hidden"
+                                                title={fileName}
+                                            >
+                                                <span className="text-2xl mb-1">📝</span>
+                                                <span className="truncate w-full">{fileName}</span>
+                                            </a>
+                                        );
+                                    })}
                                 </div>
+                                // <div className="flex flex-wrap gap-2 mt-3">
+                                //     {c.attachments.map((a) => (
+                                //         <a
+                                //             key={a.id}
+                                //             href={process.env.NEXT_PUBLIC_API_URL + "/" + a.file_url}
+                                //             download
+                                //             className="px-2 py-1 rounded bg-gray-100 text-xs"
+                                //         >
+                                //             {a.file_name}
+                                //         </a>
+                                //     ))}
+                                // </div>
+
                             )}
 
                             <div className="text-xs text-gray-500 mt-3">
@@ -468,6 +524,17 @@ export default function TicketDetailsPage() {
                     </button>
                 </div>
             </div>
+            {preview && (
+                <div
+                    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                    onClick={() => setPreview(null)}
+                >
+                    <img
+                        src={preview}
+                        className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl"
+                    />
+                </div>
+            )}
         </div>
     );
 }
