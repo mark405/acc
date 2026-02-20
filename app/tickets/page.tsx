@@ -115,24 +115,22 @@ export default function TicketsPage() {
                             </select>
                         </div>
                     )}
-                    {(user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER") && (
-                        <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
-                            <select
-                                value={statusType}
-                                onChange={(e) => {
-                                    setStatusType(
-                                        e.target.value as "OPENED" | "CLOSED" | "ALL"
-                                    );
-                                    setPage(0);
-                                }}
-                                className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
-                            >
-                                <option value="ALL">Всі статуси</option>
-                                <option value="OPENED">Відкриті</option>
-                                <option value="CLOSED">Закриті</option>
-                            </select>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                        <select
+                            value={statusType}
+                            onChange={(e) => {
+                                setStatusType(
+                                    e.target.value as "OPENED" | "CLOSED" | "ALL"
+                                );
+                                setPage(0);
+                            }}
+                            className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                        >
+                            <option value="ALL">Всі статуси</option>
+                            <option value="OPENED">Відкриті</option>
+                            <option value="CLOSED">Закриті</option>
+                        </select>
+                    </div>
 
                     {user?.role === "MANAGER" && (
                         <button
