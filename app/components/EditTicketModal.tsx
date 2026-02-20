@@ -45,7 +45,28 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+    useEffect(() => {
+        if (!isOpen) return;
 
+        const handleDocumentPaste = (e: ClipboardEvent) => {
+            const items = Array.from(e.clipboardData?.items || []);
+            const images = items
+                .map(item => item.getAsFile())
+                .filter((f): f is File => !!f);
+
+            if (images.length > 0) {
+                e.preventDefault();
+                setFilesToAdd(prev => {
+                    const existing = new Set(prev.map(f => f.name + f.size));
+                    const unique = images.filter(f => !existing.has(f.name + f.size));
+                    return [...prev, ...unique];
+                });
+            }
+        };
+
+        document.addEventListener("paste", handleDocumentPaste);
+        return () => document.removeEventListener("paste", handleDocumentPaste);
+    }, [isOpen]);
     if (!isOpen) return null;
 
     const toggleUser = (id: number) => {
@@ -70,6 +91,39 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
         } catch (err) {
             console.error("Error updating ticket:", err);
             alert("Не вдалося оновити тікет");
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        if (droppedFiles.length === 0) return;
+
+        setFilesToAdd(prev => {
+            const existing = new Set(prev.map(f => f.name + f.size));
+            const unique = droppedFiles.filter(f => !existing.has(f.name + f.size));
+            return [...prev, ...unique];
+        });
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault(); // needed or drop won't fire
+    };
+
+// Paste
+    const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+        const items = Array.from(e.clipboardData.items);
+        const images = items
+            .map(item => item.getAsFile())
+            .filter((f): f is File => !!f);
+
+        if (images.length > 0) {
+            e.preventDefault();
+            setFilesToAdd(prev => {
+                const existing = new Set(prev.map(f => f.name + f.size));
+                const unique = images.filter(f => !existing.has(f.name + f.size));
+                return [...prev, ...unique];
+            });
         }
     };
 
@@ -136,18 +190,113 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                 </div>
 
                 {/* Файлы */}
+                {/*<div className="mb-4 flex flex-col gap-2">*/}
+                {/*    <label className="text-sm font-medium">Додати файли</label>*/}
+                {/*    <button*/}
+                {/*        type="button"*/}
+                {/*        className="w-full text-left px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 flex justify-between items-center text-sm transition"*/}
+                {/*        onClick={() => fileInputRef.current?.click()}*/}
+                {/*    >*/}
+                {/*        {filesToAdd.length === 0*/}
+                {/*            ? "Виберіть файли..."*/}
+                {/*            : filesToAdd.map(f => f.name).join(", ")}*/}
+                {/*        <span className="ml-2 text-gray-400">📎</span>*/}
+                {/*    </button>*/}
+                {/*    <input*/}
+                {/*        ref={fileInputRef}*/}
+                {/*        type="file"*/}
+                {/*        multiple*/}
+                {/*        hidden*/}
+                {/*        onChange={(e) => {*/}
+                {/*            const selectedFiles = Array.from(e.target.files || []);*/}
+                {/*            setFilesToAdd(prev => [...prev, ...selectedFiles]);*/}
+                {/*        }}*/}
+                {/*    />*/}
+
+                {/*    /!* Файлы для удаления *!/*/}
+                {/*    {ticket.files.length > 0 && (*/}
+                {/*        <div className="flex flex-col gap-1 mt-2 text-sm">*/}
+                {/*            <span>Видалити файли:</span>*/}
+                {/*            {ticket.files.map(f => (*/}
+                {/*                <label key={f.id} className="flex items-center gap-2">*/}
+                {/*                    <input*/}
+                {/*                        type="checkbox"*/}
+                {/*                        onChange={e =>*/}
+                {/*                            e.target.checked*/}
+                {/*                                ? setFilesToDelete(prev => [...prev, f.id])*/}
+                {/*                                : setFilesToDelete(prev => prev.filter(id => id !== f.id))*/}
+                {/*                        }*/}
+                {/*                        className="accent-purple-900"*/}
+                {/*                    />*/}
+                {/*                    {f.file_name}*/}
+                {/*                </label>*/}
+                {/*            ))}*/}
+                {/*        </div>*/}
+                {/*    )}*/}
+                {/*</div>*/}
+                {/* Combined Dropzone for new + existing files */}
                 <div className="mb-4 flex flex-col gap-2">
-                    <label className="text-sm font-medium">Додати файли</label>
-                    <button
-                        type="button"
-                        className="w-full text-left px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 flex justify-between items-center text-sm transition"
+                    <label className="text-sm font-medium">Файли</label>
+
+                    <div
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onPaste={handlePaste}
                         onClick={() => fileInputRef.current?.click()}
+                        className="w-full min-h-[100px] border-2 border-dashed border-gray-700 rounded-lg bg-gray-800 flex flex-col items-center justify-center text-gray-400 p-4 cursor-pointer hover:border-purple-900 transition"
                     >
-                        {filesToAdd.length === 0
-                            ? "Виберіть файли..."
-                            : filesToAdd.map(f => f.name).join(", ")}
-                        <span className="ml-2 text-gray-400">📎</span>
-                    </button>
+                        {filesToAdd.length === 0 && ticket.files.length === 0 ? (
+                            <span>Перетягніть файли сюди, вставте або оберіть через провідник 📎</span>
+                        ) : (
+                            <div className="flex flex-wrap gap-2 justify-center">
+                                {/* Existing files */}
+                                {ticket.files.map(f => (
+                                    <div
+                                        key={`existing-${f.id}`}
+                                        className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                                            filesToDelete.includes(f.id) ? "bg-red-900" : "bg-gray-700"
+                                        }`}
+                                    >
+                                        {f.file_name}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFilesToDelete(prev =>
+                                                    prev.includes(f.id)
+                                                        ? prev.filter(id => id !== f.id)
+                                                        : [...prev, f.id]
+                                                );
+                                            }}
+                                            className="text-red-400 hover:text-red-600 transition"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* New files */}
+                                {filesToAdd.map((f, i) => (
+                                    <div
+                                        key={`new-${i}`}
+                                        className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-sm"
+                                    >
+                                        {f.name}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFilesToAdd(prev => prev.filter((_, idx) => idx !== i));
+                                            }}
+                                            className="text-red-400 hover:text-red-600 transition"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Hidden file input */}
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -156,30 +305,11 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                         onChange={(e) => {
                             const selectedFiles = Array.from(e.target.files || []);
                             setFilesToAdd(prev => [...prev, ...selectedFiles]);
+                            e.target.value = "";
                         }}
                     />
-
-                    {/* Файлы для удаления */}
-                    {ticket.files.length > 0 && (
-                        <div className="flex flex-col gap-1 mt-2 text-sm">
-                            <span>Видалити файли:</span>
-                            {ticket.files.map(f => (
-                                <label key={f.id} className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        onChange={e =>
-                                            e.target.checked
-                                                ? setFilesToDelete(prev => [...prev, f.id])
-                                                : setFilesToDelete(prev => prev.filter(id => id !== f.id))
-                                        }
-                                        className="accent-purple-900"
-                                    />
-                                    {f.file_name}
-                                </label>
-                            ))}
-                        </div>
-                    )}
                 </div>
+
 
                 {/* Кнопки */}
                 <div className="flex justify-end gap-4 mt-6">

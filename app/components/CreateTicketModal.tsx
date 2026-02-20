@@ -19,8 +19,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const modalRef = useRef<HTMLDivElement>(null);
-
+    const dropRef = useRef<HTMLDivElement>(null);
     const fetchUsers = async (roleFilter: string) => {
         try {
             const response = await instance.get("/users", { params: { role: roleFilter } });
@@ -60,23 +59,17 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
     useEffect(() => {
-        const el = modalRef.current;
-        if (!el) return;
+        if (!isOpen) return;
 
-        const handlePaste = (event: ClipboardEvent) => {
-            if (!event.clipboardData) return;
-
-            const items = Array.from(event.clipboardData.items);
-
+        const handleDocumentPaste = (e: ClipboardEvent) => {
+            const items = Array.from(e.clipboardData?.items || []);
             const images = items
                 .map(item => item.getAsFile())
                 .filter((f): f is File => !!f);
 
             if (images.length > 0) {
-                event.preventDefault();
-
+                e.preventDefault();
                 setFiles(prev => {
                     const existing = new Set(prev.map(f => f.name + f.size));
                     const unique = images.filter(f => !existing.has(f.name + f.size));
@@ -85,9 +78,10 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
             }
         };
 
-        el.addEventListener("paste", handlePaste as any);
-        return () => el.removeEventListener("paste", handlePaste as any);
-    }, []);
+        document.addEventListener("paste", handleDocumentPaste);
+        return () => document.removeEventListener("paste", handleDocumentPaste);
+    }, [isOpen]);
+
 
 
     if (!isOpen) return null;
@@ -107,8 +101,43 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
         );
     };
 
+    // Drag & drop
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        if (droppedFiles.length === 0) return;
+
+        setFiles(prev => {
+            const existing = new Set(prev.map(f => f.name + f.size));
+            const unique = droppedFiles.filter(f => !existing.has(f.name + f.size));
+            return [...prev, ...unique];
+        });
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault(); // needed or drop won't fire
+    };
+
+// Paste
+    const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+        const items = Array.from(e.clipboardData.items);
+        const images = items
+            .map(item => item.getAsFile())
+            .filter((f): f is File => !!f);
+
+        if (images.length > 0) {
+            e.preventDefault();
+            setFiles(prev => {
+                const existing = new Set(prev.map(f => f.name + f.size));
+                const unique = images.filter(f => !existing.has(f.name + f.size));
+                return [...prev, ...unique];
+            });
+        }
+    };
+
+
     return (
-        <div ref={modalRef} className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 pointer-events-auto">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 pointer-events-auto">
             <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-6 w-full max-w-2xl pointer-events-auto">
 
                 {/* Заголовок */}
@@ -197,19 +226,36 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                         </div>
                     )}
 
-                    {/* Файлы */}
+                    {/* Файлы / Dropzone */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium">Додати файли</label>
-                        <button
-                            type="button"
-                            className="w-full p-2 text-left border border-gray-700 rounded-lg bg-gray-800 text-sm text-gray-200 hover:border-purple-900  hover:bg-gray-700 transition flex justify-between items-center"
+                        <div
+                            // ref={dropRef}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onPaste={handlePaste}
+                            className="w-full min-h-[100px] border-2 border-dashed border-gray-700 rounded-lg bg-gray-800 flex flex-col items-center justify-center text-gray-400 p-4 cursor-pointer hover:border-purple-900 transition"
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            {files.length === 0
-                                ? "Виберіть файли..."
-                                : files.map((f) => f.name).join(", ")}
-                            <span className="text-gray-400 ml-2">📎</span>
-                        </button>
+                            {files.length === 0 ? (
+                                <span>Перетягніть файли сюди, вставте або оберіть через провідник 📎</span>
+                            ) : (
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {files.map((f, i) => (
+                                        <div key={i} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-sm">
+                                            {f.name}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setFiles(prev => prev.filter((_, idx) => idx !== i)); }}
+                                                className="text-red-400 hover:text-red-600 transition"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Hidden file input */}
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -222,28 +268,6 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                             }}
                         />
                     </div>
-
-                    {/* Показ выбранных файлов */}
-                    {files.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {files.map((f, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-sm"
-                                >
-                                    {f.name}
-                                    <button
-                                        onClick={() =>
-                                            setFiles((prev) => prev.filter((_, idx) => idx !== i))
-                                        }
-                                        className="text-red-400 hover:text-red-600 transition"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
                 {/* Кнопки */}
