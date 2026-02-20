@@ -188,52 +188,6 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                         </>
                     )}
                 </div>
-
-                {/* Файлы */}
-                {/*<div className="mb-4 flex flex-col gap-2">*/}
-                {/*    <label className="text-sm font-medium">Додати файли</label>*/}
-                {/*    <button*/}
-                {/*        type="button"*/}
-                {/*        className="w-full text-left px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 flex justify-between items-center text-sm transition"*/}
-                {/*        onClick={() => fileInputRef.current?.click()}*/}
-                {/*    >*/}
-                {/*        {filesToAdd.length === 0*/}
-                {/*            ? "Виберіть файли..."*/}
-                {/*            : filesToAdd.map(f => f.name).join(", ")}*/}
-                {/*        <span className="ml-2 text-gray-400">📎</span>*/}
-                {/*    </button>*/}
-                {/*    <input*/}
-                {/*        ref={fileInputRef}*/}
-                {/*        type="file"*/}
-                {/*        multiple*/}
-                {/*        hidden*/}
-                {/*        onChange={(e) => {*/}
-                {/*            const selectedFiles = Array.from(e.target.files || []);*/}
-                {/*            setFilesToAdd(prev => [...prev, ...selectedFiles]);*/}
-                {/*        }}*/}
-                {/*    />*/}
-
-                {/*    /!* Файлы для удаления *!/*/}
-                {/*    {ticket.files.length > 0 && (*/}
-                {/*        <div className="flex flex-col gap-1 mt-2 text-sm">*/}
-                {/*            <span>Видалити файли:</span>*/}
-                {/*            {ticket.files.map(f => (*/}
-                {/*                <label key={f.id} className="flex items-center gap-2">*/}
-                {/*                    <input*/}
-                {/*                        type="checkbox"*/}
-                {/*                        onChange={e =>*/}
-                {/*                            e.target.checked*/}
-                {/*                                ? setFilesToDelete(prev => [...prev, f.id])*/}
-                {/*                                : setFilesToDelete(prev => prev.filter(id => id !== f.id))*/}
-                {/*                        }*/}
-                {/*                        className="accent-purple-900"*/}
-                {/*                    />*/}
-                {/*                    {f.file_name}*/}
-                {/*                </label>*/}
-                {/*            ))}*/}
-                {/*        </div>*/}
-                {/*    )}*/}
-                {/*</div>*/}
                 {/* Combined Dropzone for new + existing files */}
                 <div className="mb-4 flex flex-col gap-2">
                     <label className="text-sm font-medium">Файли</label>
