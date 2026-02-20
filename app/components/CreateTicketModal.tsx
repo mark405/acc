@@ -19,6 +19,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
 
     const fetchUsers = async (roleFilter: string) => {
         try {
@@ -60,6 +61,35 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        const el = modalRef.current;
+        if (!el) return;
+
+        const handlePaste = (event: ClipboardEvent) => {
+            if (!event.clipboardData) return;
+
+            const items = Array.from(event.clipboardData.items);
+
+            const images = items
+                .map(item => item.getAsFile())
+                .filter((f): f is File => !!f);
+
+            if (images.length > 0) {
+                event.preventDefault();
+
+                setFiles(prev => {
+                    const existing = new Set(prev.map(f => f.name + f.size));
+                    const unique = images.filter(f => !existing.has(f.name + f.size));
+                    return [...prev, ...unique];
+                });
+            }
+        };
+
+        el.addEventListener("paste", handlePaste as any);
+        return () => el.removeEventListener("paste", handlePaste as any);
+    }, []);
+
+
     if (!isOpen) return null;
 
     const handleCreate = () => {
@@ -78,7 +108,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 pointer-events-auto">
+        <div ref={modalRef} className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 pointer-events-auto">
             <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-6 w-full max-w-2xl pointer-events-auto">
 
                 {/* Заголовок */}
@@ -187,7 +217,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                             className="hidden"
                             onChange={(e) => {
                                 const selectedFiles = Array.from(e.target.files || []);
-                                setFiles((prev) => [...prev, ...selectedFiles]);
+                                setFiles(prev => [...prev, ...selectedFiles]);
+                                e.target.value = "";
                             }}
                         />
                     </div>
