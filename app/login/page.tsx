@@ -11,25 +11,47 @@ import {useAuth} from "@/app/components/AuthProvider";
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [totpCode, setTotpCode] = useState(""); // for 2FA code
     const [error, setError] = useState("");
+    const [totpRequired, setTotpRequired] = useState(false); // flag if TOTP is required
     const router = useRouter();
 
     const { checkAuth } = useAuth(); // get checkAuth from context
-
     const handleLogin = async () => {
-        try {
-            const res = await instance.post("/auth/login", { username, password });
+        setError("");
 
-            if (res.status != HttpStatusCode.NoContent) {
+        if (!totpRequired) {
+            try {
+                const res = await instance.post("/auth/login", { username, password });
+
+                if (res.status === HttpStatusCode.NoContent) {
+                    // Login succeeded, no TOTP needed
+                    await checkAuth();
+                    router.push("/");
+                    return;
+                }
                 setError(errorMessages[res.data.message] || res.data.message);
-                return;
-            }
 
-            setError("");
-            await checkAuth();
-            router.push("/");
-        } catch (err: any) {
-            setError(err.message);
+            } catch (err: any) {
+                if (err.response.data === "TOTP required") {
+                    setTotpRequired(true);
+                    setError("");
+                    return;
+                }
+                setError(errorMessages[err.response.data] || err.response.data);
+            }
+        } else {
+            try {
+                await instance.post("/auth/verify-totp", { username, code: totpCode });
+                await checkAuth();
+                router.push("/");
+            } catch (err: any) {
+                if (err.response.status == HttpStatusCode.Unauthorized) {
+                    setError("Неправильний код");
+                } else {
+                    setError(errorMessages[err.response.data] || err.response.data);
+                }
+            }
         }
     };
 
@@ -55,6 +77,16 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full p-4 mb-4 rounded-md border border-gray-600 bg-gray-700 text-white text-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 />
+
+                {totpRequired && (
+                    <input
+                        type="text"
+                        placeholder="6-digit TOTP code"
+                        value={totpCode}
+                        onChange={(e) => setTotpCode(e.target.value)}
+                        className="w-full p-4 mb-4 rounded-md border border-gray-600 bg-gray-700 text-white text-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    />
+                )}
 
                 {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
 

@@ -6,6 +6,8 @@ interface User {
     id: number;
     username: string;
     role: string;
+    totp_enabled: boolean;
+    created_at: number;
 }
 
 interface AuthContextType {
