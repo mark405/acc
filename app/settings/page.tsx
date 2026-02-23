@@ -14,6 +14,7 @@ export default function SettingsPage() {
     const enableTotp = async () => {
         try {
             const res = await instance.post(`/auth/enable-totp?id=${user?.id}`);
+            setMessage({ text: "", type: "success" });
             setQrUri(res.data);
         } catch (e) {
             setMessage({ text: "Failed to generate QR code.", type: "error" });
@@ -26,6 +27,7 @@ export default function SettingsPage() {
             await instance.post("/auth/verify-totp", { code, username: user?.username });
             setTotpEnabled(true);
             setQrUri("");
+            setMessage({ text: "", type: "success" });
         } catch (e) {
             setMessage({ text: "Invalid TOTP code.", type: "error" });
         }
@@ -35,6 +37,7 @@ export default function SettingsPage() {
         try {
             await instance.post(`/auth/disable-totp?id=${user?.id}`);
             setTotpEnabled(false);
+            setMessage({ text: "", type: "success" });
         } catch (e) {
             setMessage({ text: "Failed to disable 2FA.", type: "error" });
             console.error(e);
