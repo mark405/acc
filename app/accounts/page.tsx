@@ -157,6 +157,8 @@ export default function AccountsPage() {
                         <thead>
                         <tr className="bg-gray-800 text-white">
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
+                                onClick={() => handleSort("id")}>ID {sortBy === "id" && (direction === "asc" ? "↑" : "↓")}</th>
+                            <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
                                 onClick={() => handleSort("username")}>Логін {sortBy === "username" && (direction === "asc" ? "↑" : "↓")}</th>
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
                                 onClick={() => handleSort("role")}>Роль {sortBy === "role" && (direction === "asc" ? "↑" : "↓")}</th>
@@ -170,6 +172,7 @@ export default function AccountsPage() {
                         <tbody>
                         {users.map((u) => (
                             <tr key={u.id} className="border-t border-gray-300 ">
+                                <td className="px-4 py-2 text-left">{u.id}</td>
                                 <td className="px-4 py-2 text-left">{u.username}</td>
                                 <td className="px-4 py-2 text-left">{u.role}</td>
                                 <td className="px-4 py-2 text-left">

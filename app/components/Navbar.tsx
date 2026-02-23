@@ -6,6 +6,7 @@ import {useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
+import {User} from "lucide-react";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -95,37 +96,41 @@ export default function Navbar() {
                 )}
 
                 {/* Profile */}
-                <div className="relative flex flex-col items-center">
-                    {/* Avatar */}
+                <div className="relative h-full">
                     <div
                         onClick={() => setMenuOpen(!menuOpen)}
-                        className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
+                        className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-gray-800 transition cursor-pointer h-full"
                     >
-                        {userInitial}
-                    </div>
+                        {/* Avatar */}
+                        <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-white">
+                            <User className="w-8 h-8" />
+                        </div>
 
-                    {/* ROLE UNDER AVATAR */}
-                    {user?.role && (
-                        <span className="mt-1 text-xs text-gray-300 whitespace-nowrap">
-      {user.role}
-    </span>
-                    )}
+                        {/* Info */}
+                        <div className="flex flex-col leading-tight">
+      <span className="text-lg font-semibold text-white">
+        {user?.username}
+      </span>
+                            <span className="text-sm text-gray-400">
+        {user?.role} • ID {user?.id}
+      </span>
+                        </div>
+                    </div>
 
                     {/* Dropdown */}
                     {menuOpen && (
-                        <div
-                            className="absolute top-full mt-2 right-0 w-40 bg-white rounded-lg shadow-lg py-2 text-gray-800 z-50"
-                        >
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-3 text-gray-800 z-50">
                             <Link
                                 href="/settings"
-                                className="block px-4 py-2 text-lg hover:bg-gray-100 transition"
+                                className="block px-4 py-3 text-base hover:bg-gray-100 transition"
                                 onClick={() => setMenuOpen(false)}
                             >
                                 Налаштування
                             </Link>
+
                             <button
                                 onClick={handleLogout}
-                                className="block px-4 py-2 text-lg hover:bg-gray-100 w-full text-left transition"
+                                className="block w-full text-left px-4 py-3 text-base hover:bg-gray-100 transition"
                             >
                                 Вийти
                             </button>

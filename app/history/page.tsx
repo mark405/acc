@@ -69,8 +69,12 @@ export default function HistoryPage() {
             switch (body.type) {
                 case "USER_CREATED":
                     return <>Користувач <strong>{body.username}</strong> створений</>;
+                case "USER_DELETED":
+                    return <>Користувач <strong>{body.username}</strong> видалений</>;
                 case "USER_PASSWORD_CHANGED":
                     return <>Пароль користувача <strong>{body.username}</strong> змінено</>;
+                case "USER_ROLE_CHANGED":
+                    return <>Роль користувача <strong>{body.username}</strong> змінено</>;
                 case "OPERATION_CREATED": {
                     const operationName = body.operationType === "EXPENSE" ? "Витрати" : "Доходи";
                     return (
