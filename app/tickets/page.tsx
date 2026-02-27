@@ -132,7 +132,7 @@ export default function TicketsPage() {
                         </select>
                     </div>
 
-                    {user?.role === "MANAGER" && (
+                    {user?.role === "MANAGER" || user?.role === "TECH_MANAGER" && (
                         <button
                             onClick={() => setShowModal(true)}
                             className="h-12 w-12 rounded-2xl text-2xl font-bold text-white bg-gradient-to-br bg-gray-700 shadow hover:scale-105 active:scale-95 transition"
