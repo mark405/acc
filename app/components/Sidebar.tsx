@@ -227,7 +227,7 @@ export default function Sidebar() {
                         {!collapsed && (
                             <Link href="/"
                                   className="text-2xl md:text-3xl font-extrabold hover:text-gray-300 transition">
-                                Traffgun
+                                TRFFGN GROUP
                             </Link>
                         )}
                     </div>

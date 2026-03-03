@@ -11,7 +11,6 @@ import {User} from "lucide-react";
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const {user, setUser, isAdmin} = useAuth();
-    const userInitial = user?.username.at(0)?.toUpperCase();
     const router = useRouter();
 
     const handleLogout = async () => {

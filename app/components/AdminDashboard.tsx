@@ -24,7 +24,7 @@ interface StatisticsResponse {
 export default function AdminDashboard() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [stats, setStats] = useState<MonthStats[]>([]);
-    const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+    const [type, setType] = useState<"EXPENSE" | "INCOME">("INCOME");
 
     useEffect(() => {
         instance
@@ -70,20 +70,20 @@ export default function AdminDashboard() {
             {/* Tabs */}
             <div className="flex justify-center gap-5 mb-6 bg-gray-800 p-3 rounded-4xl w-max mx-auto">
                 <button
-                    onClick={() => setType("EXPENSE")}
-                    className={`bg-gray-800 text-white px-4 py-2 rounded-4xl ${
-                        type === "EXPENSE" ? "bg-indigo-600 text-white" : "bg-gray-200"
-                    }`}
-                >
-                    Витрати
-                </button>
-                <button
                     onClick={() => setType("INCOME")}
                     className={`bg-gray-800 text-white px-4 py-2 rounded-4xl ${
                         type === "INCOME" ? "bg-indigo-600 text-white" : "bg-gray-200"
                     }`}
                 >
                     Доходи
+                </button>
+                <button
+                    onClick={() => setType("EXPENSE")}
+                    className={`bg-gray-800 text-white px-4 py-2 rounded-4xl ${
+                        type === "EXPENSE" ? "bg-indigo-600 text-white" : "bg-gray-200"
+                    }`}
+                >
+                    Витрати
                 </button>
             </div>
 
