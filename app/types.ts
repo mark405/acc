@@ -82,3 +82,10 @@ export interface CommentResponse {
     created_by: UserResponse;
     attachments: FileResponse[];
 }
+
+export interface ProjectResponse {
+    id: number;
+    name: string;
+    created_by: UserResponse;
+
+}
