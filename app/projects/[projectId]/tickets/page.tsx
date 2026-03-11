@@ -8,6 +8,7 @@ import {CreateTicketModal} from "@/app/components/CreateTicketModal";
 import {useAuth} from "@/app/components/AuthProvider";
 import {motion} from "framer-motion";
 import Pagination from "@/app/components/Pagination";
+import {useParams} from "next/navigation";
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -23,7 +24,7 @@ export default function TicketsPage() {
     const [totalPages, setTotalPages] = useState(1);
 
     const {user} = useAuth();
-
+    const projectId = useParams().projectId;
     const fetchTickets = async () => {
         let createdBy;
         let assignedTo;
@@ -47,6 +48,7 @@ export default function TicketsPage() {
             size,
             created_by: createdBy,
             assigned_to: assignedTo,
+            project_id: projectId,
         };
 
         if (types) params.types = types;
@@ -152,7 +154,7 @@ export default function TicketsPage() {
                         animate={{opacity: 1, y: 0}}
                         transition={{delay: i * 0.03}}
                         onDoubleClick={() =>
-                            (window.location.href = `/tickets/${ticket.id}`)
+                            (window.location.href = `/projects/${projectId}/tickets/${ticket.id}`)
                         }
                         className="group border-3 border-gray-600  rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
                     >

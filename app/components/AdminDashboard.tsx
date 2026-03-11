@@ -10,6 +10,8 @@ import {
     ResponsiveContainer,
     CartesianGrid,
 } from "recharts";
+import {useParams} from "next/navigation";
+import Pagination from "@/app/components/Pagination";
 
 interface MonthStats {
     month: number;
@@ -25,10 +27,11 @@ export default function AdminDashboard() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [stats, setStats] = useState<MonthStats[]>([]);
     const [type, setType] = useState<"EXPENSE" | "INCOME">("INCOME");
+    const projectId = useParams().projectId;
 
     useEffect(() => {
         instance
-            .get<StatisticsResponse>("/stats", { params: { year, type } })
+            .get<StatisticsResponse>("/stats", { params: { year, type, project_id: projectId } })
             .then((res) => {
                 if (res.status === HttpStatusCode.Ok) {
                     setStats(res.data.statistics);
@@ -156,18 +159,21 @@ export default function AdminDashboard() {
 
             </div>
 
-            {/* Year navigation */}
-            <div className="flex justify-center items-center gap-4 mt-6">
+            <div className="flex items-center justify-center gap-4 mt-10">
                 <button
+                    disabled={false}
                     onClick={() => setYear(year - 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
+                    className="px-5 py-2 rounded-xl bg-gray-800 text-white hover:scale-105 active:scale-95 transition"
                 >
                     ← Попередній
                 </button>
+
                 <span className="text-xl font-semibold">{year}</span>
+
                 <button
+                    disabled={false}
                     onClick={() => setYear(year + 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
+                    className="px-5 py-2 rounded-xl bg-gray-800 text-white  hover:scale-105 active:scale-95 transition"
                 >
                     Наступний →
                 </button>

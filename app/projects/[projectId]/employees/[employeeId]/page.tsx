@@ -3,7 +3,7 @@
 import React from "react";
 import {useParams} from "next/navigation";
 import "react-datepicker/dist/react-datepicker.css";
-import EmployeeFinancesPage from "@/app/components/employee/EmployeeFinancesPage";
+import EmployeeFinancesPage from "@/app/components/salary/EmployeeFinancesPage";
 
 export default function EmployeePage() {
     const params = useParams();

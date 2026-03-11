@@ -22,7 +22,7 @@ export interface UserResponse {
 
 export interface HistoryResponse {
     id: number;
-    user: UserResponse;
+    employee: EmployeeResponse;
     type: string;
     body: string;
     date: number;

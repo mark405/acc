@@ -33,7 +33,7 @@ export default function Sidebar() {
 
     const expenseInputRef = useRef<HTMLInputElement>(null);
     const incomeInputRef = useRef<HTMLInputElement>(null);
-
+    const projectId = useParams().projectId;
     const [contextMenu, setContextMenu] = useState<{ boardId: number; type: "EXPENSE" | "INCOME" } | null>(null);
 
     useEffect(() => {
@@ -86,7 +86,7 @@ export default function Sidebar() {
 
     const fetchEmployees = async () => {
         try {
-            let res = await instance.get("/employees", {params: {page: 0, size: 25}});
+            let res = await instance.get("/employees", {params: {page: 0, size: 25, project_id: projectId}});
             if (res.status === HttpStatusCode.Forbidden) {
                 await checkAuth();
                 if (!isLoggedIn) router.replace("/login");
@@ -100,7 +100,7 @@ export default function Sidebar() {
 
     const fetchBoards = async (type: "EXPENSE" | "INCOME") => {
         try {
-            const res = await instance.get(`/boards`, {params: {type}});
+            const res = await instance.get(`/boards`, {params: {type, project_id: projectId}});
             if (res.status === HttpStatusCode.Ok || res.status === 200) {
                 if (type === "EXPENSE") setBoardsExpense(res.data);
                 else setBoardsIncome(res.data);
@@ -275,7 +275,7 @@ export default function Sidebar() {
                                             />
                                         ) : (
                                             <Link
-                                                href={`/expenses/${board.id}`}
+                                                href={`/projects/${projectId}/expenses/${board.id}`}
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     if (board.level_type === "MAIN") return;
@@ -373,7 +373,7 @@ export default function Sidebar() {
                                             />
                                         ) : (
                                             <Link
-                                                href={`/incomes/${board.id}`}
+                                                href={`/projects/${projectId}/incomes/${board.id}`}
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     if (board.level_type === "MAIN") return;
@@ -437,30 +437,12 @@ export default function Sidebar() {
                             {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
                         </div>
 
-                        {/*{showEmployees && (*/}
-                        {/*    <div className="pl-6">*/}
-                        {/*        {employees.map((employee) => (*/}
-                        {/*            <div key={employee.id}>*/}
-                        {/*                <div*/}
-                        {/*                    className="flex justify-between items-center px-6 py-2 cursor-pointer hover:bg-gray-700"*/}
-                        {/*                >*/}
-                        {/*                    <Link*/}
-                        {/*                        href={`/employees/${employee.id}`}*/}
-                        {/*                        className="block py-1 hover:text-white transition"*/}
-                        {/*                    >*/}
-                        {/*                        <span>{employee.name}</span>*/}
-                        {/*                    </Link>*/}
-                        {/*                </div>*/}
-                        {/*            </div>*/}
-                        {/*        ))}*/}
-                        {/*    </div>*/}
-                        {/*)}*/}
                         {showEmployees && (
                             <div className="pl-6 text-gray-300">
                                 {employees.map((employee) => (
                                     <Link
                                         key={employee.id}
-                                        href={`/employees/${employee.id}`}
+                                        href={`/projects/${projectId}/employees/${employee.id}`}
                                         className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
                                     >
                                         <span>{employee.name}</span>

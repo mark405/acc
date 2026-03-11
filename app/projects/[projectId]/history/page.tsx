@@ -4,7 +4,7 @@ import React, {SetStateAction, useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {useAuth} from "@/app/components/AuthProvider";
 import {HistoryResponse} from "@/app/types";
-import {useRouter} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import Pagination from "@/app/components/Pagination";
 
 const historyTypes = ["USER", "OPERATION"];
@@ -25,7 +25,7 @@ export default function HistoryPage() {
     const [size] = useState(15);
     const [totalPages, setTotalPages] = useState(1);
     const {isLoggedIn} = useAuth();
-
+    const projectId = useParams().projectId;
     const fetchHistories = async () => {
         try {
             const params = {
@@ -35,6 +35,7 @@ export default function HistoryPage() {
                 direction,
                 page,
                 size,
+                project_id: projectId,
             };
 
             const response = await instance.get("/histories", {params});
@@ -210,7 +211,7 @@ export default function HistoryPage() {
                     <tbody>
                     {histories.map((h) => (
                         <tr key={h.id} className="border-t border-gray-300 ">
-                            <td className="px-4 py-2 text-left">{h.user.username}</td>
+                            <td className="px-4 py-2 text-left">{h.employee.name}</td>
                             <td className="px-4 py-2 text-left">{h.type}</td>
                             <td className="px-4 py-2 text-left">{renderBodyMessage(h.body)}</td>
                             <td className="w-1/5 px-4 py-2 text-left">

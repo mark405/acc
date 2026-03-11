@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {useState} from "react";
-import {usePathname, useRouter} from "next/navigation";
+import {useParams, usePathname, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -22,6 +22,7 @@ export default function Navbar() {
             router.push("/login");
         }
     };
+    const projectId = useParams().projectId;
 
     return (
         <nav className="bg-gray-900 h-30 shadow-lg flex items-center px-6 relative">
@@ -57,20 +58,33 @@ export default function Navbar() {
                 {(!isAdmin && !isProjectPage) && (
                     <>
                         <Link
-                            href="/tickets"
+                            href={`/projects/${projectId}/`}
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Зарплата
+                        </Link>
+                        <Link
+                            href={`/projects/${projectId}/tickets`}
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >
                             Тікети
                         </Link>
                     </>
                 )}
+                {(isAdmin && isProjectPage) && (
+                    <Link
+                        href={`/projects/${projectId}/tickets`}
+                        className="text-white text-lg font-medium hover:text-gray-300 transition"
+                    >
+                        Облікові записи
+                    </Link>
+                )}
                 {isAdmin && (
                     <>
                         {[
-                            { href: "/", label: "Статистика", hideOnProjectPage: true },
-                            { href: "/tickets", label: "Тікети", hideOnProjectPage: true },
-                            { href: "/accounts", label: "Облікові записи" },
-                            { href: "/history", label: "Історія", hideOnProjectPage: true },
+                            { href: `/projects/${projectId}/`, label: "Статистика", hideOnProjectPage: true },
+                            { href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true },
+                            { href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true },
                         ]
                             .filter(link => !link.hideOnProjectPage || !isProjectPage)
                             .map(link => (
@@ -111,13 +125,15 @@ export default function Navbar() {
                     {menuOpen && (
                         <div
                             className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg py-3 text-white z-50">
-                            <Link
-                                href="/settings"
-                                className="block px-4 py-3 text-base hover:bg-gray-700 transition"
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                Налаштування
-                            </Link>
+                            {isProjectPage && (
+                                <Link
+                                    href="/settings"
+                                    className="block px-4 py-3 text-base hover:bg-gray-700 transition"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    Налаштування
+                                </Link>
+                            )}
 
                             <button
                                 onClick={handleLogout}
