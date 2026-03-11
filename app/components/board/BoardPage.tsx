@@ -142,13 +142,13 @@ export default function BoardPage({
             setDirection("asc");
         }
     };
-
+    const projectId = useParams().projectId;
     const submitNewCategory = async () => {
         const name = newCategoryName.trim();
         if (!name) return;
 
         try {
-            const res = await instance.post("/categories", {name, board_id: boardId});
+            const res = await instance.post("/categories", {name, project_id: projectId, board_id: boardId});
             if (res.status === HttpStatusCode.Created) {
                 setNewCategoryName("");
                 setAddingCategory(false);

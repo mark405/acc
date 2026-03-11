@@ -7,6 +7,7 @@ import {instance} from "@/app/api/instance";
 import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import DatePicker from "react-datepicker";
 import Pagination from "@/app/components/Pagination";
+import {useParams} from "next/navigation";
 
 interface BoardProps {
     board: BoardResponse;
@@ -59,7 +60,7 @@ export default function Board({
         date: null as Date | null,
     });
 
-
+    const projectId = useParams().projectId;
     const handleCreate = async () => {
         const newErrors = {
             amount: newOperation.amount === undefined || newOperation.amount < 0, // allow 0
@@ -71,6 +72,7 @@ export default function Board({
         if (newErrors.amount || newErrors.categoryId) return;
         try {
             await instance.post("/operations/create", {
+                project_id: projectId,
                 board_id: board.id,
                 category_id: newOperation.categoryId,
                 comment: newOperation.comment,

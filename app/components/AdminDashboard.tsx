@@ -31,7 +31,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         instance
-            .get<StatisticsResponse>("/stats", { params: { year, type, project_id: projectId } })
+            .get<StatisticsResponse>("/stats", { params: { project_id: projectId, year: year, type: type } })
             .then((res) => {
                 if (res.status === HttpStatusCode.Ok) {
                     setStats(res.data.statistics);

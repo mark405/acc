@@ -112,7 +112,7 @@ export default function Sidebar() {
 
     const createBoard = async (type: "EXPENSE" | "INCOME", name: string) => {
         try {
-            const res = await instance.post(`/boards`, {name, type});
+            const res = await instance.post(`/boards`, {project_id: projectId, name, type});
             if (res.status === HttpStatusCode.Ok || res.status === 200 || res.status === HttpStatusCode.Created) {
                 await fetchBoards(type);
             }
