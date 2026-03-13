@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useParams, usePathname, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {User} from "lucide-react";
+import {EmployeeResponse, ProjectResponse} from "@/app/types";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const isProjectPage = pathname == "/";
+    const [project, setProject] = useState<ProjectResponse | null>(null);
     const handleLogout = async () => {
         const res = await instance.post("/auth/logout");
 
@@ -22,16 +24,43 @@ export default function Navbar() {
             router.push("/login");
         }
     };
+    const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
     const projectId = useParams().projectId;
 
+    const fetchEmployee = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setEmployee(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
+    useEffect(() => {
+        if (projectId) {
+            fetchEmployee();
+            const loadProject = async () => {
+                try {
+                    const res = await instance.get("/projects/" + projectId);
+                    if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                        setProject(res.data);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch projects", err);
+                }
+            };
+
+            loadProject();
+        }
+    }, [projectId]);
     return (
         <nav className="bg-gray-900 h-30 shadow-lg flex items-center px-6 relative">
             {/* Left side */}
-            <div className="flex-1"></div>
-            <>
+            <div className="flex items-center space-x-4">
                 <Link
                     href="/"
-                    className="absolute left-6 flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+                    className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 hover:bg-gray-600 transition"
                 >
                     <svg
                         className="w-5 h-5 md:w-6 md:h-6 text-white"
@@ -52,9 +81,14 @@ export default function Navbar() {
                         />
                     </svg>
                 </Link>
-            </>
+
+                <span className="text-2xl md:text-3xl font-extrabold text-white">
+            {isAdmin && isProjectPage && "TRFFGN GROUP"}
+                    {!isAdmin && (projectId == null ? "TRFFGN GROUP" : project?.name)}
+        </span>
+            </div>
             {/* Right side with links and profile */}
-            <div className="flex items-center space-x-8 relative">
+            <div className="flex items-center space-x-8 ml-auto relative">
                 {(!isAdmin && !isProjectPage) && (
                     <>
                         <Link
@@ -82,9 +116,9 @@ export default function Navbar() {
                 {isAdmin && (
                     <>
                         {[
-                            { href: `/projects/${projectId}/`, label: "Статистика", hideOnProjectPage: true },
-                            { href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true },
-                            { href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true },
+                            {href: `/projects/${projectId}/`, label: "Статистика", hideOnProjectPage: true},
+                            {href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true},
+                            {href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true},
                         ]
                             .filter(link => !link.hideOnProjectPage || !isProjectPage)
                             .map(link => (
@@ -116,8 +150,8 @@ export default function Navbar() {
         {user?.username}
       </span>
                             <span className="text-sm text-gray-400">
-        {user?.role} • ID {user?.id}
-      </span>
+{projectId && employee ? employee.role : user?.role} • ID {user?.id}
+                            </span>
                         </div>
                     </div>
 

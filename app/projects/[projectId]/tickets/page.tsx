@@ -2,13 +2,13 @@
 
 
 import React, {useEffect, useState} from "react";
-import {TicketResponse} from "@/app/types";
+import {EmployeeResponse, TicketResponse} from "@/app/types";
 import {instance} from "@/app/api/instance";
 import {CreateTicketModal} from "@/app/components/CreateTicketModal";
-import {useAuth} from "@/app/components/AuthProvider";
 import {motion} from "framer-motion";
 import Pagination from "@/app/components/Pagination";
 import {useParams} from "next/navigation";
+import {HttpStatusCode} from "axios";
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -17,27 +17,38 @@ export default function TicketsPage() {
     const [statusType, setStatusType] = useState<"OPENED" | "CLOSED" | "ALL">("ALL");
     const [preview, setPreview] = useState<string | null>(null);
 
-    const [sortBy, setSortBy] = useState("id");
-    const [direction, setDirection] = useState("desc");
+    const [sortBy] = useState("id");
+    const [direction] = useState("desc");
     const [page, setPage] = useState(0);
     const [size] = useState(25);
     const [totalPages, setTotalPages] = useState(1);
+    const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
 
-    const {user} = useAuth();
     const projectId = useParams().projectId;
+    const fetchEmployee = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setEmployee(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
+
     const fetchTickets = async () => {
         let createdBy;
         let assignedTo;
         let types;
 
-        if (user?.role == "MANAGER") {
-            createdBy = user?.id;
+        if (employee?.role == "MANAGER") {
+            createdBy = employee?.id;
         }
-        if (user?.role == "OFFERS_MANAGER" || user?.role == "TECH_MANAGER") {
-            assignedTo = user?.id;
-            types = user?.role == "OFFERS_MANAGER" ? ["ADVERTISER_REQUEST", "OFFERS_REQUEST"] : ["TECH_GOAL"];
+        if (employee?.role == "OFFERS_MANAGER" || employee?.role == "TECH_MANAGER") {
+            assignedTo = employee?.id;
+            types = employee?.role == "OFFERS_MANAGER" ? ["ADVERTISER_REQUEST", "OFFERS_REQUEST"] : ["TECH_GOAL"];
         }
-        if (user?.role == "ADMIN" || user?.role == "MANAGER" || user?.role == "HEAD_OF_AFFILIATE") {
+        if (employee?.role == "ADMIN" || employee?.role == "MANAGER" || employee?.role == "HEAD_OF_AFFILIATE") {
             types = filterType !== "ALL" ? [filterType] : undefined;
         }
 
@@ -71,7 +82,7 @@ export default function TicketsPage() {
         formData.append("type", type);
         assignedTo.forEach(id => formData.append("assignedTo", id.toString()));
         files.forEach(file => formData.append("files", file));
-
+        formData.append("projectId", String(projectId));
         await instance.post("/tickets/create", formData, {
             headers: {"Content-Type": "multipart/form-data"},
         });
@@ -81,6 +92,7 @@ export default function TicketsPage() {
     };
 
     useEffect(() => {
+        fetchEmployee();
         fetchTickets();
     }, [page, filterType, statusType]);
 
@@ -98,7 +110,7 @@ export default function TicketsPage() {
                 <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
 
                 <div className="flex items-center gap-3">
-                    {(user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER") && (
+                    {(employee?.role === "ADMIN" || employee?.role === "HEAD_OF_AFFILIATE" || employee?.role === "MANAGER") && (
                         <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
@@ -134,7 +146,7 @@ export default function TicketsPage() {
                         </select>
                     </div>
 
-                    {(user?.role === "MANAGER" || user?.role === "TECH_MANAGER" || user?.role === "HEAD_OF_AFFILIATE") && (
+                    {(employee?.role === "MANAGER" || employee?.role === "TECH_MANAGER" || employee?.role === "HEAD_OF_AFFILIATE") && (
                         <button
                             onClick={() => setShowModal(true)}
                             className="h-12 w-12 rounded-2xl text-2xl font-bold text-white bg-gradient-to-br bg-gray-700 shadow hover:scale-105 active:scale-95 transition"
@@ -183,7 +195,7 @@ export default function TicketsPage() {
                                     {ticket.status === "IN_PROGRESS" &&
                                         ticket.operated_by && (
                                             <span className="ml-1 text-gray-600">
-                                        · {ticket.operated_by.username}
+                                        · {ticket.operated_by.name}
                                       </span>
                                         )}
                                 </span>
@@ -260,7 +272,7 @@ export default function TicketsPage() {
                             {/* слева: информация о создателе и назначенных */}
                             <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
         <span>
-            Створив <b>{ticket.created_by.username}</b>
+            Створив <b>{ticket.created_by.name}</b>
         </span>
 
                                 {ticket.assigned_to.length > 0 && (
@@ -268,7 +280,7 @@ export default function TicketsPage() {
                 Для{" "}
                                         {ticket.assigned_to.map((u, i) => (
                                             <span key={u.id}>
-                        <b>{u.username}</b>
+                        <b>{u.name}</b>
                                                 {i < ticket.assigned_to.length - 1 && ", "}
                     </span>
                                         ))}

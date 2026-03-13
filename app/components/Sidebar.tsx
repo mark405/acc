@@ -7,7 +7,7 @@ import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useParams, useRouter} from "next/navigation";
-import {BoardResponse, EmployeeResponse} from "@/app/types";
+import {BoardResponse, EmployeeResponse, ProjectResponse} from "@/app/types";
 
 export default function Sidebar() {
     const params = useParams();
@@ -18,7 +18,7 @@ export default function Sidebar() {
     const [showEmployees, setShowEmployees] = useState(false);
     const [showExpenses, setShowExpenses] = useState(false);
     const [showIncome, setShowIncome] = useState(false);
-
+    const [project, setProject] = useState<ProjectResponse | null>(null);
     const [addingExpense, setAddingExpense] = useState(false);
     const [addingIncome, setAddingIncome] = useState(false);
     const [newBoardName, setNewBoardName] = useState("");
@@ -126,6 +126,20 @@ export default function Sidebar() {
             fetchEmployees();
             fetchBoards("EXPENSE");
             fetchBoards("INCOME");
+            if (projectId) {
+                const loadProject = async () => {
+                    try {
+                        const res = await instance.get("/projects/" + projectId);
+                        if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                            setProject(res.data);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch projects", err);
+                    }
+                };
+
+                loadProject();
+            }
         }
     }, [isLoggedIn]);
 
@@ -225,10 +239,9 @@ export default function Sidebar() {
                         </Link>
 
                         {!collapsed && (
-                            <Link href="/"
-                                  className="text-2xl md:text-3xl font-extrabold hover:text-gray-300 transition">
-                                TRFFGN GROUP
-                            </Link>
+                            <span className="text-2xl md:text-3xl font-extrabold text-white">
+        {projectId == null ? "TRFFGN GROUP" : project?.name}
+    </span>
                         )}
                     </div>
                 </div>

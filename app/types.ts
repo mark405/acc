@@ -32,6 +32,7 @@ export interface EmployeeResponse {
     id: number;
     name: string;
     qfd: number;
+    role: string;
 }
 
 export interface BoardResponse {
@@ -62,9 +63,9 @@ export interface TicketResponse {
     text: string;
     type: "TECH_GOAL" | "ADVERTISER_REQUEST";
     status: "OPENED" | "CLOSED" | "IN_PROGRESS";
-    assigned_to: UserResponse[];
-    created_by: UserResponse;
-    operated_by?: UserResponse;
+    assigned_to: EmployeeResponse[];
+    created_by: EmployeeResponse;
+    operated_by?: EmployeeResponse;
     created_at: number;
     files: FileResponse[];
 }
@@ -79,7 +80,7 @@ export interface CommentResponse {
     id: number;
     text: string;
     created_at: number;
-    created_by: UserResponse;
+    created_by: EmployeeResponse;
     attachments: FileResponse[];
 }
 

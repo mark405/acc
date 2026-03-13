@@ -219,7 +219,7 @@ export default function TicketDetailsPage() {
           {statusLabels[ticket.status]}
             {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
                 <span className="ml-1 text-gray-600">
-              · {ticket.operated_by.username}
+              · {ticket.operated_by.name}
             </span>
             )}
         </span>
@@ -294,7 +294,7 @@ export default function TicketDetailsPage() {
                     {/* слева: информация о создателе и назначенных */}
                     <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
         <span>
-            Створив <b>{ticket.created_by.username}</b>
+            Створив <b>{ticket.created_by.name}</b>
         </span>
 
                         {ticket.assigned_to.length > 0 && (
@@ -302,7 +302,7 @@ export default function TicketDetailsPage() {
                 Для{" "}
                                 {ticket.assigned_to.map((u, i) => (
                                     <span key={u.id}>
-                        <b>{u.username}</b>
+                        <b>{u.name}</b>
                                         {i < ticket.assigned_to.length - 1 && ", "}
                     </span>
                                 ))}
@@ -431,7 +431,7 @@ export default function TicketDetailsPage() {
                                 </div>
                             )}
                             <div className="text-xs text-gray-500 mt-3">
-                                <b>{c.created_by.username}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
+                                <b>{c.created_by.name}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
                             </div>
                         </div>
                     ))}
