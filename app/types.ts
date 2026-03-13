@@ -33,6 +33,7 @@ export interface EmployeeResponse {
     name: string;
     qfd: number;
     role: string;
+    user: UserResponse;
 }
 
 export interface BoardResponse {

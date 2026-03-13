@@ -7,7 +7,7 @@ import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useParams, useRouter} from "next/navigation";
-import {BoardResponse, EmployeeResponse, ProjectResponse} from "@/app/types";
+import {BoardResponse, EmployeeResponse, ProjectResponse, UserResponse} from "@/app/types";
 
 export default function Sidebar() {
     const params = useParams();
@@ -30,18 +30,84 @@ export default function Sidebar() {
 
     const {isLoggedIn, checkAuth} = useAuth();
     const router = useRouter();
+    const [modalOpen, setModalOpen] = useState(false);
+    const [newEmployeeName, setNewEmployeeName] = useState("");
+    const [users, setUsers] = useState<UserResponse[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     const expenseInputRef = useRef<HTMLInputElement>(null);
     const incomeInputRef = useRef<HTMLInputElement>(null);
     const projectId = useParams().projectId;
     const [contextMenu, setContextMenu] = useState<{ boardId: number; type: "EXPENSE" | "INCOME" } | null>(null);
+    const [renamingEmployee, setRenamingEmployee] = useState<{ id: number; name: string } | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeResponse | null>(null);
 
+// Function to open modal
+    const confirmDeleteEmployee = (employee: EmployeeResponse) => {
+        setEmployeeToDelete(employee);
+        setDeleteModalOpen(true);
+    };
+
+// Function to actually delete
+    const handleDeleteEmployee = async () => {
+        if (!employeeToDelete) return;
+
+        try {
+            debugger;
+            const res = await instance.delete(`/employees/${employeeToDelete.id}`);
+            if (res.status === HttpStatusCode.NoContent) {
+                // Remove from local state
+                setEmployees(prev => prev.filter(e => e.id !== employeeToDelete.id));
+            }
+        } catch (err) {
+            console.error("Failed to delete employee", err);
+        } finally {
+            setDeleteModalOpen(false);
+            setEmployeeToDelete(null);
+        }
+    };
+    const fetchUsers = async () => {
+        try {
+            const res = await instance.get("/users", {
+                params: { project_id: projectId }
+            });
+            if (res.status === HttpStatusCode.Ok) {
+                setUsers(res.data.content ?? []); // <- use .content
+            }
+        } catch (err) {
+            console.error("Failed to fetch users", err);
+        }
+    };
+
+    const handleAddEmployee = async () => {
+        if (!newEmployeeName.trim() || !selectedUserId) return;
+        try {
+            const res = await instance.post("/employees", {
+                project_id: projectId,
+                name: newEmployeeName.trim(),
+                user_id: selectedUserId,
+            });
+            if (res.status === HttpStatusCode.Created || res.status === HttpStatusCode.Ok) {
+                setModalOpen(false);
+                setNewEmployeeName("");
+                setSelectedUserId(null);
+                // refetch employees
+                const empRes = await instance.get(`/employees?project_id=${projectId}`);
+                if (empRes.status === HttpStatusCode.Ok) setEmployees(empRes.data.content ?? []);
+            }
+        } catch (err) {
+            console.error("Failed to add employee", err);
+        }
+    };
     useEffect(() => {
         const handleClick = () => setContextMenu(null);
         document.addEventListener("click", handleClick);
         return () => document.removeEventListener("click", handleClick);
     }, []);
-
+    useEffect(() => {
+        if (modalOpen) fetchUsers();
+    }, [modalOpen]);
     const deleteBoard = async (id: number, type: "EXPENSE" | "INCOME") => {
         try {
             const res = await instance.delete(`/boards/${id}`);
@@ -447,19 +513,78 @@ export default function Sidebar() {
                             onClick={() => setShowEmployees(!showEmployees)}
                         >
                             <span>Співробітники</span>
-                            {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setModalOpen(true);
+                                    }}
+                                    className="p-1 rounded-full hover:bg-gray-600 transition"
+                                >
+                                    <Plus size={18} />
+                                </button>
+                                {showEmployees ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                         </div>
 
                         {showEmployees && (
                             <div className="pl-6 text-gray-300">
                                 {employees.map((employee) => (
-                                    <Link
-                                        key={employee.id}
-                                        href={`/projects/${projectId}/employees/${employee.id}`}
-                                        className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
-                                    >
-                                        <span>{employee.name}</span>
-                                    </Link>
+                                    <div key={employee.id} className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition">
+                                        {/* Name / Editable input */}
+                                        {renamingEmployee?.id === employee.id ? (
+                                            <input
+                                                type="text"
+                                                value={renamingEmployee.name}
+                                                onChange={(e) =>
+                                                    setRenamingEmployee(prev => prev ? { ...prev, name: e.target.value } : prev)
+                                                }
+                                                onKeyDown={async (e) => {
+                                                    if (e.key === "Enter" && renamingEmployee.name.trim()) {
+                                                        try {
+                                                            await instance.put(`/employees/${employee.id}`, { name: renamingEmployee.name.trim() });
+                                                            setEmployees(prev =>
+                                                                prev.map(emp => emp.id === employee.id ? { ...emp, name: renamingEmployee.name.trim() } : emp)
+                                                            );
+                                                        } catch (err) {
+                                                            console.error("Failed to rename employee", err);
+                                                        } finally {
+                                                            setRenamingEmployee(null);
+                                                        }
+                                                    } else if (e.key === "Escape") {
+                                                        setRenamingEmployee(null);
+                                                    }
+                                                }}
+                                                autoFocus
+                                                className="w-full bg-gray-700 text-white px-2 py-1 rounded outline-none"
+                                            />
+                                        ) : (
+                                            <Link
+                                                key={employee.id}
+                                                href={`/projects/${projectId}/employees/${employee.id}`}
+                                                className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
+                                            >
+                                                <span>{employee.user.id} {employee.name}</span>
+                                            </Link>
+                                        )}
+
+                                        {/* Edit / Delete buttons */}
+                                        <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => setRenamingEmployee({ id: employee.id, name: employee.name })}
+                                                className="px-2 py-1 text-sm rounded bg-gray-600 hover:bg-gray-500 transition"
+                                            >
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                onClick={() => confirmDeleteEmployee(employee)}
+                                                className="px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm"
+                                            >
+                                                X
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -477,6 +602,69 @@ export default function Sidebar() {
             >
                 {collapsed ? <ArrowRight size={24}/> : <ArrowLeft size={24}/>}
             </button>
+            {modalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80 relative">
+                        <h2 className="text-lg font-bold mb-4">Додати співробітника</h2>
+
+                        <input
+                            type="text"
+                            placeholder="Ім'я"
+                            value={newEmployeeName}
+                            onChange={(e) => setNewEmployeeName(e.target.value)}
+                            className="w-full mb-3 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        />
+
+                        <select
+                            value={selectedUserId ?? ""}
+                            onChange={(e) => setSelectedUserId(Number(e.target.value))}
+                            className="w-full mb-4 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        >
+                            <option value="" disabled>Виберіть користувача</option>
+                            {users.map((user) => (
+                                <option key={user.id} value={user.id}>{user.id} {user.username}</option>
+                            ))}
+                        </select>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={handleAddEmployee}
+                                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 transition"
+                            >
+                                Додати
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {deleteModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80">
+                        <h2 className="text-lg font-bold mb-4">Видалити співробітника?</h2>
+                        <p className="mb-4">Ви впевнені, що хочете видалити {employeeToDelete?.name}?</p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={handleDeleteEmployee}
+                                className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 transition"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

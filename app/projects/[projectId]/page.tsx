@@ -11,5 +11,5 @@ export default function Home() {
     if (user?.role == "OFFERS_MANAGER")
         return (<TicketsPage/>)
 
-    return <div>{isAdmin ? <AdminDashboard/> : <UserDashboard/>}</div>;
+    return isAdmin ? <AdminDashboard/> : <UserDashboard/>;
 }

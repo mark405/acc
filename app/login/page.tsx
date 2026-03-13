@@ -15,7 +15,13 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [totpRequired, setTotpRequired] = useState(false); // flag if TOTP is required
     const router = useRouter();
-
+    const getErrorMessage = (err: any) => {
+        debugger;
+        if (!err.response || !err.response.data) return "Unknown error";
+        const data = err.response.data;
+        if (typeof data === "object") return errorMessages[data.message] || JSON.stringify(data);
+        return String(data);
+    };
     const { checkAuth } = useAuth(); // get checkAuth from context
     const handleLogin = async () => {
         setError("");
@@ -38,7 +44,7 @@ export default function LoginPage() {
                     setError("");
                     return;
                 }
-                setError(errorMessages[err.response.data] || err.response.data);
+                setError(getErrorMessage(err));
             }
         } else {
             try {
@@ -49,7 +55,7 @@ export default function LoginPage() {
                 if (err.response.status == HttpStatusCode.Unauthorized) {
                     setError("Неправильний код");
                 } else {
-                    setError(errorMessages[err.response.data] || err.response.data);
+                    setError(getErrorMessage(err));
                 }
             }
         }
