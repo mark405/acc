@@ -2,7 +2,7 @@
 
 import {KeyboardEvent, useEffect, useRef, useState} from "react";
 import Link from "next/link";
-import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus} from "lucide-react";
+import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Edit2, Plus, Trash2} from "lucide-react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -574,14 +574,14 @@ export default function Sidebar() {
                                                 onClick={() => setRenamingEmployee({ id: employee.id, name: employee.name })}
                                                 className="px-2 py-1 text-sm rounded bg-gray-600 hover:bg-gray-500 transition"
                                             >
-                                                Edit
+                                                <Edit2 size={16} />
                                             </button>
 
                                             <button
                                                 onClick={() => confirmDeleteEmployee(employee)}
                                                 className="px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm"
                                             >
-                                                X
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>
