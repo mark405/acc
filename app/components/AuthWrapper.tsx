@@ -29,7 +29,7 @@ export default function AuthWrapper({children}: AuthWrapperProps) {
 
     if (publicPages.includes(pathname)) return <>{children}</>;
 
-    if (pathname === "/") return (
+    if (pathname === "/" || pathname == "/accounts") return (
         <>
             <Navbar/>
             {children}

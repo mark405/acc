@@ -12,7 +12,7 @@ import {useRouter} from "next/navigation";
 import {ChangeRoleModal} from "@/app/components/ChangeRoleModal";
 import Pagination from "@/app/components/Pagination";
 
-const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER", "HEAD_OF_AFFILIATE"];
+const roles = ["USER", "ADMIN"];
 
 export default function AccountsPage() {
     const router = useRouter();

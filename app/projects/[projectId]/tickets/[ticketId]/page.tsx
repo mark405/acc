@@ -194,13 +194,13 @@ export default function TicketDetailsPage() {
             <motion.div
                 initial={{opacity: 0, y: 10}}
                 animate={{opacity: 1, y: 0}}
-                className="border-3 border-gray-600rounded-2xl shadow rounded-2xl p-6 relative"
+                className="border-3 border-gray-400 shadow rounded-2xl p-6 relative bg-gray-700/50"
             >
                 {/* header */}
                 <div className="flex flex-wrap justify-between gap-4 mb-4">
                     <div>
-                        <div className="text-2xl font-bold">#{ticket.id}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-2xl font-bold text-white">#{ticket.id}</div>
+                        <div className="text-xs text-gray-400">
                             {new Date(ticket.created_at).toLocaleString("uk-UA")}
                         </div>
                     </div>
@@ -246,7 +246,7 @@ export default function TicketDetailsPage() {
                 </div>
 
                 {/* text */}
-                <div className="text-gray-900 text-lg font-semibold whitespace-pre-wrap leading-relaxed">
+                <div className="text-gray-200 text-lg font-semibold whitespace-pre-wrap leading-relaxed">
                     {ticket.text}
                 </div>
                 {ticket.files?.length > 0 && (
@@ -290,9 +290,9 @@ export default function TicketDetailsPage() {
                     </div>
                 )}
                 {/* footer карточки */}
-                <div className="mt-6 flex justify-between border-t items-center pt-4">
+                <div className="mt-6 flex justify-between border-t items-center pt-4 border-gray-500">
                     {/* слева: информация о создателе и назначенных */}
-                    <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+                    <div className="text-sm text-gray-300 flex flex-wrap gap-x-4 gap-y-1">
         <span>
             Створив <b>{ticket.created_by.name}</b>
         </span>
@@ -362,13 +362,13 @@ export default function TicketDetailsPage() {
 
             {/* Comments */}
             <div>
-                <h2 className="text-lg font-bold mb-4">Коментарі</h2>
+                <h2 className="text-lg font-bold mb-4 text-white">Коментарі</h2>
 
                 <div className="space-y-4">
                     {comments.map((c) => (
                         <div
                             key={c.id}
-                            className={`relative rounded-xl border p-4 shadow-sm  transition
+                            className={`relative rounded-xl border p-4 shadow-sm  transition bg-gray-700/50 border-gray-400 text-white
             ${editingId === c.id ? "ring-2 ring-yellow-300" : ""}`}
                         >
                             {/* actions */}
@@ -392,7 +392,7 @@ export default function TicketDetailsPage() {
                                     )}
                                 </div>
                             )}
-                            <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                            <div className="text-sm text-white whitespace-pre-wrap">
                                 {c.text}
                             </div>
                             {c.attachments?.length > 0 && (
@@ -430,7 +430,7 @@ export default function TicketDetailsPage() {
                                     })}
                                 </div>
                             )}
-                            <div className="text-xs text-gray-500 mt-3">
+                            <div className="text-xs text-gray-400 mt-3">
                                 <b>{c.created_by.name}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
                             </div>
                         </div>
@@ -438,11 +438,11 @@ export default function TicketDetailsPage() {
                 </div>
 
                 {/* add comment */}
-                <div className="mt-6  border rounded-xl p-4 shadow-sm space-y-3">
+                <div className="mt-6  border rounded-xl p-4 shadow-sm space-y-3 bg-gray-700/50 border-gray-400">
   <textarea
       value={text}
       onChange={(e) => setText(e.target.value)}
-      className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-300 outline-none"
+      className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-300 outline-none text-white  border-gray-400 placeholder-white"
       placeholder="Написати коментар..."
   />
 
@@ -453,7 +453,7 @@ export default function TicketDetailsPage() {
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
                             onPaste={handlePasteNew}
-                            className="w-full min-h-[100px] border-2 border-dashed border-gray-700 rounded-lg  flex flex-col items-center justify-center text-gray-400 p-4 cursor-pointer hover:border-purple-900 transition"
+                            className="w-full min-h-[100px] border-2 border-dashed border-gray-400 rounded-lg  flex flex-col items-center justify-center text-white p-4 cursor-pointer hover:border-purple-900 transition"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             {files.length === 0 ? (
@@ -496,7 +496,7 @@ export default function TicketDetailsPage() {
 
                     <button
                         onClick={addComment}
-                        className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:scale-[1.02] active:scale-95 transition"
+                        className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:scale-[1.02] active:scale-95 transition"
                     >
                         Додати коментар
                     </button>

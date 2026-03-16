@@ -68,7 +68,7 @@ export default function AdminDashboard() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold mb-6 text-center">Статистика</h1>
+            <h1 className="text-4xl font-bold mb-6 text-center text-white">Статистика</h1>
 
             {/* Tabs */}
             <div className="flex justify-center gap-5 mb-6 bg-gray-800 p-3 rounded-4xl w-max mx-auto">
@@ -92,17 +92,17 @@ export default function AdminDashboard() {
 
             <div className="flex gap-6 items-start h-132">
                 {/* Table */}
-                <div className="border border-gray-300 shadow bg-white w-1/3 h-full">
+                <div className="border  shadow  w-1/3 h-full">
                     <table className="w-full text-center">
-                        <thead className="bg-gray-100 border-b">
-                        <tr className="bg-gray-900  text-white">
-                            <th className="py-2 px-4">Місяць</th>
-                            <th className="py-2 px-4">Сума</th>
-                        </tr>
+                        <thead >
+                        <tr className="border border-gray-300 text-white">
+                                <th className="py-2 px-4">Місяць</th>
+                                <th className="py-2 px-4">Сума</th>
+                            </tr>
                         </thead>
                         <tbody>
                         {stats.map((m) => (
-                            <tr key={m.month} className="border-b bg-gray-800  text-white hover:bg-gray-700">
+                            <tr key={m.month} className="border-b border-gray-300  text-white hover:bg-gray-700">
                                 <td className="py-2 px-4">{monthNames[m.month - 1]}</td>
                                 <td className="py-2 px-4 font-medium">{m.amount.toFixed(2)} $</td>
                             </tr>
@@ -163,17 +163,17 @@ export default function AdminDashboard() {
                 <button
                     disabled={false}
                     onClick={() => setYear(year - 1)}
-                    className="px-5 py-2 rounded-xl bg-gray-800 text-white hover:scale-105 active:scale-95 transition"
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white hover:scale-105 active:scale-95 transition"
                 >
                     ← Попередній
                 </button>
 
-                <span className="text-xl font-semibold">{year}</span>
+                <span className="text-xl font-semibold text-white">{year}</span>
 
                 <button
                     disabled={false}
                     onClick={() => setYear(year + 1)}
-                    className="px-5 py-2 rounded-xl bg-gray-800 text-white  hover:scale-105 active:scale-95 transition"
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white  hover:scale-105 active:scale-95 transition"
                 >
                     Наступний →
                 </button>

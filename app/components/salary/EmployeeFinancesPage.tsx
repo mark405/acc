@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import {useAuth} from "@/app/components/AuthProvider";
 import Pagination from "@/app/components/Pagination";
+import {useParams} from "next/navigation";
 
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
@@ -49,7 +50,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         paidRef: 0,
         percentQFD: 0,
     });
-
+    const projectId = useParams().projectId;
     const [isAdvanceModalOpen, setAdvanceModalOpen] = useState(false);
     const [advanceAmount, setAdvanceAmount] = useState(0);
     const [advanceDate, setAdvanceDate] = useState("");
@@ -142,6 +143,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                 income_qfd: Number(newFinance.incomeQFD),
                 paid_ref: Number(newFinance.paidRef),
                 percent_qfd: Number(newFinance.percentQFD),
+                project_id: projectId
             });
             setAdding(false);
             setNewFinance({
@@ -233,7 +235,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
-            {isAdmin && <h1 className="text-4xl font-bold mb-4 text-center">Співробітник {employee?.name}</h1>}
+            {isAdmin && <h1 className="text-4xl font-bold mb-4 text-center text-white">Співробітник {employee?.name}</h1>}
 
             <div className="overflow-visible">
                 <table className="min-w-full border-collapse border border-gray-300">
@@ -317,7 +319,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                     {adding && (
                         <tr className="border-t border-gray-300 align-middle  transition">
                             {/* Start Date */}
-                            <td className="px-2 py-1 flex flex-col">
+                            <td className="px-2 py-1 flex flex-col text-white">
                                 <label>Початок</label>
                                 <DatePicker
                                     selected={newFinance.startDate ? new Date(newFinance.startDate) : null}
@@ -334,7 +336,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                             </td>
 
                             {/* End Date */}
-                            <td className="px-2 py-1 flex flex-col">
+                            <td className="px-2 py-1 flex flex-col text-white">
                                 <label>Кінець</label>
                                 <DatePicker
                                     selected={newFinance.endDate ? new Date(newFinance.endDate) : null}
@@ -346,7 +348,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                         errors.endDate ? "border-red-800" : "border-gray-300"
                                     }`}/>
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1 text-white">
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -362,7 +364,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     }`}
                                 />
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1 text-white">
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -378,7 +380,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     }`}
                                 />
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1 text-white">
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -424,7 +426,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                             {editingId === f.id ? (
                                 <>
                                     {/* Start Date */}
-                                    <td className="px-2 py-1 flex flex-col">
+                                    <td className="px-2 py-1 flex flex-col text-white">
                                         <label>Початок</label>
                                         <DatePicker
                                             selected={editingFinance.startDate ? new Date(editingFinance.startDate) : null}
@@ -440,7 +442,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     </td>
 
                                     {/* End Date */}
-                                    <td className="px-2 py-1 flex flex-col">
+                                    <td className="px-2 py-1 flex flex-col text-white">
                                         <label>Кінець</label>
                                         <DatePicker
                                             selected={editingFinance.endDate ? new Date(editingFinance.endDate) : null}
@@ -453,7 +455,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     </td>
 
                                     {/* Income QFD */}
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1 text-white">
                                         <input
                                             type="text"
                                             value={editingFinance.incomeQFD}
@@ -468,7 +470,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     </td>
 
                                     {/* Paid Ref */}
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1 text-white">
                                         <input
                                             type="text"
                                             value={editingFinance.paidRef}
@@ -480,7 +482,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     </td>
 
                                     {/* Percent QFD */}
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1 text-white">
                                         <input
                                             type="text"
                                             value={editingFinance.percentQFD}
@@ -495,7 +497,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                     </td>
 
                                     {/* Actions */}
-                                    <td className="px-2 py-1 align-middle">
+                                    <td className="px-2 py-1 align-middle text-white">
                                         <div className="flex items-center justify-center gap-2 h-full">
                                             {isAdmin &&
                                                 <>
@@ -518,11 +520,11 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-2">{formatBackendDate(f.start_date)} – {formatBackendDate(f.end_date)}</td>
-                                    <td className="px-4 py-2">{f.income_qfd}</td>
-                                    <td className="px-4 py-2">{f.paid_ref}</td>
-                                    <td className="px-4 py-2">{f.percent_qfd}</td>
-                                    <td className="px-4 py-2 relative text-left whitespace-nowrap">
+                                    <td className="px-4 py-2 text-white">{formatBackendDate(f.start_date)} – {formatBackendDate(f.end_date)}</td>
+                                    <td className="px-4 py-2 text-white">{f.income_qfd}</td>
+                                    <td className="px-4 py-2 text-white">{f.paid_ref}</td>
+                                    <td className="px-4 py-2 text-white">{f.percent_qfd}</td>
+                                    <td className="px-4 py-2 relative text-left whitespace-nowrap text-white">
                                         {f.advances.length !== 0 &&
                                             <button
                                                 onClick={() => toggle(i)}

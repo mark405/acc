@@ -163,7 +163,7 @@ export default function BoardPage({
         <div className="p-6 max-w-7xl mx-auto">
             {board && (
                 <>
-                    <h1 className="text-4xl font-bold mb-10 text-center">
+                    <h1 className="text-4xl font-bold mb-10 text-center text-white">
                         {board.operation_type == "EXPENSE" ? `Витрати: ${board.name}` : `Доходи: ${board.name}`}
                     </h1>
 

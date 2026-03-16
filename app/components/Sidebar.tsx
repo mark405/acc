@@ -2,7 +2,7 @@
 
 import {KeyboardEvent, useEffect, useRef, useState} from "react";
 import Link from "next/link";
-import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Edit2, Plus, Trash2} from "lucide-react";
+import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Edit2, Plus, Trash2, UserCog} from "lucide-react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -34,7 +34,7 @@ export default function Sidebar() {
     const [newEmployeeName, setNewEmployeeName] = useState("");
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-
+    const {isAdmin} = useAuth();
     const expenseInputRef = useRef<HTMLInputElement>(null);
     const incomeInputRef = useRef<HTMLInputElement>(null);
     const projectId = useParams().projectId;
@@ -42,13 +42,44 @@ export default function Sidebar() {
     const [renamingEmployee, setRenamingEmployee] = useState<{ id: number; name: string } | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeResponse | null>(null);
-
+    const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+    const [employeeForRole, setEmployeeForRole] = useState<EmployeeResponse | null>(null);
+    const [selectedRole, setSelectedRole] = useState<string>("MANAGER");
 // Function to open modal
     const confirmDeleteEmployee = (employee: EmployeeResponse) => {
         setEmployeeToDelete(employee);
         setDeleteModalOpen(true);
     };
+    const openRoleDialog = (employee: EmployeeResponse) => {
+        setEmployeeForRole(employee);
+        setSelectedRole(employee.role ?? "MANAGER");
+        setRoleDialogOpen(true);
+    };
+    const handleChangeRole = async () => {
+        if (!employeeForRole) return;
 
+        try {
+            const res = await instance.put(
+                `/employees/change-role/${employeeForRole.id}`,
+                {role: selectedRole}
+            );
+
+            if (res.status === HttpStatusCode.NoContent) {
+                setEmployees(prev =>
+                    prev.map(emp =>
+                        emp.id === employeeForRole.id
+                            ? {...emp, role: selectedRole}
+                            : emp
+                    )
+                );
+            }
+        } catch (err) {
+            console.error("Failed to change role", err);
+        } finally {
+            setRoleDialogOpen(false);
+            setEmployeeForRole(null);
+        }
+    };
 // Function to actually delete
     const handleDeleteEmployee = async () => {
         if (!employeeToDelete) return;
@@ -70,7 +101,7 @@ export default function Sidebar() {
     const fetchUsers = async () => {
         try {
             const res = await instance.get("/users", {
-                params: { project_id: projectId }
+                params: {project_id: projectId}
             });
             if (res.status === HttpStatusCode.Ok) {
                 setUsers(res.data.content ?? []); // <- use .content
@@ -521,30 +552,37 @@ export default function Sidebar() {
                                     }}
                                     className="p-1 rounded-full hover:bg-gray-600 transition"
                                 >
-                                    <Plus size={18} />
+                                    <Plus size={18}/>
                                 </button>
-                                {showEmployees ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
                             </div>
                         </div>
 
                         {showEmployees && (
                             <div className="pl-6 text-gray-300">
                                 {employees.map((employee) => (
-                                    <div key={employee.id} className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition">
+                                    <div key={employee.id}
+                                         className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition">
                                         {/* Name / Editable input */}
                                         {renamingEmployee?.id === employee.id ? (
                                             <input
                                                 type="text"
                                                 value={renamingEmployee.name}
                                                 onChange={(e) =>
-                                                    setRenamingEmployee(prev => prev ? { ...prev, name: e.target.value } : prev)
+                                                    setRenamingEmployee(prev => prev ? {
+                                                        ...prev,
+                                                        name: e.target.value
+                                                    } : prev)
                                                 }
                                                 onKeyDown={async (e) => {
                                                     if (e.key === "Enter" && renamingEmployee.name.trim()) {
                                                         try {
-                                                            await instance.put(`/employees/${employee.id}`, { name: renamingEmployee.name.trim() });
+                                                            await instance.put(`/employees/${employee.id}`, {name: renamingEmployee.name.trim()});
                                                             setEmployees(prev =>
-                                                                prev.map(emp => emp.id === employee.id ? { ...emp, name: renamingEmployee.name.trim() } : emp)
+                                                                prev.map(emp => emp.id === employee.id ? {
+                                                                    ...emp,
+                                                                    name: renamingEmployee.name.trim()
+                                                                } : emp)
                                                             );
                                                         } catch (err) {
                                                             console.error("Failed to rename employee", err);
@@ -571,17 +609,29 @@ export default function Sidebar() {
                                         {/* Edit / Delete buttons */}
                                         <div className="flex items-center space-x-2">
                                             <button
-                                                onClick={() => setRenamingEmployee({ id: employee.id, name: employee.name })}
+                                                onClick={() => setRenamingEmployee({
+                                                    id: employee.id,
+                                                    name: employee.name
+                                                })}
                                                 className="px-2 py-1 text-sm rounded bg-gray-600 hover:bg-gray-500 transition"
                                             >
-                                                <Edit2 size={16} />
+                                                <Edit2 size={16}/>
                                             </button>
+                                            {employee.role !== "ADMIN" && (
 
+
+                                                <button
+                                                    onClick={() => openRoleDialog(employee)}
+                                                    className="px-2 py-1 text-sm rounded bg-blue-600 hover:bg-blue-500 transition"
+                                                >
+                                                    <UserCog size={16}/>
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => confirmDeleteEmployee(employee)}
                                                 className="px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={16}/>
                                             </button>
                                         </div>
                                     </div>
@@ -660,6 +710,45 @@ export default function Sidebar() {
                                 className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 transition"
                             >
                                 Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {roleDialogOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80">
+                        <h2 className="text-lg font-bold mb-4">Змінити роль</h2>
+
+                        <p className="mb-3">
+                            Роль співробітника: {employeeForRole?.role}
+                        </p>
+
+                        <select
+                            value={selectedRole}
+                            onChange={(e) => setSelectedRole(e.target.value)}
+                            className="w-full mb-4 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        >
+                            <option value="MANAGER">MANAGER</option>
+                            <option value="ADMIN">ADMIN</option>
+                            <option value="OFFERS_MANAGER">Offers Manager</option>
+                            <option value="TECH_MANAGER">Tech Manager</option>
+                            <option value="HEAD_OF_AFFILIATE">Head Of Affiliate</option>
+                        </select>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setRoleDialogOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+
+                            <button
+                                onClick={handleChangeRole}
+                                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 transition"
+                            >
+                                Зберегти
                             </button>
                         </div>
                     </div>

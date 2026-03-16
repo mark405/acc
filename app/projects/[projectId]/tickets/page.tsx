@@ -107,11 +107,11 @@ export default function TicketsPage() {
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
+                <h1 className="text-4xl font-bold mb-4 text-center text-white">Тікети</h1>
 
                 <div className="flex items-center gap-3">
                     {(employee?.role === "ADMIN" || employee?.role === "HEAD_OF_AFFILIATE" || employee?.role === "MANAGER") && (
-                        <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                        <div className="flex items-center gap-2 bg-indigo-600 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
                                 onChange={(e) => {
@@ -120,7 +120,7 @@ export default function TicketsPage() {
                                     );
                                     setPage(0);
                                 }}
-                                className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                                className="bg-indigo-600 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                             >
                                 <option value="ALL">Всі типи</option>
                                 <option value="TECH_GOAL">Tech Goal</option>
@@ -129,7 +129,7 @@ export default function TicketsPage() {
                             </select>
                         </div>
                     )}
-                    <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                    <div className="flex items-center gap-2 bg-indigo-600 text-white shadow rounded-xl px-4 py-2">
                         <select
                             value={statusType}
                             onChange={(e) => {
@@ -138,7 +138,7 @@ export default function TicketsPage() {
                                 );
                                 setPage(0);
                             }}
-                            className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                            className="bg-indigo-600 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                         >
                             <option value="ALL">Всі статуси</option>
                             <option value="OPENED">Відкриті</option>
@@ -168,12 +168,12 @@ export default function TicketsPage() {
                         onDoubleClick={() =>
                             (window.location.href = `/projects/${projectId}/tickets/${ticket.id}`)
                         }
-                        className="group border-3 border-gray-600  rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
+                        className="group border-3 border-gray-400 bg-gray-700/50 rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
                     >
                         {/* top */}
                         <div className="flex flex-wrap justify-between items-start gap-4">
                             <div className="space-y-1">
-                                <div className="text-xl font-bold">#{ticket.id}</div>
+                                <div className="text-xl font-bold text-white">#{ticket.id}</div>
 
                                 <div className="text-sm text-gray-500">
                                     {new Date(ticket.created_at).toLocaleString("uk-UA")}
@@ -222,13 +222,13 @@ export default function TicketsPage() {
                         </div>
 
                         {/* body */}
-                        <div className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">
+                        <div className="text-gray-200 text-lg whitespace-pre-wrap leading-relaxed">
                             {ticket.text}
                         </div>
                         {/* files */}
                         {ticket.files?.length > 0 && (
                             <div className="mt-5 border-t pt-4">
-                                <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                                <div className="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">
                                     Файли
                                 </div>
 
@@ -268,9 +268,9 @@ export default function TicketsPage() {
 
                             </div>
                         )}
-                        <div className="mt-6 flex justify-between border-t items-center pt-4">
+                        <div className="mt-6 flex justify-between border-t border-gray-500 items-center pt-4">
                             {/* слева: информация о создателе и назначенных */}
-                            <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+                            <div className="text-sm text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
         <span>
             Створив <b>{ticket.created_by.name}</b>
         </span>

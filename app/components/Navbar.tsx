@@ -13,8 +13,6 @@ export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const {user, setUser, isAdmin} = useAuth();
     const router = useRouter();
-    const pathname = usePathname();
-    const isProjectPage = pathname == "/";
     const [project, setProject] = useState<ProjectResponse | null>(null);
     const handleLogout = async () => {
         const res = await instance.post("/auth/logout");
@@ -83,13 +81,13 @@ export default function Navbar() {
                 </Link>
 
                 <span className="text-2xl md:text-3xl font-extrabold text-white">
-            {isAdmin && isProjectPage && "TRFFGN GROUP"}
+            {isAdmin && projectId == null && "TRFFGN GROUP"}
                     {!isAdmin && (projectId == null ? "TRFFGN GROUP" : project?.name)}
         </span>
             </div>
             {/* Right side with links and profile */}
             <div className="flex items-center space-x-8 ml-auto relative">
-                {(!isAdmin && !isProjectPage) && (
+                {(!isAdmin && projectId != null) && (
                     <>
                         <Link
                             href={`/projects/${projectId}/`}
@@ -105,9 +103,9 @@ export default function Navbar() {
                         </Link>
                     </>
                 )}
-                {(isAdmin && isProjectPage) && (
+                {(isAdmin && projectId == null) && (
                     <Link
-                        href={`/projects/${projectId}/tickets`}
+                        href={`/accounts`}
                         className="text-white text-lg font-medium hover:text-gray-300 transition"
                     >
                         Облікові записи
@@ -120,7 +118,7 @@ export default function Navbar() {
                             {href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true},
                         ]
-                            .filter(link => !link.hideOnProjectPage || !isProjectPage)
+                            .filter(link => !link.hideOnProjectPage || projectId != null)
                             .map(link => (
                                 <Link
                                     key={link.href}
@@ -159,7 +157,7 @@ export default function Navbar() {
                     {menuOpen && (
                         <div
                             className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg py-3 text-white z-50">
-                            {isProjectPage && (
+                            {projectId == null && (
                                 <Link
                                     href="/settings"
                                     className="block px-4 py-3 text-base hover:bg-gray-700 transition"

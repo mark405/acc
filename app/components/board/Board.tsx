@@ -77,7 +77,7 @@ export default function Board({
                 category_id: newOperation.categoryId,
                 comment: newOperation.comment,
                 amount: Number(newOperation.amount),
-                operation_type: newOperation.operationType,
+                operation_type: board.operation_type,
                 date: newOperation.date ? new Date(newOperation.date).toISOString() : undefined,
             });
             setAdding(false);
@@ -108,6 +108,7 @@ export default function Board({
     };
 
     const handleSave = async (id: number) => {
+        debugger;
         try {
             await instance.put(`/operations/${id}`, {
                 board_id: board.id,
@@ -125,10 +126,10 @@ export default function Board({
     };
 
     return (
-        <div className="overflow-x-auto flex-1">
-            <table className="min-w-full table-fixed border-collapse border border-gray-300">
+        <div className="overflow-x-auto flex-1 ">
+            <table className="min-w-full table-fixed border-collapse border border-gray-600 rounded-lg shadow-lg">
                 <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr className="bg-gray-700/50 text-white">
                     {columns.map((field) => (
                         <th
                             key={field}
@@ -150,7 +151,7 @@ export default function Board({
 
                 <tbody>
                 {adding && (
-                    <tr className="border-t border-gray-300 hover:bg-gray-800 transition hover:text-white">
+                    <tr className="border-t border-gray-300 bg-gray-700/50 transition hover:text-white">
                         <td className="px-2 py-1">
                             <input
                                 type="text"
@@ -162,7 +163,7 @@ export default function Board({
                                         setNewOperation({ ...newOperation, amount: value === "" ? 0 : Number(value) });
                                     }
                                 }}
-                                className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                                className={`text-white w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                                     errors.amount ? "border-red-800" : "border-gray-300"
                                 }`}
                             />
@@ -171,15 +172,15 @@ export default function Board({
                             <select
                                 value={newOperation.categoryId || ""}
                                 onChange={(e) => setNewOperation({ ...newOperation, categoryId: Number(e.target.value) })}
-                                className={`w-full px-2 py-1 border rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                                    errors.categoryId ? "border-red-800" : "border-gray-300"
+                                className={`w-full px-2 py-1 border rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                                    errors.categoryId ? "border-red-800" : "border-gray-700"
                                 }`}
                             >
-                                <option value="" disabled className="text-gray-400">
+                                <option value="" disabled>
                                     Виберіть категорію
                                 </option>
                                 {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id} className="bg-gray-800 text-white">
+                                    <option key={cat.id} value={cat.id}>
                                         {cat.name}
                                     </option>
                                 ))}
@@ -190,7 +191,7 @@ export default function Board({
                                 type="text"
                                 value={newOperation.comment}
                                 onChange={(e) => setNewOperation({...newOperation, comment: e.target.value})}
-                                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="w-full px-2 py-1 border text-white border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
                         </td>
                         <td className="px-2 py-1">
@@ -203,7 +204,7 @@ export default function Board({
                                 timeFormat="HH:mm"
                                 timeIntervals={1}
                                 dateFormat="yyyy-MM-dd HH:mm"
-                                className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 "
+                                className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
                             />
                         </td>
                         <td className="px-2 py-1 flex gap-2 justify-center">
@@ -225,7 +226,7 @@ export default function Board({
 
                 {operations.length > 0 ? (
                     operations.map((op) => (
-                        <tr key={op.id} className="border-t border-gray-300 hover:bg-gray-800 hover:text-white transition">
+                        <tr key={op.id} className=" bg-gray-700/50 hover:bg-gray-800 hover:text-white transition">
                             {editingId === op.id ? (
                                 <>
                                     <td className="px-4 py-2">
@@ -233,26 +234,42 @@ export default function Board({
                                             type="number"
                                             value={editingOperation.amount}
                                             onChange={(e) => setEditingOperation({...editingOperation, amount: Number(e.target.value)})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2">
                                         <select
                                             value={editingOperation.categoryId}
                                             onChange={(e) => setEditingOperation({...editingOperation, categoryId: Number(e.target.value)})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full bg-gray-700 text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         >
                                             {categories.map((cat) => (
                                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                                             ))}
                                         </select>
+                                        {/*<select*/}
+                                        {/*    value={newOperation.categoryId || ""}*/}
+                                        {/*    onChange={(e) => setNewOperation({ ...newOperation, categoryId: Number(e.target.value) })}*/}
+                                        {/*    className={`w-full px-2 py-1 border rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${*/}
+                                        {/*        errors.categoryId ? "border-red-800" : "border-gray-700"*/}
+                                        {/*    }`}*/}
+                                        {/*>*/}
+                                        {/*    <option value="" disabled>*/}
+                                        {/*        Виберіть категорію*/}
+                                        {/*    </option>*/}
+                                        {/*    {categories.map((cat) => (*/}
+                                        {/*        <option key={cat.id} value={cat.id}>*/}
+                                        {/*            {cat.name}*/}
+                                        {/*        </option>*/}
+                                        {/*    ))}*/}
+                                        {/*</select>*/}
                                     </td>
                                     <td className="px-4 py-2">
                                         <input
                                             type="text"
                                             value={editingOperation.comment}
                                             onChange={(e) => setEditingOperation({...editingOperation, comment: e.target.value})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2">
@@ -265,7 +282,7 @@ export default function Board({
                                             timeFormat="HH:mm"
                                             timeIntervals={1}
                                             dateFormat="yyyy-MM-dd HH:mm"
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2 flex gap-2 justify-center">
@@ -285,10 +302,10 @@ export default function Board({
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-2 ">{op.amount.toFixed(2)}</td>
-                                    <td className="px-4 py-2">{op.category?.name}</td>
-                                    <td className="px-4 py-2">{op.comment || <span className="italic text-gray-500">—</span>}</td>
-                                    <td className="px-4 py-2">
+                                    <td className="px-4 py-2 text-white">{op.amount.toFixed(2)}</td>
+                                    <td className="px-4 py-2 text-white">{op.category?.name}</td>
+                                    <td className="px-4 py-2 text-white">{op.comment || <span className="italic text-gray-500">—</span>}</td>
+                                    <td className="px-4 py-2 text-white">
                                         {new Date(op.date).toLocaleString("en-GB", {
                                             year: "numeric",
                                             month: "2-digit",

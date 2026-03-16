@@ -7,7 +7,7 @@ import {HistoryResponse} from "@/app/types";
 import {useParams, useRouter} from "next/navigation";
 import Pagination from "@/app/components/Pagination";
 
-const historyTypes = ["USER", "OPERATION"];
+const historyTypes = ["USER", "OPERATION", "EMPLOYEE"];
 
 export default function HistoryPage() {
     const router = useRouter();
@@ -156,22 +156,22 @@ export default function HistoryPage() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4 text-center">Історія дій</h1>
+            <h1 className="text-4xl font-bold mb-4 text-center text-white">Історія дій</h1>
 
             {/* Filters */}
-            <div className="flex items-center space-x-4 mb-4 justify-center">
+            <div className="flex items-center space-x-4 mb-4 justify-center ">
                 <input
                     type="text"
                     placeholder="Шукати по логіну"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 border-indigo-600 text-white bg-gray-700/50"
                     autoComplete="off"
                 />
                 <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 border-indigo-600 bg-indigo-600 text-white"
                 >
                     <option value="">Усі типи</option>
                     {historyTypes.map((t) => (
@@ -184,7 +184,7 @@ export default function HistoryPage() {
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="min-w-full table-fixed border-collapse border border-gray-300">
+                <table className="min-w-full table-fixed border-collapse border border-gray-600 bg-gray-700/50 ">
                     <thead>
                     <tr className="bg-gray-800 text-white">
                         <th
@@ -210,11 +210,11 @@ export default function HistoryPage() {
                     </thead>
                     <tbody>
                     {histories.map((h) => (
-                        <tr key={h.id} className="border-t border-gray-300 ">
-                            <td className="px-4 py-2 text-left">{h.employee.name}</td>
-                            <td className="px-4 py-2 text-left">{h.type}</td>
-                            <td className="px-4 py-2 text-left">{renderBodyMessage(h.body)}</td>
-                            <td className="w-1/5 px-4 py-2 text-left">
+                        <tr key={h.id} className="border-t border-gray-600 ">
+                            <td className="px-4 py-2 text-left text-white">{h.employee.name}</td>
+                            <td className="px-4 py-2 text-left text-white">{h.type}</td>
+                            <td className="px-4 py-2 text-left text-white">{renderBodyMessage(h.body)}</td>
+                            <td className="w-1/5 px-4 py-2 text-left text-white">
                                 {new Date(h.date).toLocaleString("en-GB", {
                                     year: "numeric",
                                     month: "2-digit",
