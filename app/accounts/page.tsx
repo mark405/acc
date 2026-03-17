@@ -166,6 +166,7 @@ export default function AccountsPage() {
                                 onClick={() => handleSort("createdAt")}>Створення {sortBy === "createdAt" && (direction === "asc" ? "↑" : "↓")}</th>
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
                                 onClick={() => handleSort("modifiedAt")}>Редагування {sortBy === "modifiedAt" && (direction === "asc" ? "↑" : "↓")}</th>
+                            <th className="w-1/4 px-4 py-2 text-left cursor-pointer">Проекти</th>
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer">Дії</th>
                         </tr>
                         </thead>
@@ -196,6 +197,9 @@ export default function AccountsPage() {
                                         hour12: false,
                                         timeZone: "Europe/Kiev",
                                     })}
+                                </td>
+                                <td className="px-4 py-2 text-left">
+                                    {u.projects.map(p => p.name).join(", ")}
                                 </td>
                                 {u.role === "USER" && (
                                     <td className="px-4 py-2 text-left flex gap-2">

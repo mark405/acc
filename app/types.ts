@@ -18,6 +18,7 @@ export interface UserResponse {
     role: string;
     created_at: number;
     modified_at: number;
+    projects: ProjectResponse[];
 }
 
 export interface HistoryResponse {
