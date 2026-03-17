@@ -600,7 +600,7 @@ export default function Sidebar() {
                                             <Link
                                                 key={employee.id}
                                                 href={`/projects/${projectId}/employees/${employee.id}`}
-                                                className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
+                                                className="block w-full"
                                             >
                                                 <span>{employee.user.id} {employee.name} ({employee.role})</span>
                                             </Link>
