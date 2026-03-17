@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { TicketResponse, UserResponse } from "@/app/types";
+import {EmployeeResponse, TicketResponse, UserResponse} from "@/app/types";
 import { instance } from "@/app/api/instance";
+import {useParams} from "next/navigation";
 
 interface EditTicketModalProps {
     isOpen: boolean;
@@ -14,25 +15,26 @@ interface EditTicketModalProps {
 export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicketModalProps) => {
     const [text, setText] = useState(ticket.text);
     const [assignedTo, setAssignedTo] = useState<number[]>(ticket.assigned_to.map(u => u.id));
-    const [users, setUsers] = useState<UserResponse[]>(ticket.assigned_to);
+    const [employees, setEmployees] = useState<EmployeeResponse[]>(ticket.assigned_to);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [filesToAdd, setFilesToAdd] = useState<File[]>([]);
     const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const projectId = useParams().projectId;
     useEffect(() => {
         // Fetch all users when modal opens
         const role = ticket.type == 'ADVERTISER_REQUEST' ? 'OFFERS_MANAGER' : 'TECH_MANAGER';
         if (isOpen) {
-            const fetchAllUsers = async () => {
+            const fetchAllEmployees = async () => {
                 try {
-                    const response = await instance.get("/users", { params: { role: role}});
-                    setUsers(response.data.content);
+                    const response = await instance.get("/employees", { params: { role: role, project_id: projectId}});
+                    setEmployees(response.data.content);
                 } catch (err) {
                     console.error("Error fetching users:", err);
                 }
             };
-            fetchAllUsers();
+            fetchAllEmployees();
         }
     }, [isOpen]);
 
@@ -151,7 +153,7 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                     <label className="text-sm font-medium">Призначення</label>
                     {ticket.type === "TECH_GOAL" ? (
                         <div className="px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-200 text-sm">
-                            {users.map(u => u.username).join(", ")}
+                            {employees.map(u => u.name).join(", ")}
                         </div>
                     ) : (
                         <>
@@ -161,7 +163,7 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                             >
                                 {assignedTo.length === 0
                                     ? "Кому ▾"
-                                    : assignedTo.map(id => users.find(u => u.id === id)?.username).join(", ")}
+                                    : assignedTo.map(id => employees.find(u => u.id === id)?.name).join(", ")}
                                 <span className="ml-2 text-gray-400">▾</span>
                             </button>
 
@@ -170,14 +172,14 @@ export const EditTicketModal = ({ isOpen, ticket, onClose, onUpdate }: EditTicke
                                     ref={dropdownRef}
                                     className="absolute top-full mt-1 w-full max-h-48 overflow-auto bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
                                 >
-                                    {users.map(user => (
+                                    {employees.map(user => (
                                         <div
                                             key={user.id}
                                             className={`px-3 py-2 cursor-pointer hover:bg-gray-700 flex justify-between items-center rounded
                       ${assignedTo.includes(user.id) ? "bg-purple-900" : ""}`}
                                             onClick={() => toggleUser(user.id)}
                                         >
-                                            <span>{user.username}</span>
+                                            <span>{user.name}</span>
                                             {assignedTo.includes(user.id) && (
                                                 <span className="text-purple-900 font-bold">✓</span>
                                             )}

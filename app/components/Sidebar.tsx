@@ -337,7 +337,7 @@ export default function Sidebar() {
 
                         {!collapsed && (
                             <span className="text-2xl md:text-3xl font-extrabold text-white">
-        {projectId == null ? "TRFFGN GROUP" : project?.name}
+        {projectId == null ? "TRFFGN GROUP" : project?.name.toUpperCase()}
     </span>
                         )}
                     </div>
@@ -559,7 +559,7 @@ export default function Sidebar() {
                         </div>
 
                         {showEmployees && (
-                            <div className="pl-6 text-gray-300">
+                            <div className=" text-gray-300">
                                 {employees.map((employee) => (
                                     <div key={employee.id}
                                          className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition">
@@ -602,7 +602,7 @@ export default function Sidebar() {
                                                 href={`/projects/${projectId}/employees/${employee.id}`}
                                                 className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
                                             >
-                                                <span>{employee.user.id} {employee.name}</span>
+                                                <span>{employee.user.id} {employee.name} ({employee.role})</span>
                                             </Link>
                                         )}
 

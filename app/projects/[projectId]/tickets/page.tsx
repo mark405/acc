@@ -40,7 +40,7 @@ export default function TicketsPage() {
         let createdBy;
         let assignedTo;
         let types;
-
+        debugger;
         if (employee?.role == "MANAGER") {
             createdBy = employee?.id;
         }
@@ -93,8 +93,12 @@ export default function TicketsPage() {
 
     useEffect(() => {
         fetchEmployee();
+    }, []);
+
+    useEffect(() => {
+        if (!employee) return;
         fetchTickets();
-    }, [page, filterType, statusType]);
+    }, [employee, page, filterType, statusType]);
 
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",

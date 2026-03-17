@@ -82,7 +82,7 @@ export default function Navbar() {
 
                 <span className="text-2xl md:text-3xl font-extrabold text-white">
             {isAdmin && projectId == null && "TRFFGN GROUP"}
-                    {!isAdmin && (projectId == null ? "TRFFGN GROUP" : project?.name)}
+                    {!isAdmin && (projectId == null ? "TRFFGN GROUP" : project?.name.toUpperCase())}
         </span>
             </div>
             {/* Right side with links and profile */}

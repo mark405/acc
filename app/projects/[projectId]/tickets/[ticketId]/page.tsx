@@ -3,15 +3,15 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
-import {CommentResponse, TicketResponse} from "@/app/types";
+import {CommentResponse, EmployeeResponse, TicketResponse} from "@/app/types";
 import {useAuth} from "@/app/components/AuthProvider";
 import {EditTicketModal} from "@/app/components/EditTicketModal";
 import {motion} from "framer-motion";
 import {EditCommentModal} from "@/app/components/EditTicketCommentModal";
+import {HttpStatusCode} from "axios";
 
 export default function TicketDetailsPage() {
     const {ticketId} = useParams();
-    const {user} = useAuth();
 
     const [ticket, setTicket] = useState<TicketResponse | null>(null);
     const [comments, setComments] = useState<CommentResponse[]>([]);
@@ -28,8 +28,10 @@ export default function TicketDetailsPage() {
     const [preview, setPreview] = useState<string | null>(null);
 
     const [editModalTicket, setEditModalTicket] = useState<TicketResponse | null>(null);
+    const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
 
     const router = useRouter();
+    const projectId = useParams().projectId;
 
     // Загрузка тикета и комментариев
     const load = async () => {
@@ -38,8 +40,18 @@ export default function TicketDetailsPage() {
         setTicket(t.data);
         setComments(c.data);
     };
-
+    const fetchEmployee = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setEmployee(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
     useEffect(() => {
+        fetchEmployee();
         load();
     }, [ticketId]);
 
@@ -143,7 +155,7 @@ export default function TicketDetailsPage() {
     const handleDeleteTicket = async (id: number) => {
         try {
             await instance.delete(`/tickets/${id}`);
-            router.push("/tickets");
+            router.push(`/projects/${projectId}/tickets`);
         } catch (err) {
             console.error("Помилка при видаленні тікета:", err);
         }
@@ -154,7 +166,7 @@ export default function TicketDetailsPage() {
         CLOSED: "Закрито",
     };
 
-    const isWorker = user?.role === "OFFERS_MANAGER" || user?.role === "TECH_MANAGER";
+    const isWorker = employee?.role === "OFFERS_MANAGER" || employee?.role === "TECH_MANAGER";
 
     const statusButtonMap: Record<string, string> = {
         OPENED: "Взяти в роботу",
@@ -312,7 +324,7 @@ export default function TicketDetailsPage() {
 
                     {/* справа: кнопки */}
                     <div className="flex gap-2">
-                        {user?.role === "MANAGER" && (
+                        {employee?.role === "MANAGER" && (
                             <>
                                 <button
                                     onClick={() => setEditModalTicket(ticket)}
@@ -328,7 +340,7 @@ export default function TicketDetailsPage() {
                                 </button>
                             </>
                         )}
-                        {user?.role === "ADMIN" && (
+                        {employee?.role === "ADMIN" && (
                             <>
                                 <button
                                     onClick={() => handleDeleteTicket(ticket.id)}
@@ -372,7 +384,7 @@ export default function TicketDetailsPage() {
             ${editingId === c.id ? "ring-2 ring-yellow-300" : ""}`}
                         >
                             {/* actions */}
-                            {user?.id === c.created_by.id && (
+                            {employee?.id === c.created_by.id && (
                                 <div className="absolute right-3 top-3 flex gap-2">
                                     {editingId !== c.id && (
                                         <>
