@@ -74,6 +74,12 @@ export default function Navbar() {
                             Статистика
                         </Link>
                         <Link
+                            href="/offers"
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Офери
+                        </Link>
+                        <Link
                             href="/tickets"
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >

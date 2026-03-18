@@ -8,6 +8,7 @@ interface User {
     role: string;
     totp_enabled: boolean;
     created_at: number;
+    offers_editable: boolean;
 }
 
 interface AuthContextType {

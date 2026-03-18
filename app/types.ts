@@ -18,6 +18,7 @@ export interface UserResponse {
     role: string;
     created_at: number;
     modified_at: number;
+    offers_editable: boolean;
 }
 
 export interface HistoryResponse {
@@ -81,4 +82,12 @@ export interface CommentResponse {
     created_at: number;
     created_by: UserResponse;
     attachments: FileResponse[];
+}
+
+export interface OfferResponse {
+    id: number;
+    name: string;
+    geo: string;
+    source: string;
+    description: string;
 }

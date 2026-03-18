@@ -4,7 +4,7 @@ import React, {SetStateAction, useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
-import {RefreshCw, Trash2, UserStar} from "lucide-react";
+import {Lock, RefreshCw, Trash2, UserStar} from "lucide-react";
 import {DeleteModal} from "@/app/components/DeleteModal";
 import {ChangePasswordModal} from "@/app/components/ChangePasswordModal";
 import {UserResponse} from "@/app/types";
@@ -16,7 +16,7 @@ const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER", "HEAD_OF_AF
 
 export default function AccountsPage() {
     const router = useRouter();
-    const { isAdmin } = useAuth();
+    const {isAdmin} = useAuth();
 
     if (!isAdmin) {
         router.back()
@@ -121,7 +121,15 @@ export default function AccountsPage() {
             setUserId(null);
         }
     }
-
+    const handleToggleOffersEditable = async (id: number) => {
+        try {
+            await instance.put(`users/offers-editable/${id}`);
+            // Refresh users to see the updated flag
+            fetchUsers();
+        } catch (err) {
+            console.error("Failed to toggle offers editable", err);
+        }
+    };
     return (
         <>
             <div className="p-6 max-w-7xl mx-auto">
@@ -214,6 +222,20 @@ export default function AccountsPage() {
                                             className="text-red-600 hover:text-red-400 cursor-pointer transition"
                                             onClick={() => handleDeleteClick(u.id)}
                                         />
+                                        <Lock
+                                            size={18}
+                                            className={`cursor-pointer transition ${u.offers_editable ? "text-green-600 hover:text-green-400" : "text-gray-600 hover:text-gray-400"}`}
+                                            onClick={() => handleToggleOffersEditable(u.id)}
+                                        />
+                                    </td>
+                                )}
+                                {u.role !== "MANAGER" && (
+                                    <td className="px-4 py-2 text-left flex gap-2">
+                                        <Lock
+                                            size={18}
+                                            className={`cursor-pointer transition ${u.offers_editable ? "text-green-600 hover:text-green-400" : "text-gray-600 hover:text-gray-400"}`}
+                                            onClick={() => handleToggleOffersEditable(u.id)}
+                                        />
                                     </td>
                                 )}
                             </tr>
@@ -241,7 +263,7 @@ export default function AccountsPage() {
                 onConfirm={async (newRole) => {
                     if (userId === null) return;
                     try {
-                        await instance.put(`/users/change-role/${userId}`, { role: newRole });
+                        await instance.put(`/users/change-role/${userId}`, {role: newRole});
                         fetchUsers();
                     } catch (err) {
                         console.error("Failed to change role", err);
