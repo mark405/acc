@@ -58,6 +58,12 @@ export default function Navbar() {
                 {!isAdmin && (
                     <>
                         <Link
+                            href="/offers"
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Офери
+                        </Link>
+                        <Link
                             href="/tickets"
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >
