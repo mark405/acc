@@ -123,7 +123,7 @@ export default function SettingsPage() {
 function TotpForm({ onConfirm }: { onConfirm: (code: string) => void }) {
     const [code, setCode] = useState("");
     return (
-        <div className="mt-2 flex justify-center gap-2">
+        <div className="mt-2 flex justify-center gap-2 text-white">
             <input
                 type="text"
                 placeholder="123456"
