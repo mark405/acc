@@ -155,9 +155,7 @@ export default function TicketsPage() {
                         initial={{opacity: 0, y: 15}}
                         animate={{opacity: 1, y: 0}}
                         transition={{delay: i * 0.03}}
-                        onDoubleClick={() =>
-                            (window.location.href = `/tickets/${ticket.id}`)
-                        }
+                        onClick={() => window.location.href = `/tickets/${ticket.id}`}
                         className="group border-3 border-gray-600  rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
                     >
                         {/* top */}
