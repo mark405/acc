@@ -53,13 +53,13 @@ export default function SettingsPage() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
-                <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+        <div className="min-h-screen flex items-center justify-center bg-gray-800 p-4">
+            <div className="bg-gray-800 shadow-lg rounded-xl p-8 w-full max-w-lg">
+                <h1 className="text-3xl font-bold mb-6 text-center text-white">
                     Налаштування
                 </h1>
-                <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-lg">
-                    <div className="space-y-2 text-gray-700">
+                <div className="bg-gray-800 shadow-md rounded-lg p-6 w-full max-w-lg">
+                    <div className="space-y-2 text-white">
                         <div><strong>ID:</strong> {user.id}</div>
                         <div><strong>Логін:</strong> {user.username}</div>
                         <div><strong>Роль:</strong> {user.role}</div>
@@ -95,16 +95,16 @@ export default function SettingsPage() {
 
                 {qrUri && (
                     <div className="mt-6 text-center">
-                        <p className="mb-4 text-gray-700">Скануй QR код за допомогою Google Authenticator:</p>
+                        <p className="mb-4 text-white">Скануй QR код за допомогою Google Authenticator:</p>
                         <QRCodeSVG value={qrUri} size={180} className="mx-auto mb-4" />
-                        <p className="mb-2 text-gray-700">Введи 6-значний код знизу:</p>
+                        <p className="mb-2 text-white">Введи 6-значний код знизу:</p>
                         <TotpForm onConfirm={confirmTotp} />
                     </div>
                 )}
 
                 {totpEnabled && (
                     <div className="mt-6 text-center">
-                        <p className="text-gray-700 mb-4">
+                        <p className="text-white mb-4">
                             2FA зараз <strong>умівкнений</strong>.
                         </p>
                         <button

@@ -196,7 +196,7 @@ export default function ProjectsPage() {
                      onClick={() => setDeleteModal(null)}>
                     <div className="bg-gray-800 rounded-xl shadow-2xl p-6 w-96" onClick={(e) => e.stopPropagation()}>
                         <h2 className="text-xl font-bold mb-4 text-white">Delete Project</h2>
-                        <p className="mb-4 text-gray-300">Are you sure you want to delete "{deleteModal.name}"?</p>
+                        <p className="mb-4 text-gray-300">Ви впевнені, що хочете видалити {deleteModal.name}?</p>
                         <div className="flex justify-end gap-2">
                             <button
                                 className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 text-white"
