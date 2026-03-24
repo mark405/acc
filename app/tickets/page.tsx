@@ -32,9 +32,13 @@ export default function TicketsPage() {
         if (user?.role == "MANAGER") {
             createdBy = user?.id;
         }
-        if (user?.role == "OFFERS_MANAGER" || user?.role == "TECH_MANAGER") {
+        if (user?.role == "OFFERS_MANAGER") {
             assignedTo = user?.id;
-            types = user?.role == "OFFERS_MANAGER" ? ["ADVERTISER_REQUEST", "OFFERS_REQUEST"] : ["TECH_GOAL"];
+            types = ["ADVERTISER_REQUEST", "OFFERS_REQUEST"];
+        }
+        if (user?.role == "TECH_MANAGER") {
+            assignedTo = user?.id;
+            createdBy = user?.id;
         }
         if (user?.role == "ADMIN" || user?.role == "MANAGER" || user?.role == "HEAD_OF_AFFILIATE") {
             types = filterType !== "ALL" ? [filterType] : undefined;
