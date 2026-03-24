@@ -83,7 +83,7 @@ export default function OfferDetailsPage() {
                     isOpen={isDeleteModalOpen}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={handleDelete}
-                    title="Are you sure you want to delete this offer?"
+                    title="Ви впевнені, що хочете видалити?"
                 />
             )}
             {(isOfferModalOpen && offerId) && (
