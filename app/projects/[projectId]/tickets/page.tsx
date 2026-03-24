@@ -169,7 +169,7 @@ export default function TicketsPage() {
                         initial={{opacity: 0, y: 15}}
                         animate={{opacity: 1, y: 0}}
                         transition={{delay: i * 0.03}}
-                        onDoubleClick={() =>
+                        onClick={() =>
                             (window.location.href = `/projects/${projectId}/tickets/${ticket.id}`)
                         }
                         className="group border-3 border-gray-400 bg-gray-700/50 rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
