@@ -205,7 +205,7 @@ export default function AccountsPage() {
                                         timeZone: "Europe/Kiev",
                                     })}
                                 </td>
-                                {u.role === "MANAGER" && (
+                                {u.role != "ADMIN" && (
                                     <td className="px-4 py-2 text-left flex gap-2">
                                         <UserStar
                                             size={18}
