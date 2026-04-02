@@ -2,7 +2,7 @@
 
 import {useRef, useState} from "react";
 import {CategoryResponse} from "@/app/types";
-import {Plus} from "lucide-react";
+import {Check, Edit2, Plus, Trash2, X} from "lucide-react";
 import CategoryItem from "@/app/components/board/filters/CategoryItem";
 
 interface CategoryFiltersProps {
@@ -43,12 +43,6 @@ export default function CategoryFilters({
         setCategoryFilter(newFilter);
     };
 
-    const [contextMenu, setContextMenu] = useState<{
-        categoryId: number;
-        position: "top" | "bottom";
-        rect: DOMRect;
-    } | null>(null);
-
     return (
         <div className="flex-1 flex flex-col mt-4 overflow-y-hidden">
             <div className="flex justify-between items-center mb-3">
@@ -61,29 +55,47 @@ export default function CategoryFilters({
             </div>
             <div className="flex flex-col space-y-1 max-h-96 overflow-y-auto sidebar-scroll">
                 {addingCategory && (
-                    <input
-                        ref={categoryInputRef}
-                        autoFocus
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyDown={(e) => {
-                            const trimmed = newCategoryName.trim();
-                            if (e.key === "Enter" && trimmed) {
-                                const exists = categories.some(
-                                    (c) => c.name.toLowerCase() === trimmed.toLowerCase()
-                                );
+                    <div className="flex items-center gap-2">
 
-                                if (!exists) {
-                                    submitNewCategory(trimmed);
+                        <input
+                            ref={categoryInputRef}
+                            autoFocus
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="Нова категорія…"
+                            className="w-[97%] ml-1 my-1 px-1 py-1 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        />
+                        <button
+                            onClick={(e) => {
+                                const trimmed = newCategoryName.trim();
+                                if (trimmed) {
+                                    const exists = categories.some(
+                                        (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+                                    );
+
+                                    if (!exists) {
+                                        submitNewCategory(trimmed);
+                                    }
+                                } else  {
+                                    setAddingCategory(false);
+                                    setNewCategoryName("");
                                 }
-                            } else if (e.key === "Escape") {
-                                setAddingCategory(false);
+                            }}
+                            className="p-1 rounded text-indigo-300"
+                        >
+                            <Check size={18}/>
+                        </button>
+
+                        <button
+                            onClick={() => {
                                 setNewCategoryName("");
-                            }
-                        }}
-                        placeholder="Нова категорія…"
-                        className="w-[97%] ml-1 my-1 px-1 py-1 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
+                                setAddingCategory(false);
+                            }}
+                            className="transition cursor-pointer text-red-400 hover:text-red-500"
+                        >
+                            <X size={20}/>
+                        </button>
+                    </div>
                 )}
 
                 {categories.map((c) => (
@@ -96,8 +108,6 @@ export default function CategoryFilters({
                         toggleCategoryFilter={toggleCategoryFilter}
                         renameCategory={renameCategory}
                         deleteCategory={deleteCategory}
-                        contextMenu={contextMenu}
-                        setContextMenu={setContextMenu}
                     />
                 ))}
             </div>
