@@ -7,6 +7,7 @@ import {useParams} from "next/navigation";
 import {BoardResponse, CategoryResponse, OperationResponse} from "@/app/types";
 import BoardFilters from "@/app/components/board/filters/BoardFilters";
 import Board from "@/app/components/board/Board";
+import TotalPanel from "@/app/components/TotalPanel";
 
 interface BoardPageProps {
     boardType: "EXPENSE" | "INCOME";
@@ -167,7 +168,7 @@ export default function BoardPage({
                         {board.operation_type == "EXPENSE" ? `Витрати: ${board.name}` : `Доходи: ${board.name}`}
                     </h1>
 
-                    <div className="flex gap-6">
+                    <div className="mb-6">
                         <BoardFilters
                             categories={categories}
                             categoryFilter={categoryFilter}
@@ -187,6 +188,8 @@ export default function BoardPage({
                             setAddingCategory={setAddingCategory}
                             newCategoryName={newCategoryName}
                             setNewCategoryName={setNewCategoryName}/>
+                    </div>
+                    <div className="flex gap-6 items-start">
                         <Board
                             board={board}
                             categories={categories}

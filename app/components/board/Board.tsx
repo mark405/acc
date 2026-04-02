@@ -8,6 +8,7 @@ import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import DatePicker from "react-datepicker";
 import Pagination from "@/app/components/Pagination";
 import {useParams} from "next/navigation";
+import TotalPanel from "@/app/components/TotalPanel";
 
 interface BoardProps {
     board: BoardResponse;
@@ -337,7 +338,10 @@ export default function Board({
                 )}
                 </tbody>
             </table>
-
+            <TotalPanel
+                boardId={board.id}
+                type={board.operation_type}
+            />
             {/* Pagination */}
             <Pagination
                 page={page}

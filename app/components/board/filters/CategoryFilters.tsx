@@ -44,9 +44,8 @@ export default function CategoryFilters({
     };
 
     return (
-        <div className="flex-1 flex flex-col mt-4 overflow-y-hidden">
+        <div className="bg-gray-800/40 p-3 rounded-lg min-w-[220px]">
             <div className="flex justify-between items-center mb-3">
-                <span className="text-white text-sm font-semibold">Категорії</span>
                 <Plus
                     size={20}
                     className="text-gray-400 hover:text-indigo-400 cursor-pointer"
