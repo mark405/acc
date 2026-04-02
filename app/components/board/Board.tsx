@@ -45,7 +45,7 @@ export default function Board({
                               }: Readonly<BoardProps>) {
     const [adding, setAdding] = useState(false);
     const [newOperation, setNewOperation] = useState({
-        date: "",
+        date: new Date().toISOString(),
         categoryId: 0,
         comment: "",
         amount: 0,
@@ -81,7 +81,7 @@ export default function Board({
                 date: newOperation.date ? new Date(newOperation.date).toISOString() : undefined,
             });
             setAdding(false);
-            setNewOperation({date: "", categoryId: 0, comment: "", amount: 0, operationType: "EXPENSE"});
+            setNewOperation({date: new Date().toISOString(), categoryId: 0, comment: "", amount: 0, operationType: "EXPENSE"});
             fetchOperations();
         } catch (err) {
             console.error("Failed to create operation", err);
