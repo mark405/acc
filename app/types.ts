@@ -32,9 +32,20 @@ export interface HistoryResponse {
 export interface EmployeeResponse {
     id: number;
     name: string;
-    qfd: number;
     role: string;
     user: UserResponse;
+    columns: ColumnResponse[]
+}
+
+export interface ColumnResponse {
+    id: number;
+    name: string;
+    values: ValueResponse[]
+}
+
+export interface ValueResponse {
+    id: number;
+    name: string;
 }
 
 export interface BoardResponse {
@@ -48,9 +59,6 @@ export interface EmployeeFinanceResponse {
     id: number;
     start_date: number[];
     end_date: number[];
-    income_qfd: number;
-    paid_ref: number;
-    percent_qfd: number;
     advances: EmployeeAdvanceResponse[]
 }
 
