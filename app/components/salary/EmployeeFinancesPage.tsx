@@ -13,12 +13,14 @@ import {useParams} from "next/navigation";
 
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
-    const {isAdmin} = useAuth();
+    const [isAdmin, setAdmin] = useState<true | false>(false)
 
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
     const [finances, setFinances] = useState<EmployeeFinanceResponse[]>([]);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-
+    const [conditions, setConditions] = useState<string>("");
+    const [conditionsOpen, setConditionsOpen] = useState(false);
+    const [conditionsDraft, setConditionsDraft] = useState("");
     const [sortBy, setSortBy] = useState<string>("id");
     const [direction, setDirection] = useState<"asc" | "desc">("desc");
     const [page, setPage] = useState<number>(0);
@@ -41,7 +43,15 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         paidRef: 0,
         percentQFD: 0,
     });
-
+    const fetchConditions = async () => {
+        try {
+            const res = await instance.get(`/employees/${employeeId}/conditions`);
+            setConditions(res.data || "");
+            setConditionsDraft(res.data || "");
+        } catch (err) {
+            console.error("Failed to fetch conditions", err);
+        }
+    };
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingFinance, setEditingFinance] = useState({
         startDate: "" as string,
@@ -101,6 +111,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
             const res = await instance.get(`/employees/${employeeId}`);
             if (res.status === HttpStatusCode.Ok) {
                 setEmployee(res.data);
+                setAdmin(res.data?.role == 'ADMIN')
             }
         } catch (err) {
             console.error("Failed to fetch employee:", err);
@@ -209,9 +220,19 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         if (employeeId) {
             fetchEmployee();
             fetchFinances();
+            fetchConditions();
         }
     }, [employeeId, sortBy, direction, page]);
-
+    const saveConditions = async () => {
+        try {
+            await instance.post(`/employees/${employeeId}/conditions`, {
+                text: conditionsDraft
+            });
+            setConditions(conditionsDraft);
+        } catch (err) {
+            console.error("Failed to save conditions", err);
+        }
+    };
     const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
     const formatBackendDate = (dateArray: number[]) => {
@@ -608,7 +629,46 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                     ))}
                     </tbody>
                 </table>
+                <div className="mt-6 mb-4 border border-gray-700 rounded">
+                    <div
+                        className="bg-gray-800 text-white px-4 py-2 cursor-pointer flex justify-between items-center"
+                        onClick={() => setConditionsOpen(!conditionsOpen)}
+                    >
+                        <span className="font-semibold">Умови</span>
+                        <span>{conditionsOpen ? "▲" : "▼"}</span>
+                    </div>
 
+                    {conditionsOpen && (
+                        <div className="p-4 bg-gray-900 text-white flex flex-col gap-3">
+                            <textarea
+                                value={conditionsDraft}
+                                onChange={(e) => isAdmin && setConditionsDraft(e.target.value)}
+                                readOnly={!isAdmin}
+                                className={`w-full h-40 p-2 border border-gray-600 rounded bg-gray-800 text-white ${
+                                    !isAdmin ? "opacity-70 cursor-not-allowed" : ""
+                                }`}
+                                placeholder={isAdmin ? "Введіть умови..." : ""}
+                            />
+
+                            {isAdmin &&
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setConditionsDraft(conditions)}
+                                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                                    >
+                                        Скасувати
+                                    </button>
+                                    <button
+                                        onClick={saveConditions}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded"
+                                    >
+                                        Зберегти
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    )}
+                </div>
                 <Pagination
                     page={page}
                     totalPages={totalPages}
