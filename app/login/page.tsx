@@ -16,7 +16,6 @@ export default function LoginPage() {
     const [totpRequired, setTotpRequired] = useState(false); // flag if TOTP is required
     const router = useRouter();
     const getErrorMessage = (err: any) => {
-        debugger;
         if (!err.response || !err.response.data) return "Unknown error";
         const data = err.response.data;
         if (typeof data === "object") return errorMessages[data.message] || JSON.stringify(data);

@@ -155,7 +155,7 @@ export default function HistoryPage() {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
             <h1 className="text-4xl font-bold mb-4 text-center text-white">Історія дій</h1>
 
             {/* Filters */}

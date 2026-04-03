@@ -161,8 +161,7 @@ export default function BoardPage({
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            {board && (
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">            {board && (
                 <>
                     <h1 className="text-4xl font-bold mb-10 text-center text-white">
                         {board.operation_type == "EXPENSE" ? `Витрати: ${board.name}` : `Доходи: ${board.name}`}

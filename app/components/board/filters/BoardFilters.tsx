@@ -68,9 +68,9 @@ export default function BoardFilters({
     <div className="w-full p-4 grid grid-cols-3 gap-6">
 
         {/* Labels row */}
-        <div className="text-white text-sm font-semibold">Категорії</div>
-        <div className="text-white text-sm font-semibold">Дата</div>
-        <div className="text-white text-sm font-semibold">Коментарі</div>
+        <div className="text-white text-sm font-semibold">Фільтр по категоріям</div>
+        <div className="text-white text-sm font-semibold">Фільтр по даті</div>
+        <div className="text-white text-sm font-semibold">Фільтр по коментарям</div>
 
         {/* Inputs row */}
         <div className="min-w-[300px] flex flex-col gap-3">

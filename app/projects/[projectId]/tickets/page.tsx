@@ -40,7 +40,6 @@ export default function TicketsPage() {
         let createdBy;
         let assignedTo;
         let types;
-        debugger;
         if (employee?.role == "MANAGER") {
             createdBy = employee?.id;
         }
@@ -108,7 +107,7 @@ export default function TicketsPage() {
 
     return (
 
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                 <h1 className="text-4xl font-bold mb-4 text-center text-white">Тікети</h1>

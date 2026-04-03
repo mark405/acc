@@ -7,7 +7,7 @@ interface CommentFilterProps {
 
 export default function CommentFilter({ commentFilter, setCommentFilter }: Readonly<CommentFilterProps>) {
     return (
-        <div className=" p-3 rounded-lg min-w-[220px]">
+        <div className="rounded-lg min-w-[220px]">
             <input
                 type="text"
                 value={commentFilter}

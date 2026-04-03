@@ -109,7 +109,6 @@ export default function Board({
     };
 
     const handleSave = async (id: number) => {
-        debugger;
         try {
             await instance.put(`/operations/${id}`, {
                 board_id: board.id,

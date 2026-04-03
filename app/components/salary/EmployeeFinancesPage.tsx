@@ -14,13 +14,14 @@ import {useParams} from "next/navigation";
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
     const [isAdmin, setAdmin] = useState<true | false>(false)
-
+    const [projectEmployee, setProjectEmployee] = useState<EmployeeResponse | null>(null);
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
     const [finances, setFinances] = useState<EmployeeFinanceResponse[]>([]);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const [conditions, setConditions] = useState<string>("");
+    const [isEditing, setIsEditing] = useState(false);
     const [conditionsOpen, setConditionsOpen] = useState(false);
-    const [conditionsDraft, setConditionsDraft] = useState("");
+    const [conditionsDraft, setConditionsDraft] = useState(conditions);
     const [sortBy, setSortBy] = useState<string>("id");
     const [direction, setDirection] = useState<"asc" | "desc">("desc");
     const [page, setPage] = useState<number>(0);
@@ -112,6 +113,18 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
             if (res.status === HttpStatusCode.Ok) {
                 setEmployee(res.data);
                 setAdmin(res.data?.role == 'ADMIN')
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
+
+    const fetchEmployeeByUser = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setProjectEmployee(res.data);
+                setAdmin(res.data.role == 'ADMIN')
             }
         } catch (err) {
             console.error("Failed to fetch employee:", err);
@@ -212,12 +225,9 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         setPage(0);
     };
 
-    const onPageChange = (newPage: number) => {
-        if (newPage >= 0 && newPage < totalPages) setPage(newPage);
-    };
-
     useEffect(() => {
         if (employeeId) {
+            fetchEmployeeByUser();
             fetchEmployee();
             fetchFinances();
             fetchConditions();
@@ -629,43 +639,78 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                     ))}
                     </tbody>
                 </table>
-                <div className="mt-6 mb-4 border border-gray-700 rounded">
+                <div className="mt-6 mb-4 border border-gray-700 rounded-lg overflow-hidden">
+                    {/* Header */}
                     <div
-                        className="bg-gray-800 text-white px-4 py-2 cursor-pointer flex justify-between items-center"
+                        className="bg-gray-800 text-white px-4 py-3 cursor-pointer flex justify-between items-center hover:bg-gray-750"
                         onClick={() => setConditionsOpen(!conditionsOpen)}
                     >
-                        <span className="font-semibold">Умови</span>
-                        <span>{conditionsOpen ? "▲" : "▼"}</span>
+        <span className="font-semibold text-sm tracking-wide">
+            Умови
+        </span>
+                        <span className="text-xs">
+            {conditionsOpen ? "▲" : "▼"}
+        </span>
                     </div>
 
+                    {/* Body */}
                     {conditionsOpen && (
-                        <div className="p-4 bg-gray-900 text-white flex flex-col gap-3">
+                        <div className="bg-gray-900 text-white p-4 flex flex-col gap-4">
+
+                            {/* Textarea */}
                             <textarea
                                 value={conditionsDraft}
-                                onChange={(e) => isAdmin && setConditionsDraft(e.target.value)}
-                                readOnly={!isAdmin}
-                                className={`w-full h-40 p-2 border border-gray-600 rounded bg-gray-800 text-white ${
-                                    !isAdmin ? "opacity-70 cursor-not-allowed" : ""
-                                }`}
-                                placeholder={isAdmin ? "Введіть умови..." : ""}
+                                onChange={(e) => isEditing && setConditionsDraft(e.target.value)}
+                                readOnly={!isEditing}
+                                className={`w-full h-64 p-3 border border-gray-600 rounded-md bg-gray-800 text-white resize-none transition-all
+                    ${isEditing
+                                    ? "cursor-text focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                    : "cursor-default opacity-80"
+                                }
+                `}
+                                placeholder={isEditing ? "Введіть умови..." : ""}
                             />
 
-                            {isAdmin &&
-                                <div className="flex justify-end gap-2">
+                            {/* Footer actions */}
+                            <div className="flex justify-end items-center gap-2 pt-2 border-t border-gray-700">
+
+                                {isAdmin && !isEditing && (
                                     <button
-                                        onClick={() => setConditionsDraft(conditions)}
-                                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                                        onClick={() => {
+                                            setConditionsDraft(conditions);
+                                            setIsEditing(true);
+                                        }}
+                                        className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 rounded-md transition"
                                     >
-                                        Скасувати
+                                        Редагувати
                                     </button>
-                                    <button
-                                        onClick={saveConditions}
-                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded"
-                                    >
-                                        Зберегти
-                                    </button>
-                                </div>
-                            }
+                                )}
+
+                                {isAdmin && isEditing && (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setConditionsDraft(conditions);
+                                                setIsEditing(false);
+                                            }}
+                                            className="px-4 py-2 text-sm bg-gray-600 hover:bg-gray-500 rounded-md transition"
+                                        >
+                                            Скасувати
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                saveConditions();
+                                                setIsEditing(false);
+                                            }}
+                                            className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 rounded-md transition"
+                                        >
+                                            Зберегти
+                                        </button>
+                                    </>
+                                )}
+
+                            </div>
                         </div>
                     )}
                 </div>

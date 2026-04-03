@@ -1,7 +1,5 @@
 "use client";
 
-import CommentFilter from "@/app/components/board/filters/CommentFilters";
-
 interface DateFiltersProps {
     startDate: string | "";
     setStartDate: (val: string) => void;
@@ -9,7 +7,7 @@ interface DateFiltersProps {
     setEndDate: (val: string) => void;
 }
 
-export default function DateFilters({ startDate, setStartDate, endDate, setEndDate }: Readonly<DateFiltersProps>) {
+export default function DateFilters({startDate, setStartDate, endDate, setEndDate}: Readonly<DateFiltersProps>) {
     return (
         <div className=" p-3 rounded-lg min-w-[220px]">
             <label className="text-white text-sm font-semibold">Дата</label>

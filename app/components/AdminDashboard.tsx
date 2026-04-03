@@ -61,13 +61,13 @@ export default function AdminDashboard() {
     const chartData = Array.from({ length: 12 }, (_, i) => {
         const m = stats.find((s) => s.month === i + 1);
         return {
-            monthName: monthNames[i],
+            monthName: monthNames[i].slice(0, 3),
             amount: m?.amount ?? 0,
         };
     });
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
             <h1 className="text-4xl font-bold mb-6 text-center text-white">Статистика</h1>
 
             {/* Tabs */}

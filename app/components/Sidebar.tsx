@@ -82,7 +82,6 @@ export default function Sidebar() {
         if (!employeeToDelete) return;
 
         try {
-            debugger;
             const res = await instance.delete(`/employees/${employeeToDelete.id}`);
             if (res.status === HttpStatusCode.NoContent) {
                 // Remove from local state
@@ -224,7 +223,6 @@ export default function Sidebar() {
 
 
     const handeCreate = async (type: "EXPENSE" | "INCOME") => {
-        debugger;
         if (newBoardName.trim().length == 0) {
             setNewBoardName("");
             return;
