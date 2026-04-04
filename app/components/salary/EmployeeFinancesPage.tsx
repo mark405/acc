@@ -3,18 +3,19 @@
 import React, {useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
-import {EmployeeFinanceResponse, EmployeeResponse} from "@/app/types";
+import {ColumnResponse, EmployeeFinanceResponse, EmployeeResponse} from "@/app/types";
 import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
-import {useAuth} from "@/app/components/AuthProvider";
 import Pagination from "@/app/components/Pagination";
 import {useParams} from "next/navigation";
+import { ListPlus } from 'lucide-react';
 
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
     const [isAdmin, setAdmin] = useState<true | false>(false)
     const [projectEmployee, setProjectEmployee] = useState<EmployeeResponse | null>(null);
+    const [columns, setColumns] = useState<ColumnResponse[]>([]);
     const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
     const [finances, setFinances] = useState<EmployeeFinanceResponse[]>([]);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -30,19 +31,27 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
     const [errors, setErrors] = useState<{
         startDate?: boolean;
         endDate?: boolean;
-        incomeQFD?: boolean;
-        paidRef?: boolean;
-        percentQFD?: boolean
     }>({});
-
+    const [columnToDelete, setColumnToDelete] = useState<ColumnResponse | null>(null);
+    const [isColumnModalOpen, setColumnModalOpen] = useState(false);
+    const [columnName, setColumnName] = useState("");
+    const [editingColumnId, setEditingColumnId] = useState<number | null>(null);
+    const openAddColumnModal = () => {
+        setColumnName("");
+        setEditingColumnId(null);
+        setColumnModalOpen(true);
+    };
+    const openEditColumnModal = (col: ColumnResponse) => {
+        setColumnName(col.name);
+        setEditingColumnId(col.id);
+        setColumnModalOpen(true);
+    };
     const [adding, setAdding] = useState(false);
     const [newFinance, setNewFinance] = useState({
         startDate: "",
         endDate: "",
         employeeId: employeeId,
-        incomeQFD: 0,
-        paidRef: 0,
-        percentQFD: 0,
+        values: {} as Record<number, string>
     });
     const fetchConditions = async () => {
         try {
@@ -57,9 +66,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
     const [editingFinance, setEditingFinance] = useState({
         startDate: "" as string,
         endDate: "" as string,
-        incomeQFD: 0,
-        paidRef: 0,
-        percentQFD: 0,
+        values: {} as Record<number, string>
     });
     const projectId = useParams().projectId;
     const [isAdvanceModalOpen, setAdvanceModalOpen] = useState(false);
@@ -113,6 +120,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
             if (res.status === HttpStatusCode.Ok) {
                 setEmployee(res.data);
                 setAdmin(res.data?.role == 'ADMIN')
+                setColumns(res.data.columns);
             }
         } catch (err) {
             console.error("Failed to fetch employee:", err);
@@ -149,9 +157,6 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         const newErrors = {
             startDate: !newFinance.startDate, // true if empty
             endDate: !newFinance.endDate,
-            incomeQFD: newFinance.incomeQFD === undefined || newFinance.incomeQFD < 0, // allow 0
-            paidRef: newFinance.paidRef === undefined || newFinance.paidRef < 0, // allow 0
-            percentQFD: newFinance.percentQFD === undefined || newFinance.percentQFD < 0, // allow 0
         };
         setErrors(newErrors);
 
@@ -160,23 +165,25 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
             return; // do NOT close the row
         }
         try {
+            const valuesPayload = Object.entries(newFinance.values).map(
+                ([columnId, value]) => ({
+                    column_id: Number(columnId),
+                    value
+                })
+            );
             await instance.post("/employee-finances", {
                 employee_id: employeeId,
                 start_date: newFinance.startDate,
                 end_date: newFinance.endDate,
-                income_qfd: Number(newFinance.incomeQFD),
-                paid_ref: Number(newFinance.paidRef),
-                percent_qfd: Number(newFinance.percentQFD),
-                project_id: projectId
+                project_id: projectId,
+                values: valuesPayload
             });
             setAdding(false);
             setNewFinance({
                 startDate: "",
                 endDate: "",
                 employeeId: employeeId,
-                incomeQFD: 0,
-                paidRef: 0,
-                percentQFD: 0
+                values: {}
             });
             fetchFinances();
         } catch (err) {
@@ -186,20 +193,30 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
 
     const handleEdit = (finance: EmployeeFinanceResponse) => {
         setEditingId(finance.id);
+        const valuesMap: Record<number, string> = {};
+        finance.values.forEach(v => {
+            valuesMap[v.employee_column_id] = v.value;
+        });
         setEditingFinance({
             startDate: formatBackendDate(finance.start_date),
             endDate: formatBackendDate(finance.end_date),
+            values: valuesMap
         });
     };
 
-    const handleSave = async (id: number) => {
+    const handleSave = async (finance: EmployeeFinanceResponse) => {
         try {
-            await instance.put(`/employee-finances/${id}`, {
+            const valuesPayload = Object.entries(editingFinance.values).map(
+                ([columnId, value]) => ({
+                    id: finance.values.find(v => v.employee_column_id === Number(columnId))?.id,
+                    column_id: Number(columnId),
+                    value
+                })
+            );
+            await instance.put(`/employee-finances/${finance.id}`, {
                 start_date: editingFinance.startDate,
                 end_date: editingFinance.endDate,
-                income_qfd: editingFinance.incomeQFD,
-                paid_ref: editingFinance.paidRef,
-                percent_qfd: editingFinance.percentQFD,
+                values: valuesPayload
             });
             setEditingId(null);
             fetchFinances();
@@ -258,30 +275,93 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         }
     };
 
+    const saveColumn = async () => {
+        if (!columnName.trim()) return;
+
+        try {
+            if (editingColumnId) {
+                await instance.put(`/employees/${editingColumnId}/columns`, {
+                    name: columnName
+                });
+            } else {
+                await instance.post(`/employees/${employeeId}/columns`, {
+                    name: columnName
+                });
+            }
+
+            setColumnModalOpen(false);
+            setColumnName("");
+            setEditingColumnId(null);
+            fetchEmployeeByUser();
+            fetchEmployee();
+
+        } catch (err) {
+            console.error("Failed to save column", err);
+        }
+    };
+
+    const confirmDeleteColumn = async () => {
+        if (!columnToDelete) return;
+
+        try {
+            await instance.delete(`/employees/${columnToDelete.id}/columns`);
+            fetchEmployeeByUser();
+            fetchEmployee();
+        } catch (err) {
+            console.error("Failed to delete column", err);
+        } finally {
+            setColumnToDelete(null);
+        }
+    };
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
-            {isAdmin && <h1 className="text-4xl font-bold mb-4 text-center text-white">Співробітник {employee?.name}</h1>}
+            {isAdmin &&
+                <h1 className="text-4xl font-bold mb-4 text-center text-white">Співробітник {employee?.name}</h1>}
 
             <div className="overflow-visible">
                 <table className="min-w-full border-collapse border border-gray-300">
                     <thead>
                     <tr className="bg-gray-800 text-white">
                         <th className="px-4 py-2 text-left w-62">Період</th>
-                        <th
-                            className="px-4 py-2 text-left cursor-pointer"
-                            onClick={() => handleSort("incomeQFD")}
-                        >
-                            Дохід по QFD {sortBy === "incomeQFD" && (direction === "asc" ? "↑" : "↓")}
-                        </th>
+                        {columns.map(col => (
+                            <th key={col.id} className="px-4 py-2 text-left text-white">
+                                <div className="flex items-center gap-2 group">
+                                    {col.name}
+
+                                    {isAdmin && (
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                                            <Edit2
+                                                size={14}
+                                                className="cursor-pointer hover:text-indigo-400"
+                                                onClick={() => openEditColumnModal(col)}
+                                            />
+                                            <Trash
+                                                size={14}
+                                                className="cursor-pointer hover:text-red-400"
+                                                onClick={() => setColumnToDelete(col)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </th>
+                        ))}
                         <th className="px-4 py-2 text-left">Аванси</th>
                         <th className="w-12 px-4 py-2 text-left">
-                            {isAdmin &&
-                                <Plus
-                                    size={20}
-                                    className="text-gray-200 hover:text-indigo-400 cursor-pointer"
-                                    onClick={() => setAdding(true)}
-                                />
-                            }
+                            {isAdmin && (
+                                <div className="flex items-center gap-2">
+                                    <ListPlus
+                                        size={20}
+                                        className="cursor-pointer hover:text-indigo-400"
+                                        onClick={openAddColumnModal}
+                                    />
+                                    <Plus
+                                        size={20}
+                                        className="text-gray-200 hover:text-indigo-400 cursor-pointer"
+                                        onClick={() => setAdding(true)}
+                                    />
+                                </div>
+                            )}
                         </th>
                     </tr>
                     </thead>
@@ -319,57 +399,24 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                         errors.endDate ? "border-red-800" : "border-gray-300"
                                     }`}/>
                             </td>
-                            <td className="px-2 py-1 text-white">
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={newFinance.incomeQFD}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (/^\d*\.?\d*$/.test(value)) {
-                                            setNewFinance({...newFinance, incomeQFD: value === "" ? 0 : Number(value)});
+                            {columns.map(col => (
+                                <td key={col.id} className="px-2 py-1">
+                                    <input
+                                        type="number"
+                                        value={newFinance.values[col.id] || undefined}
+                                        onChange={(e) =>
+                                            setNewFinance(prev => ({
+                                                ...prev,
+                                                values: {
+                                                    ...prev.values,
+                                                    [col.id]: e.target.value
+                                                }
+                                            }))
                                         }
-                                    }}
-                                    className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                                        errors.incomeQFD ? "border-red-800" : "border-gray-300"
-                                    }`}
-                                />
-                            </td>
-                            <td className="px-2 py-1 text-white">
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={newFinance.paidRef}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (/^\d*\.?\d*$/.test(value)) {
-                                            setNewFinance({...newFinance, paidRef: value === "" ? 0 : Number(value)});
-                                        }
-                                    }}
-                                    className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                                        errors.paidRef ? "border-red-800" : "border-gray-300"
-                                    }`}
-                                />
-                            </td>
-                            <td className="px-2 py-1 text-white">
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={newFinance.percentQFD}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (/^\d*\.?\d*$/.test(value)) {
-                                            setNewFinance({
-                                                ...newFinance,
-                                                percentQFD: value === "" ? 0 : Number(value)
-                                            });
-                                        }
-                                    }}
-                                    className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                                        errors.percentQFD ? "border-red-800" : "border-gray-300"
-                                    }`}
-                                />
-                            </td>
+                                        className="w-full px-2 py-1 border rounded bg-gray-800 text-white"
+                                    />
+                                </td>
+                            ))}
                             <td className="px-2 py-1 align-middle">
                                 <div className="flex items-center justify-center gap-2 h-full">
                                     {isAdmin &&
@@ -424,56 +471,31 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                             className="w-full px-2 py-1 border rounded"
                                         />
                                     </td>
-
-                                    {/* Income QFD */}
-                                    <td className="px-2 py-1 text-white">
-                                        <input
-                                            type="text"
-                                            value={editingFinance.incomeQFD}
-                                            onChange={(e) =>
-                                                setEditingFinance({
-                                                    ...editingFinance,
-                                                    incomeQFD: Number(e.target.value)
-                                                })
-                                            }
-                                            className="w-full px-2 py-1 border rounded"
-                                        />
-                                    </td>
-
-                                    {/* Paid Ref */}
-                                    <td className="px-2 py-1 text-white">
-                                        <input
-                                            type="text"
-                                            value={editingFinance.paidRef}
-                                            onChange={(e) =>
-                                                setEditingFinance({...editingFinance, paidRef: Number(e.target.value)})
-                                            }
-                                            className="w-full px-2 py-1 border rounded"
-                                        />
-                                    </td>
-
-                                    {/* Percent QFD */}
-                                    <td className="px-2 py-1 text-white">
-                                        <input
-                                            type="text"
-                                            value={editingFinance.percentQFD}
-                                            onChange={(e) =>
-                                                setEditingFinance({
-                                                    ...editingFinance,
-                                                    percentQFD: Number(e.target.value)
-                                                })
-                                            }
-                                            className="w-full px-2 py-1 border rounded"
-                                        />
-                                    </td>
-
+                                    {columns.map(col => (
+                                        <td key={col.id} className="px-2 py-1">
+                                            <input
+                                                type="number"
+                                                value={editingFinance.values[col.id]}
+                                                onChange={(e) =>
+                                                    setEditingFinance(prev => ({
+                                                        ...prev,
+                                                        values: {
+                                                            ...prev.values,
+                                                            [col.id]: e.target.value
+                                                        }
+                                                    }))
+                                                }
+                                                className="w-full px-2 py-1 border rounded bg-gray-800 text-white"
+                                            />
+                                        </td>
+                                    ))}
                                     {/* Actions */}
                                     <td className="px-2 py-1 align-middle text-white">
                                         <div className="flex items-center justify-center gap-2 h-full">
                                             {isAdmin &&
                                                 <>
                                                     <button
-                                                        onClick={() => handleSave(f.id)}
+                                                        onClick={() => handleSave(f)}
                                                         className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
                                                     >
                                                         <Check size={18}/>
@@ -492,9 +514,15 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                             ) : (
                                 <>
                                     <td className="px-4 py-2 text-white">{formatBackendDate(f.start_date)} – {formatBackendDate(f.end_date)}</td>
-                                    <td className="px-4 py-2 text-white">{f.income_qfd}</td>
-                                    <td className="px-4 py-2 text-white">{f.paid_ref}</td>
-                                    <td className="px-4 py-2 text-white">{f.percent_qfd}</td>
+                                    {columns.map(col => {
+                                        const cell = f.values.find(v => v.employee_column_id === col.id);
+
+                                        return (
+                                            <td key={col.id} className="px-4 py-2 text-white ">
+                                                {cell?.value}
+                                            </td>
+                                        );
+                                    })}
                                     <td className="px-4 py-2 relative text-left whitespace-nowrap text-white">
                                         {f.advances.length !== 0 &&
                                             <button
@@ -724,6 +752,65 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                         {advanceDateError && (
                             <span className="text-red-500 text-sm mt-1">{advanceDateError}</span>
                         )}
+                    </div>
+                )}
+                {isColumnModalOpen && (
+                    <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-4">
+                        <div className="bg-gray-800 text-white p-6 rounded-md shadow-lg w-[300px] border border-gray-700">
+                            <h2 className="text-xl font-semibold mb-4">
+                                {editingColumnId ? "Редагувати колонку" : "Додати колонку"}
+                            </h2>
+
+                            <input
+                                type="text"
+                                value={columnName}
+                                onChange={(e) => setColumnName(e.target.value)}
+                                placeholder="Назва"
+                                className="w-full px-3 py-2 mb-4 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={saveColumn}
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded"
+                                >
+                                    Зберегти
+                                </button>
+                                <button
+                                    onClick={() => setColumnModalOpen(false)}
+                                    className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded"
+                                >
+                                    Відмінити
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {columnToDelete && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50 ">
+                        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
+                            <h2 className="text-lg mb-4">
+                                Ви впевнені, що хочете видалити колонку{" "}
+                                <span className="font-bold text-white">
+                    {columnToDelete.name}
+                </span>?
+                            </h2>
+                            <div className="flex gap-2 justify-end">
+                                <button
+                                    onClick={() => setColumnToDelete(null)}
+                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                                >
+                                    Скасувати
+                                </button>
+
+                                <button
+                                    onClick={confirmDeleteColumn}
+                                    className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded"
+                                >
+                                    Видалити
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

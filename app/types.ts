@@ -40,12 +40,12 @@ export interface EmployeeResponse {
 export interface ColumnResponse {
     id: number;
     name: string;
-    values: ValueResponse[]
 }
 
 export interface ValueResponse {
     id: number;
-    name: string;
+    value: string;
+    employee_column_id: number;
 }
 
 export interface BoardResponse {
@@ -60,6 +60,7 @@ export interface EmployeeFinanceResponse {
     start_date: number[];
     end_date: number[];
     advances: EmployeeAdvanceResponse[]
+    values: ValueResponse[];
 }
 
 export interface EmployeeAdvanceResponse {
