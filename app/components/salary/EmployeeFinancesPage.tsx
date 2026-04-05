@@ -12,8 +12,18 @@ import {useParams} from "next/navigation";
 import {closestCenter, DndContext} from "@dnd-kit/core";
 import {arrayMove, SortableContext, useSortable, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
-
-function SortableColumn({column, isAdmin, openEditColumnModal, setColumnToDelete}) {
+type SortableColumnProps = {
+    column: ColumnResponse;
+    isAdmin: boolean;
+    openEditColumnModal: (col: ColumnResponse) => void;
+    setColumnToDelete: (col: ColumnResponse) => void;
+};
+function SortableColumn({
+                            column,
+                            isAdmin,
+                            openEditColumnModal,
+                            setColumnToDelete
+                        }: SortableColumnProps) {
     const {
         attributes,
         listeners,
