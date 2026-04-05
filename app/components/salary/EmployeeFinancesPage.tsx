@@ -363,9 +363,36 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         if (!columnToDelete) return;
 
         try {
+            const deletedIndex = columnToDelete.index;
+
+            // 1. Delete column
             await instance.delete(`/employees/${columnToDelete.id}/columns`);
+
+            // 2. Shift remaining columns
+            const updatedColumns = columns
+                .filter(c => c.id !== columnToDelete.id)
+                .map(c => {
+                    if (c.index > deletedIndex) {
+                        return { ...c, index: c.index - 1 };
+                    }
+                    return c;
+                });
+
+            setColumns(updatedColumns);
+
+            // 3. Sync with backend
+            await Promise.all(
+                updatedColumns.map(col =>
+                    instance.put(`/employees/${col.id}/columns`, {
+                        name: col.name,
+                        index: col.index
+                    })
+                )
+            );
+
             fetchEmployeeByUser();
             fetchEmployee();
+
         } catch (err) {
             console.error("Failed to delete column", err);
         } finally {
