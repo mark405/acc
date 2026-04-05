@@ -40,6 +40,7 @@ export interface EmployeeResponse {
 export interface ColumnResponse {
     id: number;
     name: string;
+    index: number;
 }
 
 export interface ValueResponse {

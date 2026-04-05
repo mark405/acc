@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useParams, usePathname, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
@@ -10,6 +10,7 @@ import {User} from "lucide-react";
 import {EmployeeResponse, ProjectResponse} from "@/app/types";
 
 export default function Navbar() {
+    const dropdownRef = useRef<HTMLDivElement | null>(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const {user, setUser, isAdmin} = useAuth();
     const router = useRouter();
@@ -52,6 +53,24 @@ export default function Navbar() {
             loadProject();
         }
     }, [projectId]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     return (
         <nav className="bg-gray-900 h-30 shadow-lg flex items-center px-6 relative">
             {/* Left side */}
@@ -132,7 +151,7 @@ export default function Navbar() {
                 )}
 
                 {/* Profile */}
-                <div className="relative h-full">
+                <div ref={dropdownRef} className="relative h-full">
                     <div
                         onClick={() => setMenuOpen(!menuOpen)}
                         className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-gray-800 transition cursor-pointer h-full"

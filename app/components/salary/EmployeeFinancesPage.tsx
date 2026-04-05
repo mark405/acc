@@ -4,13 +4,65 @@ import React, {useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {ColumnResponse, EmployeeFinanceResponse, EmployeeResponse} from "@/app/types";
-import {Check, Edit2, Plus, Trash, X} from "lucide-react";
+import {Check, Edit2, ListPlus, Plus, Trash, X} from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import Pagination from "@/app/components/Pagination";
 import {useParams} from "next/navigation";
-import { ListPlus } from 'lucide-react';
+import {closestCenter, DndContext} from "@dnd-kit/core";
+import {arrayMove, SortableContext, useSortable, verticalListSortingStrategy} from "@dnd-kit/sortable";
+import {CSS} from "@dnd-kit/utilities";
 
+function SortableColumn({column, isAdmin, openEditColumnModal, setColumnToDelete}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition
+    } = useSortable({id: column.id});
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition
+    };
+
+    return (
+        <th
+            ref={setNodeRef}
+            style={style}
+            className="px-4 py-2 text-left group"
+        >
+            <div className="flex items-center gap-2">
+
+                {/* Drag handle (important) */}
+                <span
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab select-none"
+                >
+                    {column.name}
+                </span>
+
+                {/* Your controls go HERE */}
+                {isAdmin && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <Edit2
+                            size={14}
+                            className="cursor-pointer hover:text-indigo-400"
+                            onClick={() => openEditColumnModal(column)}
+                        />
+                        <Trash
+                            size={14}
+                            className="cursor-pointer hover:text-red-400"
+                            onClick={() => setColumnToDelete(column)}
+                        />
+                    </div>
+                )}
+            </div>
+        </th>
+    );
+}
 
 export default function EmployeeFinancesPage({employeeId}: { employeeId: number }) {
     const [isAdmin, setAdmin] = useState<true | false>(false)
@@ -257,7 +309,8 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
             console.error("Failed to save conditions", err);
         }
     };
-    const formatDate = (date: Date) => date.toISOString().split("T")[0];
+    const formatDate = (date: Date) =>
+        date.toLocaleDateString("en-CA"); // yyyy-MM-dd
 
     const formatBackendDate = (dateArray: number[]) => {
         if (!dateArray || !Array.isArray(dateArray)) return "";
@@ -281,11 +334,17 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         try {
             if (editingColumnId) {
                 await instance.put(`/employees/${editingColumnId}/columns`, {
-                    name: columnName
+                    name: columnName,
+                    index: columns.find(c => c.id === editingColumnId)?.index,
                 });
             } else {
+                const nextIndex =
+                    columns.length > 0
+                        ? Math.max(...columns.map(c => c.index)) + 1
+                        : 1;
                 await instance.post(`/employees/${employeeId}/columns`, {
-                    name: columnName
+                    name: columnName,
+                    index: nextIndex
                 });
             }
 
@@ -314,170 +373,123 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         }
     };
 
+    const handleDragEnd = async (event: any) => {
+        const {active, over} = event;
+
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = columns.findIndex(c => c.id === active.id);
+        const newIndex = columns.findIndex(c => c.id === over.id);
+
+        const newColumns = arrayMove(columns, oldIndex, newIndex)
+            .map((col, i) => ({
+                ...col,
+                index: i + 1
+            }));
+
+        setColumns(newColumns);
+
+        // send to backend
+        try {
+            await Promise.all(
+                newColumns.map(col =>
+                    instance.put(`/employees/${col.id}/columns`, {
+                        name: col.name,
+                        index: col.index
+                    })
+                )
+            );
+        } catch (e) {
+            console.error("Failed to reorder columns", e);
+        }
+    };
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
             {isAdmin &&
                 <h1 className="text-4xl font-bold mb-4 text-center text-white">Співробітник {employee?.name}</h1>}
 
             <div className="overflow-visible">
-                <table className="min-w-full border-collapse border border-gray-300">
-                    <thead>
-                    <tr className="bg-gray-800 text-white">
-                        <th className="px-4 py-2 text-left w-62">Період</th>
-                        {columns.map(col => (
-                            <th key={col.id} className="px-4 py-2 text-left text-white">
-                                <div className="flex items-center gap-2 group">
-                                    {col.name}
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 
-                                    {isAdmin && (
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                                            <Edit2
-                                                size={14}
-                                                className="cursor-pointer hover:text-indigo-400"
-                                                onClick={() => openEditColumnModal(col)}
-                                            />
-                                            <Trash
-                                                size={14}
-                                                className="cursor-pointer hover:text-red-400"
-                                                onClick={() => setColumnToDelete(col)}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                    <table className="min-w-full border-collapse border border-gray-300">
+                        <thead>
+                        <tr className="bg-gray-800 text-white">
+                            <th className="px-4 py-2 text-left w-62">Період</th>
+                            <SortableContext
+                                items={columns.map(c => c.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {[...columns]
+                                    .sort((a, b) => a.index - b.index)
+                                    .map(col => (
+                                        <SortableColumn key={col.id} column={col} isAdmin={isAdmin}
+                                                        openEditColumnModal={openEditColumnModal}
+                                                        setColumnToDelete={setColumnToDelete}/>
+                                    ))}
+                            </SortableContext>
+                            <th className="px-4 py-2 text-left">Аванси</th>
+                            <th className="w-12 px-4 py-2 text-left">
+                                {isAdmin && (
+                                    <div className="flex items-center gap-2">
+                                        <ListPlus
+                                            size={20}
+                                            className="cursor-pointer hover:text-indigo-400"
+                                            onClick={openAddColumnModal}
+                                        />
+                                        <Plus
+                                            size={20}
+                                            className="text-gray-200 hover:text-indigo-400 cursor-pointer"
+                                            onClick={() => setAdding(true)}
+                                        />
+                                    </div>
+                                )}
                             </th>
-                        ))}
-                        <th className="px-4 py-2 text-left">Аванси</th>
-                        <th className="w-12 px-4 py-2 text-left">
-                            {isAdmin && (
-                                <div className="flex items-center gap-2">
-                                    <ListPlus
-                                        size={20}
-                                        className="cursor-pointer hover:text-indigo-400"
-                                        onClick={openAddColumnModal}
-                                    />
-                                    <Plus
-                                        size={20}
-                                        className="text-gray-200 hover:text-indigo-400 cursor-pointer"
-                                        onClick={() => setAdding(true)}
-                                    />
-                                </div>
-                            )}
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-
-                    {adding && (
-                        <tr className="border-t border-gray-300 align-middle  transition">
-                            {/* Start Date */}
-                            <td className="px-2 py-1 flex flex-col text-white">
-                                <label>Початок</label>
-                                <DatePicker
-                                    selected={newFinance.startDate ? new Date(newFinance.startDate) : null}
-                                    onChange={(startDate: Date | null) =>
-                                        setNewFinance({
-                                            ...newFinance,
-                                            startDate: startDate ? formatDate(startDate) : ""
-                                        })
-                                    }
-                                    dateFormat="yyyy-MM-dd"
-                                    className={`w-full px-2 py-1 border rounded ${
-                                        errors.startDate ? "border-red-800" : "border-gray-300"
-                                    }`}/>
-                            </td>
-
-                            {/* End Date */}
-                            <td className="px-2 py-1 flex flex-col text-white">
-                                <label>Кінець</label>
-                                <DatePicker
-                                    selected={newFinance.endDate ? new Date(newFinance.endDate) : null}
-                                    onChange={(endDate: Date | null) =>
-                                        setNewFinance({...newFinance, endDate: endDate ? formatDate(endDate) : ""})
-                                    }
-                                    dateFormat="yyyy-MM-dd"
-                                    className={`w-full px-2 py-1 border rounded ${
-                                        errors.endDate ? "border-red-800" : "border-gray-300"
-                                    }`}/>
-                            </td>
-                            {columns.map(col => (
-                                <td key={col.id} className="px-2 py-1">
-                                    <input
-                                        type="number"
-                                        value={newFinance.values[col.id] || undefined}
-                                        onChange={(e) =>
-                                            setNewFinance(prev => ({
-                                                ...prev,
-                                                values: {
-                                                    ...prev.values,
-                                                    [col.id]: e.target.value
-                                                }
-                                            }))
-                                        }
-                                        className="w-full px-2 py-1 border rounded bg-gray-800 text-white"
-                                    />
-                                </td>
-                            ))}
-                            <td className="px-2 py-1 align-middle">
-                                <div className="flex items-center justify-center gap-2 h-full">
-                                    {isAdmin &&
-                                        <>
-                                            <button
-                                                onClick={handleCreate}
-                                                className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500 flex items-center justify-center"
-                                            >
-                                                <Check size={20}/>
-                                            </button>
-                                            <button
-                                                onClick={() => setAdding(false)}
-                                                className="p-2 bg-red-950 text-white rounded hover:bg-red-800 flex items-center justify-center"
-                                            >
-                                                <X size={20}/>
-                                            </button>
-                                        </>
-                                    }
-                                </div>
-                            </td>
                         </tr>
-                    )}
-                    {finances.length > 0 && finances.map((f, i) => (
-                        <tr key={f.id} className="border-t border-gray-300">
-                            {editingId === f.id ? (
-                                <>
-                                    {/* Start Date */}
-                                    <td className="px-2 py-1 flex flex-col text-white">
-                                        <label>Початок</label>
-                                        <DatePicker
-                                            selected={editingFinance.startDate ? new Date(editingFinance.startDate) : null}
-                                            onChange={(d) =>
-                                                setEditingFinance({
-                                                    ...editingFinance,
-                                                    startDate: d ? formatDate(d) : ""
-                                                })
-                                            }
-                                            dateFormat="yyyy-MM-dd"
-                                            className="w-full px-2 py-1 border rounded"
-                                        />
-                                    </td>
+                        </thead>
+                        <tbody>
 
-                                    {/* End Date */}
-                                    <td className="px-2 py-1 flex flex-col text-white">
-                                        <label>Кінець</label>
-                                        <DatePicker
-                                            selected={editingFinance.endDate ? new Date(editingFinance.endDate) : null}
-                                            onChange={(d) =>
-                                                setEditingFinance({...editingFinance, endDate: d ? formatDate(d) : ""})
-                                            }
-                                            dateFormat="yyyy-MM-dd"
-                                            className="w-full px-2 py-1 border rounded"
-                                        />
-                                    </td>
-                                    {columns.map(col => (
+                        {adding && (
+                            <tr className="border-t border-gray-300 align-middle  transition">
+                                {/* Start Date */}
+                                <td className="px-2 py-1 flex flex-col text-white">
+                                    <label>Початок</label>
+                                    <DatePicker
+                                        selected={newFinance.startDate ? new Date(newFinance.startDate) : null}
+                                        onChange={(startDate: Date | null) =>
+                                            setNewFinance({
+                                                ...newFinance,
+                                                startDate: startDate ? formatDate(startDate) : ""
+                                            })
+                                        }
+                                        dateFormat="yyyy-MM-dd"
+                                        className={`w-full px-2 py-1 border rounded ${
+                                            errors.startDate ? "border-red-800" : "border-gray-300"
+                                        }`}/>
+                                </td>
+
+                                {/* End Date */}
+                                <td className="px-2 py-1 flex flex-col text-white">
+                                    <label>Кінець</label>
+                                    <DatePicker
+                                        selected={newFinance.endDate ? new Date(newFinance.endDate) : null}
+                                        onChange={(endDate: Date | null) =>
+                                            setNewFinance({...newFinance, endDate: endDate ? formatDate(endDate) : ""})
+                                        }
+                                        dateFormat="yyyy-MM-dd"
+                                        className={`w-full px-2 py-1 border rounded ${
+                                            errors.endDate ? "border-red-800" : "border-gray-300"
+                                        }`}/>
+                                </td>
+                                {[...columns]
+                                    .sort((a, b) => a.index - b.index)
+                                    .map(col => (
                                         <td key={col.id} className="px-2 py-1">
                                             <input
                                                 type="number"
-                                                value={editingFinance.values[col.id]}
+                                                value={newFinance.values[col.id] || undefined}
                                                 onChange={(e) =>
-                                                    setEditingFinance(prev => ({
+                                                    setNewFinance(prev => ({
                                                         ...prev,
                                                         values: {
                                                             ...prev.values,
@@ -489,57 +501,134 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                             />
                                         </td>
                                     ))}
-                                    {/* Actions */}
-                                    <td className="px-2 py-1 align-middle text-white">
-                                        <div className="flex items-center justify-center gap-2 h-full">
-                                            {isAdmin &&
-                                                <>
-                                                    <button
-                                                        onClick={() => handleSave(f)}
-                                                        className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
-                                                    >
-                                                        <Check size={18}/>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setEditingId(null)}
-                                                        className="p-2 bg-red-950 text-white rounded hover:bg-red-800"
-                                                    >
-                                                        <X size={18}/>
-                                                    </button>
-                                                </>
-                                            }
-                                        </div>
-                                    </td>
-                                </>
-                            ) : (
-                                <>
-                                    <td className="px-4 py-2 text-white">{formatBackendDate(f.start_date)} – {formatBackendDate(f.end_date)}</td>
-                                    {columns.map(col => {
-                                        const cell = f.values.find(v => v.employee_column_id === col.id);
+                                <td className="px-2 py-1 align-middle">
+                                    <div className="flex items-center justify-center gap-2 h-full">
+                                        {isAdmin &&
+                                            <>
+                                                <button
+                                                    onClick={handleCreate}
+                                                    className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500 flex items-center justify-center"
+                                                >
+                                                    <Check size={20}/>
+                                                </button>
+                                                <button
+                                                    onClick={() => setAdding(false)}
+                                                    className="p-2 bg-red-950 text-white rounded hover:bg-red-800 flex items-center justify-center"
+                                                >
+                                                    <X size={20}/>
+                                                </button>
+                                            </>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                        {finances.length > 0 && finances.map((f, i) => (
+                            <tr key={f.id} className="border-t border-gray-300">
+                                {editingId === f.id ? (
+                                    <>
+                                        {/* Start Date */}
+                                        <td className="px-2 py-1 flex flex-col text-white">
+                                            <label>Початок</label>
+                                            <DatePicker
+                                                selected={editingFinance.startDate ? new Date(editingFinance.startDate) : null}
+                                                onChange={(d) =>
+                                                    setEditingFinance({
+                                                        ...editingFinance,
+                                                        startDate: d ? formatDate(d) : ""
+                                                    })
+                                                }
+                                                dateFormat="yyyy-MM-dd"
+                                                className="w-full px-2 py-1 border rounded"
+                                            />
+                                        </td>
 
-                                        return (
-                                            <td key={col.id} className="px-4 py-2 text-white ">
-                                                {cell?.value}
-                                            </td>
-                                        );
-                                    })}
-                                    <td className="px-4 py-2 relative text-left whitespace-nowrap text-white">
-                                        {f.advances.length !== 0 &&
-                                            <button
-                                                onClick={() => toggle(i)}
-                                                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
-                                            >
-                                                Показати ({f.advances.length})
-                                            </button>}
-                                        {openIndex === i && f.advances.length !== 0 && (
-                                            <div
-                                                className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-64 z-50"
-                                            >
-                                                {f.advances.map((a) => (
-                                                    <div
-                                                        key={a.id}
-                                                        className="flex justify-between items-center px-2 py-1 border-b border-gray-700 last:border-none"
-                                                    >
+                                        {/* End Date */}
+                                        <td className="px-2 py-1 flex flex-col text-white">
+                                            <label>Кінець</label>
+                                            <DatePicker
+                                                selected={editingFinance.endDate ? new Date(editingFinance.endDate) : null}
+                                                onChange={(d) =>
+                                                    setEditingFinance({
+                                                        ...editingFinance,
+                                                        endDate: d ? formatDate(d) : ""
+                                                    })
+                                                }
+                                                dateFormat="yyyy-MM-dd"
+                                                className="w-full px-2 py-1 border rounded"
+                                            />
+                                        </td>
+                                        {[...columns]
+                                            .sort((a, b) => a.index - b.index)
+                                            .map(col => (
+                                                <td key={col.id} className="px-2 py-1">
+                                                    <input
+                                                        type="number"
+                                                        value={editingFinance.values[col.id]}
+                                                        onChange={(e) =>
+                                                            setEditingFinance(prev => ({
+                                                                ...prev,
+                                                                values: {
+                                                                    ...prev.values,
+                                                                    [col.id]: e.target.value
+                                                                }
+                                                            }))
+                                                        }
+                                                        className="w-full px-2 py-1 border rounded bg-gray-800 text-white"
+                                                    />
+                                                </td>
+                                            ))}
+                                        {/* Actions */}
+                                        <td className="px-2 py-1 align-middle text-white">
+                                            <div className="flex items-center justify-center gap-2 h-full">
+                                                {isAdmin &&
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleSave(f)}
+                                                            className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
+                                                        >
+                                                            <Check size={18}/>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditingId(null)}
+                                                            className="p-2 bg-red-950 text-white rounded hover:bg-red-800"
+                                                        >
+                                                            <X size={18}/>
+                                                        </button>
+                                                    </>
+                                                }
+                                            </div>
+                                        </td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td className="px-4 py-2 text-white">{formatBackendDate(f.start_date)} – {formatBackendDate(f.end_date)}</td>
+                                        {columns.map(col => {
+                                            const cell = f.values.find(v => v.employee_column_id === col.id);
+
+                                            return (
+                                                <td key={col.id} className="px-4 py-2 text-white ">
+                                                    {cell?.value}
+                                                </td>
+                                            );
+                                        })}
+                                        <td className="px-4 py-2 relative text-left whitespace-nowrap text-white">
+                                            {f.advances.length !== 0 &&
+                                                <button
+                                                    onClick={() => toggle(i)}
+                                                    className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+                                                >
+                                                    Показати ({f.advances.length})
+                                                </button>}
+                                            {openIndex === i && f.advances.length !== 0 && (
+                                                <div
+                                                    className="absolute left-0 top-full mt-2 bg-gray-800 text-white rounded shadow-lg p-2 w-64 z-50"
+                                                >
+                                                    {f.advances.map((a) => (
+                                                        <div
+                                                            key={a.id}
+                                                            className="flex justify-between items-center px-2 py-1 border-b border-gray-700 last:border-none"
+                                                        >
                                                         <span>
                                                           {a.amount} |{" "}
                                                             {new Date(a.date).toLocaleString("en-GB", {
@@ -552,61 +641,63 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                                                 timeZone: "Europe/Kiev",
                                                             })}
                                                         </span>
-                                                        {isAdmin &&
-                                                            <button
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await instance.delete(`/employee-advances/${a.id}`);
-                                                                        fetchFinances(); // обновляем таблицу
-                                                                    } catch (err) {
-                                                                        console.error("Failed to delete advance", err);
-                                                                    }
-                                                                }}
-                                                                className="p-1 bg-red-700 hover:bg-red-600 text-white rounded ml-auto"
-                                                            >
-                                                                <Trash size={14}/>
-                                                            </button>
-                                                        }
-                                                    </div>
-                                                ))}
-                                                <div className="flex justify-between items-center px-2 py-1 font-bold">
-                                                    <span>Сума:</span>
-                                                    <span>
+                                                            {isAdmin &&
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await instance.delete(`/employee-advances/${a.id}`);
+                                                                            fetchFinances(); // обновляем таблицу
+                                                                        } catch (err) {
+                                                                            console.error("Failed to delete advance", err);
+                                                                        }
+                                                                    }}
+                                                                    className="p-1 bg-red-700 hover:bg-red-600 text-white rounded ml-auto"
+                                                                >
+                                                                    <Trash size={14}/>
+                                                                </button>
+                                                            }
+                                                        </div>
+                                                    ))}
+                                                    <div
+                                                        className="flex justify-between items-center px-2 py-1 font-bold">
+                                                        <span>Сума:</span>
+                                                        <span>
                                                         {f.advances.reduce((sum, a) => sum + a.amount, 0)}
                                                     </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                    </td>
-                                    <td className="px-2 py-1 align-middle">
-                                        <div className="flex items-center justify-center gap-2 h-full">
-                                            {isAdmin &&
-                                                <>
-                                                    <button
-                                                        className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
-                                                        onClick={openAdvanceModal}
-                                                    >
-                                                        <Plus size={18}/>
-                                                    </button>
-                                                    <button onClick={() => handleEdit(f)}
-                                                            className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
-                                                        <Edit2 size={18}/>
-                                                    </button>
-                                                    <button onClick={() => handleDelete(f.id)}
-                                                            className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
-                                                        <Trash size={18}/>
-                                                    </button>
-                                                </>
-                                            }
-                                        </div>
-                                    </td>
-                                </>
-                            )}
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
+                                        </td>
+                                        <td className="px-2 py-1 align-middle">
+                                            <div className="flex items-center justify-center gap-2 h-full">
+                                                {isAdmin &&
+                                                    <>
+                                                        <button
+                                                            className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500"
+                                                            onClick={openAdvanceModal}
+                                                        >
+                                                            <Plus size={18}/>
+                                                        </button>
+                                                        <button onClick={() => handleEdit(f)}
+                                                                className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
+                                                            <Edit2 size={18}/>
+                                                        </button>
+                                                        <button onClick={() => handleDelete(f.id)}
+                                                                className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
+                                                            <Trash size={18}/>
+                                                        </button>
+                                                    </>
+                                                }
+                                            </div>
+                                        </td>
+                                    </>
+                                )}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </DndContext>
                 <div className="mt-6 mb-4 border border-gray-700 rounded-lg overflow-hidden">
                     {/* Header */}
                     <div
@@ -756,7 +847,8 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                 )}
                 {isColumnModalOpen && (
                     <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-4">
-                        <div className="bg-gray-800 text-white p-6 rounded-md shadow-lg w-[300px] border border-gray-700">
+                        <div
+                            className="bg-gray-800 text-white p-6 rounded-md shadow-lg w-[300px] border border-gray-700">
                             <h2 className="text-xl font-semibold mb-4">
                                 {editingColumnId ? "Редагувати колонку" : "Додати колонку"}
                             </h2>
@@ -788,7 +880,8 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                 )}
                 {columnToDelete && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 ">
-                        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
+                        <div
+                            className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
                             <h2 className="text-lg mb-4">
                                 Ви впевнені, що хочете видалити колонку{" "}
                                 <span className="font-bold text-white">
