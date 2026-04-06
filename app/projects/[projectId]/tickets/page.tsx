@@ -47,9 +47,9 @@ export default function TicketsPage() {
             assignedTo = employee?.id;
             types = ["ADVERTISER_REQUEST", "OFFERS_REQUEST"];
         }
-        if (user?.role == "TECH_MANAGER") {
-            assignedTo = user?.id;
-            createdBy = user?.id;
+        if (employee?.role == "TECH_MANAGER") {
+            assignedTo = employee?.id;
+            createdBy = employee?.id;
         }
         if (employee?.role == "ADMIN" || employee?.role == "MANAGER" || employee?.role == "HEAD_OF_AFFILIATE") {
             types = filterType !== "ALL" ? [filterType] : undefined;
