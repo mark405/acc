@@ -110,7 +110,7 @@ export default function TicketsPage() {
     };
 
     return (
-
+        <>
         <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
@@ -305,11 +305,6 @@ export default function TicketsPage() {
                 onChange={setPage}
             />
             {/* Modal */}
-            <CreateTicketModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                onCreate={handleCreateTicket}
-            />
             {preview && (
                 <div
                     className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
@@ -322,5 +317,11 @@ export default function TicketsPage() {
                 </div>
             )}
         </div>
+    <CreateTicketModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onCreate={handleCreateTicket}
+    />
+    </>
     );
 }

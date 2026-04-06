@@ -188,7 +188,7 @@ export default function TaskDetailsPage() {
 
         try {
             await instance.delete(`/tickets/${ticketToDelete.id}`);
-            router.push(`/projects/${projectId}/tickets`);
+            router.push(`/projects/${projectId}/tasks`);
         } catch (err) {
             console.error("Помилка при видаленні задачі:", err);
         } finally {
