@@ -52,15 +52,19 @@ export default function OfferDetailsPage() {
     if (!offer) return <p>Loading...</p>;
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4">Офер #{offerId}</h1>
-            <div className="border p-4 rounded shadow-md space-y-2">
+        <div className="p-6 max-w-4xl mx-auto text-white">
+            <h1 className="text-4xl font-bold mb-4 text-center text-white">
+                Офер #{offerId}
+            </h1>
+            <div className="border border-gray-700 p-4 rounded-xl shadow-md space-y-2 bg-gray-900">
                 <p><strong>ID:</strong> {offer.id}</p>
                 <p><strong>Name:</strong> {offer.name}</p>
                 <p><strong>Geo:</strong> {offer.geo}</p>
                 <p><strong>Source:</strong> {offer.source}</p>
                 <p><strong>Description:</strong></p>
-                <div className="border p-2 rounded bg-gray-50 whitespace-pre-wrap">{offer.description}</div>
+                <div className="border border-gray-700 p-2 rounded bg-gray-800 whitespace-pre-wrap">
+                    {offer.description}
+                </div>
                 {user?.offers_editable && (
                     <div className="flex gap-2 mt-4">
 

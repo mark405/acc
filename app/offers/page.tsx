@@ -28,8 +28,16 @@ export default function OfferPage() {
     const router = useRouter();
     const fetchOffers = async () => {
         try {
-            const params = { name: name || undefined, geo: geo || undefined, source: source || undefined, sort_by: sortBy, direction, page, size };
-            const res = await instance.get("/offers", { params });
+            const params = {
+                name: name || undefined,
+                geo: geo || undefined,
+                source: source || undefined,
+                sort_by: sortBy,
+                direction,
+                page,
+                size
+            };
+            const res = await instance.get("/offers", {params});
             setOffers(res.data.content);
             setTotalPages(res.data.total_pages);
         } catch (err) {
@@ -47,49 +55,66 @@ export default function OfferPage() {
 
     const handleSort = (field: string) => {
         if (sortBy === field) setDirection(direction === "asc" ? "desc" : "asc");
-        else { setSortBy(field); setDirection("asc"); }
+        else {
+            setSortBy(field);
+            setDirection("asc");
+        }
     };
 
-    const handleDelete = (id: number) => { setSelectedOfferId(id); setIsDeleteModalOpen(true); };
-    const handleEdit = (id: number) => { setSelectedOfferId(id); setIsOfferModalOpen(true); };
-    const handleCreate = () => { setSelectedOfferId(null); setIsOfferModalOpen(true); };
+    const handleDelete = (id: number) => {
+        setSelectedOfferId(id);
+        setIsDeleteModalOpen(true);
+    };
+    const handleEdit = (id: number) => {
+        setSelectedOfferId(id);
+        setIsOfferModalOpen(true);
+    };
+    const handleCreate = () => {
+        setSelectedOfferId(null);
+        setIsOfferModalOpen(true);
+    };
 
     const confirmDelete = async () => {
         if (selectedOfferId === null) return;
         try {
             await instance.delete(`/offers/${selectedOfferId}`);
             fetchOffers();
-        } catch (err) { console.error(err); }
-        finally { setIsDeleteModalOpen(false); setSelectedOfferId(null); }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsDeleteModalOpen(false);
+            setSelectedOfferId(null);
+        }
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4 text-center">Офери</h1>
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
+            <h1 className="text-white text-4xl font-bold mb-4 text-center">Офери</h1>
 
             {/* Filters */}
-            <div className="flex items-center space-x-4 mb-4 justify-center">
+            <div className="flex items-center space-x-4 mb-4 justify-center text-white">
                 <input type="text" placeholder="Name" value={name} onChange={e => setName(e.target.value)}
-                       className="border rounded px-2 py-1" />
+                       className="border rounded px-2 py-1 text-white border-white"/>
                 <input type="text" placeholder="Geo" value={geo} onChange={e => setGeo(e.target.value)}
-                       className="border rounded px-2 py-1" />
+                       className="border rounded px-2 py-1 text-white"/>
                 <input type="text" placeholder="Source" value={source} onChange={e => setSource(e.target.value)}
-                       className="border rounded px-2 py-1" />
-                <button onClick={handleCreate} className="px-3 py-1 bg-green-600 text-white rounded">Створити оффер</button>
+                       className="border rounded px-2 py-1 text-white"/>
+                <button onClick={handleCreate} className="px-3 py-1 bg-green-600 text-white rounded">Створити оффер
+                </button>
             </div>
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="min-w-full table-fixed border-collapse border border-gray-300">
+                <table className="min-w-full table-fixed border-collapse border border-gray-300 text-white">
                     <thead>
                     <tr className="bg-gray-800 text-white">
                         {["id", "name", "geo", "source"].map(f =>
-                            <th key={f} className="px-4 py-2 text-left cursor-pointer"
-                                onClick={() => handleSort(f)}>
+                            <th key={f}
+                                className="w-1/6 px-4 py-2 text-left cursor-pointer" onClick={() => handleSort(f)}>
                                 {f.toUpperCase()} {sortBy === f && (direction === "asc" ? "↑" : "↓")}
                             </th>
                         )}
-                        <th className="px-4 py-2">Actions</th>
+                        <th className="w-1/6 px-4 py-2">Дії</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -99,26 +124,28 @@ export default function OfferPage() {
                             <td className="px-4 py-2">{o.name}</td>
                             <td className="px-4 py-2">{o.geo}</td>
                             <td className="px-4 py-2">{o.source}</td>
-                            <td className="px-4 py-2 flex gap-2">
-                                <Eye
-                                    size={18}
-                                    className="cursor-pointer text-green-600 hover:text-green-400"
-                                    onClick={() => router.push(`/offers/${o.id}`)}
-                                />
-                                {user?.offers_editable && (
-                                    <>
-                                        <Edit3
-                                            size={18}
-                                            className="cursor-pointer text-blue-600 hover:text-blue-400"
-                                            onClick={() => handleEdit(o.id)}
-                                        />
-                                        <Trash2
-                                            size={18}
-                                            className="cursor-pointer text-red-600 hover:text-red-400"
-                                            onClick={() => handleDelete(o.id)}
-                                        />
-                                    </>
-                                )}
+                            <td className="px-4 py-2">
+                                <div className="flex gap-2 items-center justify-center">
+                                    <Eye
+                                        size={18}
+                                        className="cursor-pointer text-green-600 hover:text-green-400"
+                                        onClick={() => router.push(`/offers/${o.id}`)}
+                                    />
+                                    {user?.offers_editable && (
+                                        <>
+                                            <Edit3
+                                                size={18}
+                                                className="cursor-pointer text-blue-600 hover:text-blue-400"
+                                                onClick={() => handleEdit(o.id)}
+                                            />
+                                            <Trash2
+                                                size={18}
+                                                className="cursor-pointer text-red-600 hover:text-red-400"
+                                                onClick={() => handleDelete(o.id)}
+                                            />
+                                        </>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -127,15 +154,15 @@ export default function OfferPage() {
             </div>
 
             {/* Pagination */}
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} onChange={setPage}/>
 
             {isDeleteModalOpen && (
                 <DeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}
-                             onConfirm={confirmDelete} title="Delete this offer?" />
+                             onConfirm={confirmDelete} title="Видалити цей оффер?"/>
             )}
             {isOfferModalOpen && (
                 <OfferModal isOpen={isOfferModalOpen} onClose={() => setIsOfferModalOpen(false)}
-                            onSaved={fetchOffers} offerId={selectedOfferId} />
+                            onSaved={fetchOffers} offerId={selectedOfferId}/>
             )}
 
         </div>
