@@ -111,3 +111,18 @@ export interface OfferResponse {
     source: string;
     description: string;
 }
+
+export interface NodeResponse {
+    id: number;
+    type: string;
+    name: string;
+    role: string;
+    x: number;
+    y: number;
+}
+
+export interface  EdgeResponse  {
+    id: number;
+    source: number;
+    target: number;
+}

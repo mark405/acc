@@ -2,7 +2,19 @@
 
 import {useEffect, useState} from "react";
 import Link from "next/link";
-import {ArrowLeft, ArrowRight, Check, ChevronDown, ChevronUp, Edit2, Plus, Trash2, UserCog, X} from "lucide-react";
+import {
+    ArrowLeft,
+    ArrowRight,
+    BarChart2,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Edit2,
+    Plus,
+    Trash2,
+    UserCog, Users,
+    X
+} from "lucide-react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -575,6 +587,15 @@ export default function Sidebar() {
                         >
                             <span>Співробітники</span>
                             <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/projects/${projectId}/employees/diagram`);
+                                    }}
+                                    className="p-1 rounded-full hover:bg-gray-600 transition"
+                                >
+                                    <Users size={18}/>
+                                </button>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
