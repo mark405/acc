@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import {EmployeeResponse, UserResponse} from "@/app/types";
-import { instance } from "@/app/api/instance";
+import React, {useEffect, useRef, useState} from "react";
+import {EmployeeResponse} from "@/app/types";
+import {instance} from "@/app/api/instance";
 import {useParams} from "next/navigation";
 
 interface CreateTicketModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (text: string, type: "TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST", assignedTo: number[], files: File[]) => void;
+    onCreate: (text: string, assignedTo: number[], files: File[]) => void;
 }
 
-export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketModalProps) => {
+export const CreateTaskModal = ({isOpen, onClose, onCreate}: CreateTicketModalProps) => {
     const [text, setText] = useState("");
-    const [type, setType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST">("TECH_GOAL");
     const [assignedTo, setAssignedTo] = useState<number[]>([]);
     const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -21,9 +20,9 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const projectId = useParams().projectId;
-    const fetchEmployees = async (roleFilter: string) => {
+    const fetchEmployees = async () => {
         try {
-            const response = await instance.get("/employees", { params: { role: roleFilter, project_id: projectId } });
+            const response = await instance.get("/employees", {params: {project_id: projectId}});
             setEmployees(response.data.content);
         } catch (e) {
             console.error("Error fetching users", e);
@@ -32,24 +31,9 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
 
     useEffect(() => {
         if (!isOpen) return;
-
-        if (type === "TECH_GOAL") {
-            const fetchTechManagers = async () => {
-                try {
-                    const res = await instance.get("/employees", { params: { role: "TECH_MANAGER", project_id: projectId } });
-                    setEmployees(res.data.content);
-                    setAssignedTo(res.data.content.map((u: UserResponse) => u.id));
-                } catch (err) {
-                    console.error("Failed to fetch TECH_MANAGER", err);
-                }
-            };
-            fetchTechManagers();
-        } else {
-            // Для ADVERTISER_REQUEST загружаем OFFERS_MANAGER для выбора
-            fetchEmployees("OFFERS_MANAGER");
-            setAssignedTo([]); // сброс выбранных пользователей
-        }
-    }, [isOpen, type]);
+        fetchEmployees();
+        setAssignedTo([]); // сброс выбранных пользователей
+    }, [isOpen]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -84,13 +68,11 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     }, [isOpen]);
 
 
-
     if (!isOpen) return null;
 
     const handleCreate = () => {
-        onCreate(text, type, assignedTo, files);
+        onCreate(text, assignedTo, files);
         setText("");
-        setType("TECH_GOAL");
         setAssignedTo([]);
         setFiles([]);
         setDropdownOpen(false);
@@ -143,7 +125,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
 
                 {/* Заголовок */}
                 <h2 className="text-2xl font-bold mb-6 text-center border-b border-gray-700 pb-3">
-                    Створити Тікет
+                    Створити Задачу
                 </h2>
 
                 {/* Тело формы */}
@@ -160,72 +142,46 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                         />
                     </div>
 
-                    {/* Тип тикета */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium">Тип</label>
-                        <select
-                            value={type}
-                            onChange={(e) =>
-                                setType(e.target.value as "TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST")
-                            }
-                            className="w-full p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white focus:ring-2 focus:ring-purple-900  outline-none"
-                        >
-                            <option value="TECH_GOAL">Tech Goal</option>
-                            <option value="ADVERTISER_REQUEST">Запити рекламодавцям</option>
-                            <option value="OFFERS_REQUEST">Запити на офери</option>
-                        </select>
-                    </div>
-
                     {/* Назначение */}
-                    {type === "ADVERTISER_REQUEST" || type === "OFFERS_REQUEST" ? (
-                        <div className="relative flex flex-col gap-1">
-                            <label className="text-sm font-medium">Призначено:</label>
-                            <button
-                                onClick={() => setDropdownOpen((prev) => !prev)}
-                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-left hover:bg-gray-700 flex justify-between items-center text-sm transition"
-                            >
-                                {assignedTo.length === 0
-                                    ? "Кому ▾"
-                                    : assignedTo
-                                        .map((id) => employees.find((u) => u.id === id)?.name)
-                                        .join(", ")}
-                                <span className="ml-2 text-gray-400">▾</span>
-                            </button>
+                    <div className="relative flex flex-col gap-1">
+                        <label className="text-sm font-medium">Призначено:</label>
+                        <button
+                            onClick={() => setDropdownOpen((prev) => !prev)}
+                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-left hover:bg-gray-700 flex justify-between items-center text-sm transition"
+                        >
+                            {assignedTo.length === 0
+                                ? "Кому ▾"
+                                : assignedTo
+                                    .map((id) => employees.find((u) => u.id === id)?.name)
+                                    .join(", ")}
+                            <span className="ml-2 text-gray-400">▾</span>
+                        </button>
 
-                            {dropdownOpen && (
-                                <div
-                                    ref={dropdownRef}
-                                    className="absolute top-full mt-1 w-full max-h-48 overflow-auto bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
-                                >
-                                    {employees.map((user) => (
-                                        <div
-                                            key={user.id}
-                                            className={`px-3 py-2 cursor-pointer hover:bg-gray-700 flex justify-between items-center text-sm rounded
+                        {dropdownOpen && (
+                            <div
+                                ref={dropdownRef}
+                                className="absolute top-full mt-1 w-full max-h-48 overflow-auto bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
+                            >
+                                {employees.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className={`px-3 py-2 cursor-pointer hover:bg-gray-700 flex justify-between items-center text-sm rounded
                       ${
-                                                assignedTo.includes(user.id)
-                                                    ? "bg-purple-950"
-                                                    : ""
-                                            }`}
-                                            onClick={() => toggleUser(user.id)}
-                                        >
-                                            <span>{user.name}</span>
-                                            {assignedTo.includes(user.id) && (
-                                                <span className="focus:ring-purple-900  font-bold">✓</span>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-sm text-gray-400">
-                            Призначено:{" "}
-                            {employees
-                                .filter((u) => assignedTo.includes(u.id))
-                                .map((u) => u.name)
-                                .join(", ")}
-                        </div>
-                    )}
+                                            assignedTo.includes(user.id)
+                                                ? "bg-purple-950"
+                                                : ""
+                                        }`}
+                                        onClick={() => toggleUser(user.id)}
+                                    >
+                                        <span>{user.name}</span>
+                                        {assignedTo.includes(user.id) && (
+                                            <span className="focus:ring-purple-900  font-bold">✓</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Файлы / Dropzone */}
                     <div className="flex flex-col gap-1">
@@ -242,10 +198,14 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                             ) : (
                                 <div className="flex flex-wrap gap-2 justify-center">
                                     {files.map((f, i) => (
-                                        <div key={i} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-sm">
+                                        <div key={i}
+                                             className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-sm">
                                             {f.name}
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); setFiles(prev => prev.filter((_, idx) => idx !== i)); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFiles(prev => prev.filter((_, idx) => idx !== i));
+                                                }}
                                                 className="text-red-400 hover:text-red-600 transition"
                                             >
                                                 ✕
@@ -282,8 +242,6 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                     <button
                         className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 text-white transition"
                         onClick={handleCreate}
-                        disabled={type == "TECH_GOAL" && assignedTo.length === 0}
-                        hidden={type == "TECH_GOAL" && assignedTo.length === 0}
                     >
                         Створити
                     </button>

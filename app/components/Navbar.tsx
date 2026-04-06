@@ -109,6 +109,12 @@ export default function Navbar() {
                 {(!isAdmin && projectId != null) && (
                     <>
                         <Link
+                            href={`/projects/${projectId}/tasks`}
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Задачі
+                        </Link>
+                        <Link
                             href={`/projects/${projectId}/`}
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >
@@ -154,6 +160,7 @@ export default function Navbar() {
                         {[
                             {href: `/projects/${projectId}/`, label: "Статистика", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true},
+                            {href: `/projects/${projectId}/tasks`, label: "Задачі", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true},
                         ]
                             .filter(link => !link.hideOnProjectPage || projectId != null)
