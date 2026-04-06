@@ -138,6 +138,16 @@ export default function Navbar() {
                         </Link>
                     </>
                 )}
+                {(!isAdmin && projectId == null) && (
+                    <>
+                        <Link
+                            href="/offers"
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Офери
+                        </Link>
+                    </>
+                )}
 
                 {isAdmin && (
                     <>
