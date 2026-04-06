@@ -4,7 +4,6 @@ import {useEffect, useRef} from "react";
 import {CategoryResponse} from "@/app/types";
 import CommentFilter from "@/app/components/board/filters/CommentFilters";
 import CategoryFilters from "@/app/components/board/filters/CategoryFilters";
-import DateFilters from "@/app/components/board/filters/DateFilters";
 
 interface BoardFiltersProps {
     categories: CategoryResponse[];
@@ -66,19 +65,15 @@ export default function BoardFilters({
     }, [addingCategory]);
 
     return (
-        <div className="w-64 flex-shrink-0 bg-gray-900 p-4 rounded-lg shadow-lg h-[600px] flex flex-col">
-            {/* Comment Filter */}
-            <CommentFilter commentFilter={commentFilter} setCommentFilter={setCommentFilter}/>
+    <div className="w-full p-4 grid grid-cols-3 gap-6">
 
-            {/* Date Filters */}
-            <DateFilters
-                startDate={startDate}
-                setStartDate={setStartDate}
-                endDate={endDate}
-                setEndDate={setEndDate}
-            />
+        {/* Labels row */}
+        <div className="text-white text-sm font-semibold">Фільтр по категоріям</div>
+        <div className="text-white text-sm font-semibold">Фільтр по даті</div>
+        <div className="text-white text-sm font-semibold">Фільтр по коментарям</div>
 
-            {/* Categories */}
+        {/* Inputs row */}
+        <div className="min-w-[300px] flex flex-col gap-3">
             <CategoryFilters
                 categories={categories}
                 categoryFilter={categoryFilter}
@@ -94,5 +89,25 @@ export default function BoardFilters({
                 setNewCategoryName={setNewCategoryName}
             />
         </div>
+
+        <div className="min-w-[300px] flex flex-col gap-3">
+            <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+        </div>
+
+        <div className="min-w-[300px] flex flex-col gap-3">
+            <CommentFilter commentFilter={commentFilter} setCommentFilter={setCommentFilter}/>
+        </div>
+    </div>
     );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import {KeyboardEvent, useEffect, useRef, useState} from "react";
+import {useEffect, useState} from "react";
 import Link from "next/link";
-import {ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus} from "lucide-react";
+import {ArrowLeft, ArrowRight, Check, ChevronDown, ChevronUp, Edit2, Plus, Trash2, UserCog, X} from "lucide-react";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useParams, useRouter} from "next/navigation";
-import {BoardResponse, EmployeeResponse} from "@/app/types";
+import {BoardResponse, EmployeeResponse, ProjectResponse, UserResponse} from "@/app/types";
 
 export default function Sidebar() {
     const params = useParams();
@@ -18,7 +18,7 @@ export default function Sidebar() {
     const [showEmployees, setShowEmployees] = useState(false);
     const [showExpenses, setShowExpenses] = useState(false);
     const [showIncome, setShowIncome] = useState(false);
-
+    const [project, setProject] = useState<ProjectResponse | null>(null);
     const [addingExpense, setAddingExpense] = useState(false);
     const [addingIncome, setAddingIncome] = useState(false);
     const [newBoardName, setNewBoardName] = useState("");
@@ -30,17 +30,107 @@ export default function Sidebar() {
 
     const {isLoggedIn, checkAuth} = useAuth();
     const router = useRouter();
-
-    const expenseInputRef = useRef<HTMLInputElement>(null);
-    const incomeInputRef = useRef<HTMLInputElement>(null);
-
+    const [modalOpen, setModalOpen] = useState(false);
+    const [newEmployeeName, setNewEmployeeName] = useState("");
+    const [users, setUsers] = useState<UserResponse[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const projectId = useParams().projectId;
     const [contextMenu, setContextMenu] = useState<{ boardId: number; type: "EXPENSE" | "INCOME" } | null>(null);
+    const [renamingEmployee, setRenamingEmployee] = useState<{ id: number; name: string } | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeResponse | null>(null);
+    const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+    const [employeeForRole, setEmployeeForRole] = useState<EmployeeResponse | null>(null);
+    const [selectedRole, setSelectedRole] = useState<string>("MANAGER");
+
+    const confirmDeleteEmployee = (employee: EmployeeResponse) => {
+        setEmployeeToDelete(employee);
+        setDeleteModalOpen(true);
+    };
+    const openRoleDialog = (employee: EmployeeResponse) => {
+        setEmployeeForRole(employee);
+        setSelectedRole(employee.role ?? "MANAGER");
+        setRoleDialogOpen(true);
+    };
+    const handleChangeRole = async () => {
+        if (!employeeForRole) return;
+
+        try {
+            const res = await instance.put(
+                `/employees/change-role/${employeeForRole.id}`,
+                {role: selectedRole}
+            );
+
+            if (res.status === HttpStatusCode.NoContent) {
+                setEmployees(prev =>
+                    prev.map(emp =>
+                        emp.id === employeeForRole.id
+                            ? {...emp, role: selectedRole}
+                            : emp
+                    )
+                );
+            }
+        } catch (err) {
+            console.error("Failed to change role", err);
+        } finally {
+            setRoleDialogOpen(false);
+            setEmployeeForRole(null);
+        }
+    };
+// Function to actually delete
+    const handleDeleteEmployee = async () => {
+        if (!employeeToDelete) return;
+
+        try {
+            const res = await instance.delete(`/employees/${employeeToDelete.id}`);
+            if (res.status === HttpStatusCode.NoContent) {
+                // Remove from local state
+                setEmployees(prev => prev.filter(e => e.id !== employeeToDelete.id));
+            }
+        } catch (err) {
+            console.error("Failed to delete employee", err);
+        } finally {
+            setDeleteModalOpen(false);
+            setEmployeeToDelete(null);
+        }
+    };
+    const fetchUsers = async () => {
+        try {
+            const res = await instance.get("/users", {
+                params: {project_id: projectId}
+            });
+            if (res.status === HttpStatusCode.Ok) {
+                setUsers(res.data.content ?? []); // <- use .content
+            }
+        } catch (err) {
+            console.error("Failed to fetch users", err);
+        }
+    };
+
+    const handleAddEmployee = async () => {
+        if (!newEmployeeName.trim() || !selectedUserId) return;
+        try {
+            const res = await instance.post("/employees", {
+                project_id: projectId,
+                name: newEmployeeName.trim(),
+                user_id: selectedUserId,
+            });
+            if (res.status === HttpStatusCode.Created || res.status === HttpStatusCode.Ok) {
+                setModalOpen(false);
+                setNewEmployeeName("");
+                setSelectedUserId(null);
+                // refetch employees
+                const empRes = await instance.get(`/employees?project_id=${projectId}`);
+                if (empRes.status === HttpStatusCode.Ok) setEmployees(empRes.data.content ?? []);
+            }
+        } catch (err) {
+            console.error("Failed to add employee", err);
+        }
+    };
 
     useEffect(() => {
-        const handleClick = () => setContextMenu(null);
-        document.addEventListener("click", handleClick);
-        return () => document.removeEventListener("click", handleClick);
-    }, []);
+        if (modalOpen) fetchUsers();
+    }, [modalOpen]);
 
     const deleteBoard = async (id: number, type: "EXPENSE" | "INCOME") => {
         try {
@@ -58,35 +148,9 @@ export default function Sidebar() {
         }
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Node;
-            if (
-                addingExpense &&
-                expenseInputRef.current &&
-                !expenseInputRef.current.contains(target)
-            ) {
-                setAddingExpense(false);
-                setNewBoardName("");
-            }
-            if (
-                addingIncome &&
-                incomeInputRef.current &&
-                !incomeInputRef.current.contains(target)
-            ) {
-                setAddingIncome(false);
-                setNewBoardName("");
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [addingExpense, addingIncome]);
-
-
     const fetchEmployees = async () => {
         try {
-            let res = await instance.get("/employees", {params: {page: 0, size: 25}});
+            let res = await instance.get("/employees", {params: {page: 0, size: 25, project_id: projectId}});
             if (res.status === HttpStatusCode.Forbidden) {
                 await checkAuth();
                 if (!isLoggedIn) router.replace("/login");
@@ -100,7 +164,7 @@ export default function Sidebar() {
 
     const fetchBoards = async (type: "EXPENSE" | "INCOME") => {
         try {
-            const res = await instance.get(`/boards`, {params: {type}});
+            const res = await instance.get(`/boards`, {params: {type, project_id: projectId}});
             if (res.status === HttpStatusCode.Ok || res.status === 200) {
                 if (type === "EXPENSE") setBoardsExpense(res.data);
                 else setBoardsIncome(res.data);
@@ -112,7 +176,7 @@ export default function Sidebar() {
 
     const createBoard = async (type: "EXPENSE" | "INCOME", name: string) => {
         try {
-            const res = await instance.post(`/boards`, {name, type});
+            const res = await instance.post(`/boards`, {project_id: projectId, name, type});
             if (res.status === HttpStatusCode.Ok || res.status === 200 || res.status === HttpStatusCode.Created) {
                 await fetchBoards(type);
             }
@@ -126,6 +190,20 @@ export default function Sidebar() {
             fetchEmployees();
             fetchBoards("EXPENSE");
             fetchBoards("INCOME");
+            if (projectId) {
+                const loadProject = async () => {
+                    try {
+                        const res = await instance.get("/projects/" + projectId);
+                        if (res.status === HttpStatusCode.Ok || res.status === 200) {
+                            setProject(res.data);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch projects", err);
+                    }
+                };
+
+                loadProject();
+            }
         }
     }, [isLoggedIn]);
 
@@ -144,27 +222,24 @@ export default function Sidebar() {
     };
 
 
-    const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>, type: "EXPENSE" | "INCOME") => {
-        if (e.key === "Enter" && newBoardName.trim()) {
-            await createBoard(type, newBoardName.trim());
+    const handeCreate = async (type: "EXPENSE" | "INCOME") => {
+        if (newBoardName.trim().length == 0) {
             setNewBoardName("");
-            if (type === "EXPENSE") setAddingExpense(false);
-            else setAddingIncome(false);
-        } else if (e.key === "Escape") {
-            setNewBoardName("");
-            setAddingExpense(false);
-            setAddingIncome(false);
+            return;
         }
+        await createBoard(type, newBoardName.trim());
+        setNewBoardName("");
+        if (type === "EXPENSE") setAddingExpense(false);
+        else setAddingIncome(false);
     };
 
-    const handleRenameKeyDown = async (
-        e: KeyboardEvent<HTMLInputElement>,
+    const handleRenameBoard = async (
         type: "EXPENSE" | "INCOME",
         id: number
     ) => {
         if (!renamingBoard) return;
 
-        if (e.key === "Enter" && renamingBoard.name.trim()) {
+        if (renamingBoard.name.trim()) {
             try {
                 const res = await instance.put(`/boards/${id}`, {
                     name: renamingBoard.name.trim(),
@@ -187,7 +262,7 @@ export default function Sidebar() {
             } finally {
                 setRenamingBoard(null);
             }
-        } else if (e.key === "Escape") {
+        } else {
             setRenamingBoard(null);
         }
     };
@@ -225,10 +300,9 @@ export default function Sidebar() {
                         </Link>
 
                         {!collapsed && (
-                            <Link href="/"
-                                  className="text-2xl md:text-3xl font-extrabold hover:text-gray-300 transition">
-                                TRFFGN GROUP
-                            </Link>
+                            <span className="text-2xl md:text-3xl font-extrabold text-white">
+        {projectId == null ? "TRFFGN GROUP" : project?.name.toUpperCase()}
+    </span>
                         )}
                     </div>
                 </div>
@@ -260,75 +334,108 @@ export default function Sidebar() {
                         {showExpenses && (
                             <div className="pl-10 text-gray-300 text-base">
                                 {boardsExpense.map((board) => (
-                                    <div key={board.id} className="relative">
+                                    <div key={board.id} className="relative group">
                                         {renamingBoard?.id === board.id && renamingBoard.type === "EXPENSE" ? (
-                                            <input
-                                                type="text"
-                                                value={renamingBoard.name}
-                                                onChange={(e) => setRenamingBoard(prev => prev ? {
-                                                    ...prev,
-                                                    name: e.target.value
-                                                } : prev)}
-                                                onKeyDown={(e) => handleRenameKeyDown(e, "EXPENSE", board.id)}
-                                                autoFocus
-                                                className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
-                                            />
-                                        ) : (
-                                            <Link
-                                                href={`/expenses/${board.id}`}
-                                                onContextMenu={(e) => {
-                                                    e.preventDefault();
-                                                    if (board.level_type === "MAIN") return;
-                                                    setContextMenu({boardId: board.id, type: "EXPENSE"});
-                                                }}
-                                                onDoubleClick={() => setRenamingBoard({
-                                                    id: board.id,
-                                                    type: "EXPENSE",
-                                                    name: board.name
-                                                })}
-                                                className="block py-1 hover:text-white transition"
-                                            >
-                                                {board.name}
-                                            </Link>
-                                        )}
-                                        {contextMenu?.boardId === board.id && contextMenu.type === "EXPENSE" && (
-                                            <div
-                                                className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <input
+                                                    type="text"
+                                                    value={renamingBoard.name}
+                                                    onChange={(e) =>
+                                                        setRenamingBoard(prev => prev ? {
+                                                            ...prev,
+                                                            name: e.target.value
+                                                        } : prev)
+                                                    }
+                                                    autoFocus
+                                                    className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                                />
+                                                <button
+
+                                                    onClick={() => handleRenameBoard("EXPENSE", board.id)}
+                                                    className=" transition cursor-pointer"
+                                                >
+                                                    <Check size={20}/>
+                                                </button>
                                                 <button
                                                     onClick={() => {
-                                                        setRenamingBoard({
-                                                            id: board.id,
-                                                            type: "EXPENSE",
-                                                            name: board.name
-                                                        });
-                                                        setContextMenu(null);
+                                                        setRenamingBoard(null);
                                                     }}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
+                                                    className="transition cursor-pointer text-red-400 hover:text-red-500"
                                                 >
-                                                    Редагувати
+                                                    <X size={20}/>
                                                 </button>
-                                                <button
-                                                    onClick={() => deleteBoard(board.id, "EXPENSE")}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center py-1">
+                                                <Link
+                                                    href={`/projects/${projectId}/expenses/${board.id}`}
+                                                    onContextMenu={(e) => {
+                                                        e.preventDefault();
+                                                        if (board.level_type === "MAIN") return;
+                                                        setContextMenu({boardId: board.id, type: "EXPENSE"});
+                                                    }}
+                                                    className="flex-1 py-1 hover:text-white transition"
                                                 >
-                                                    Видалити
-                                                </button>
+                                                    {board.name}
+                                                </Link>
+                                                {board.level_type !== "MAIN" && (
+                                                    <div
+                                                        className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
+                                                        <button
+                                                            onClick={() =>
+                                                                setRenamingBoard({
+                                                                    id: board.id,
+                                                                    type: "EXPENSE",
+                                                                    name: board.name
+                                                                })
+                                                            }
+                                                            className="p-1 rounded hover:bg-gray-600"
+                                                        >
+                                                            <Edit2 size={18}/>
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => deleteBoard(board.id, "EXPENSE")}
+                                                            className="p-1 rounded hover:bg-red-600"
+                                                        >
+                                                            <Trash2 size={18}/>
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
                                 ))}
 
+
                                 {addingExpense && (
-                                    <input
-                                        ref={expenseInputRef}
-                                        type="text"
-                                        value={newBoardName}
-                                        onChange={(e) => setNewBoardName(e.target.value)}
-                                        onKeyDown={(e) => handleKeyDown(e, "EXPENSE")}
-                                        placeholder="Назва таблиці..."
-                                        autoFocus
-                                        className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
-                                    />
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <input
+                                            type="text"
+                                            value={newBoardName}
+                                            onChange={(e) =>
+                                                setNewBoardName(() => e.target.value)
+                                            }
+                                            autoFocus
+                                            className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded outline-none"
+                                        />
+                                        <button
+
+                                            onClick={() => handeCreate("EXPENSE")}
+                                            className=" transition cursor-pointer"
+                                        >
+                                            <Check size={20}/>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setNewBoardName("");
+                                                setAddingExpense(false);
+                                            }}
+                                            className="transition cursor-pointer text-red-400 hover:text-red-500"
+                                        >
+                                            <X size={20}/>
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -356,58 +463,74 @@ export default function Sidebar() {
                         {showIncome && (
                             <div className="pl-10 text-gray-300 text-base">
                                 {boardsIncome.map((board) => (
-                                    <div key={board.id} className="relative">
+                                    <div key={board.id} className="relative group">
                                         {renamingBoard?.id === board.id && renamingBoard.type === "INCOME" ? (
-                                            <input
-                                                type="text"
-                                                value={renamingBoard.name}
-                                                onChange={(e) =>
-                                                    setRenamingBoard(prev => prev ? {
-                                                        ...prev,
-                                                        name: e.target.value
-                                                    } : prev)
-                                                }
-                                                onKeyDown={(e) => handleRenameKeyDown(e, "INCOME", board.id)}
-                                                autoFocus
-                                                className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
-                                            />
-                                        ) : (
-                                            <Link
-                                                href={`/incomes/${board.id}`}
-                                                onContextMenu={(e) => {
-                                                    e.preventDefault();
-                                                    if (board.level_type === "MAIN") return;
-                                                    setContextMenu({boardId: board.id, type: "INCOME"});
-                                                }}
-                                                className="block py-1 hover:text-white transition"
-                                            >
-                                                {board.name}
-                                            </Link>
-                                        )}
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <input
+                                                    type="text"
+                                                    value={renamingBoard.name}
+                                                    onChange={(e) =>
+                                                        setRenamingBoard(prev => prev ? {
+                                                            ...prev,
+                                                            name: e.target.value
+                                                        } : prev)
+                                                    }
+                                                    autoFocus
+                                                    className="w-[75%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
+                                                />
+                                                <button
 
-                                        {/* Context menu */}
-                                        {contextMenu?.boardId === board.id && contextMenu.type === "INCOME" && (
-                                            <div
-                                                className="absolute right-0 mt-1 bg-gray-700 text-white rounded shadow-md w-36 z-[1000]">
+                                                    onClick={() => handleRenameBoard("INCOME", board.id)}
+                                                    className=" transition cursor-pointer"
+                                                >
+                                                    <Check size={20}/>
+                                                </button>
                                                 <button
                                                     onClick={() => {
-                                                        setRenamingBoard({
-                                                            id: board.id,
-                                                            type: "INCOME",
-                                                            name: board.name
-                                                        });
-                                                        setContextMenu(null);
+                                                        setRenamingBoard(null);
                                                     }}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-800 transition"
+                                                    className="transition cursor-pointer text-red-400 hover:text-red-500"
                                                 >
-                                                    Редагувати
+                                                    <X size={20}/>
                                                 </button>
-                                                <button
-                                                    onClick={() => deleteBoard(board.id, "INCOME")}
-                                                    className="block w-full text-left px-2 py-1 text-sm hover:bg-red-600 transition"
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center py-1">
+                                                <Link
+                                                    href={`/projects/${projectId}/incomes/${board.id}`}
+                                                    onContextMenu={(e) => {
+                                                        e.preventDefault();
+                                                        if (board.level_type === "MAIN") return;
+                                                        setContextMenu({boardId: board.id, type: "INCOME"});
+                                                    }}
+                                                    className="flex-1 py-1 hover:text-white transition"
                                                 >
-                                                    Видалити
-                                                </button>
+                                                    {board.name}
+                                                </Link>
+                                                {board.level_type !== "MAIN" && (
+                                                    <div
+                                                        className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
+                                                        <button
+                                                            onClick={() =>
+                                                                setRenamingBoard({
+                                                                    id: board.id,
+                                                                    type: "INCOME",
+                                                                    name: board.name
+                                                                })
+                                                            }
+                                                            className="p-1 rounded hover:bg-gray-600"
+                                                        >
+                                                            <Edit2 size={18}/>
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => deleteBoard(board.id, "INCOME")}
+                                                            className="p-1 rounded hover:bg-red-600"
+                                                        >
+                                                            <Trash2 size={18}/>
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -415,16 +538,33 @@ export default function Sidebar() {
 
 
                                 {addingIncome && (
-                                    <input
-                                        ref={incomeInputRef}
-                                        type="text"
-                                        value={newBoardName}
-                                        onChange={(e) => setNewBoardName(e.target.value)}
-                                        onKeyDown={(e) => handleKeyDown(e, "INCOME")}
-                                        placeholder="Назва таблиці..."
-                                        autoFocus
-                                        className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded mt-1 outline-none"
-                                    />
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <input
+                                            type="text"
+                                            value={newBoardName}
+                                            onChange={(e) =>
+                                                setNewBoardName(() => e.target.value)
+                                            }
+                                            autoFocus
+                                            className="w-[85%] bg-gray-700 text-white px-2 py-1 rounded outline-none"
+                                        />
+                                        <button
+
+                                            onClick={() => handeCreate("INCOME")}
+                                            className=" transition cursor-pointer"
+                                        >
+                                            <Check size={20}/>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setNewBoardName("");
+                                                setAddingIncome(false);
+                                            }}
+                                            className="transition cursor-pointer text-red-400 hover:text-red-500"
+                                        >
+                                            <X size={20}/>
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -434,37 +574,121 @@ export default function Sidebar() {
                             onClick={() => setShowEmployees(!showEmployees)}
                         >
                             <span>Співробітники</span>
-                            {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setModalOpen(true);
+                                    }}
+                                    className="p-1 rounded-full hover:bg-gray-600 transition"
+                                >
+                                    <Plus size={18}/>
+                                </button>
+                                {showEmployees ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            </div>
                         </div>
 
-                        {/*{showEmployees && (*/}
-                        {/*    <div className="pl-6">*/}
-                        {/*        {employees.map((employee) => (*/}
-                        {/*            <div key={employee.id}>*/}
-                        {/*                <div*/}
-                        {/*                    className="flex justify-between items-center px-6 py-2 cursor-pointer hover:bg-gray-700"*/}
-                        {/*                >*/}
-                        {/*                    <Link*/}
-                        {/*                        href={`/employees/${employee.id}`}*/}
-                        {/*                        className="block py-1 hover:text-white transition"*/}
-                        {/*                    >*/}
-                        {/*                        <span>{employee.name}</span>*/}
-                        {/*                    </Link>*/}
-                        {/*                </div>*/}
-                        {/*            </div>*/}
-                        {/*        ))}*/}
-                        {/*    </div>*/}
-                        {/*)}*/}
                         {showEmployees && (
-                            <div className="pl-6 text-gray-300">
+                            <div className="pl-10 text-gray-300">
                                 {employees.map((employee) => (
-                                    <Link
-                                        key={employee.id}
-                                        href={`/employees/${employee.id}`}
-                                        className="flex justify-between items-center px-6 py-2 hover:bg-gray-700 transition"
-                                    >
-                                        <span>{employee.name}</span>
-                                    </Link>
+                                    <div key={employee.id}
+                                         className="relative group ">
+                                        {/* Name / Editable input */}
+                                        {renamingEmployee?.id === employee.id ? (
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <input
+                                                    type="text"
+                                                    value={renamingEmployee.name}
+                                                    onChange={(e) =>
+                                                        setRenamingEmployee(prev => prev ? {
+                                                            ...prev,
+                                                            name: e.target.value
+                                                        } : prev)
+                                                    }
+                                                    autoFocus
+                                                    className="w-[75%] bg-gray-700 text-white px-2 py-1 rounded outline-none"
+                                                />
+                                                <button
+                                                    onClick={async (e) => {
+                                                        if (renamingEmployee.name.trim()) {
+                                                            try {
+                                                                await instance.put(`/employees/${employee.id}`, {name: renamingEmployee.name.trim()});
+                                                                setEmployees(prev =>
+                                                                    prev.map(emp => emp.id === employee.id ? {
+                                                                        ...emp,
+                                                                        name: renamingEmployee.name.trim()
+                                                                    } : emp)
+                                                                );
+                                                            } catch (err) {
+                                                                console.error("Failed to rename employee", err);
+                                                            } finally {
+                                                                setRenamingEmployee(null);
+                                                            }
+                                                        } else {
+                                                            setRenamingEmployee(null);
+                                                        }
+                                                    }}
+                                                    className=" transition cursor-pointer"
+                                                >
+                                                    <Check size={20}/>
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setRenamingEmployee(null);
+                                                    }}
+                                                    className="transition cursor-pointer text-red-400 hover:text-red-500"
+                                                >
+                                                    <X size={20}/>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center py-1">
+
+                                                <Link
+                                                    key={employee.id}
+                                                    href={`/projects/${projectId}/employees/${employee.id}`}
+                                                    className="block w-full mb-2  px-2 py-1 rounded transition"
+                                                >
+                                                    <span>
+                                                        <span className="text-purple-400 font-semibold underline decoration-purple-400">
+                                                            #{employee.user.id}
+                                                        </span>{" "}
+                                                        {employee.name}{" "}
+                                                        <span className="text-gray-400">({employee.role})</span>
+                                                    </span>
+                                                </Link>
+                                                {/* Edit / Delete buttons */}
+                                                <div
+                                                    className="flex items-center gap-1  opacity-0 group-hover:opacity-100 transition">
+                                                    <button
+                                                        onClick={() => setRenamingEmployee({
+                                                            id: employee.id,
+                                                            name: employee.name
+                                                        })}
+                                                        className="p-1 text-sm rounded hover:bg-gray-600 transition"
+                                                    >
+                                                        <Edit2 size={18}/>
+                                                    </button>
+                                                    {employee.role !== "ADMIN" && (
+                                                        <button
+                                                            onClick={() => openRoleDialog(employee)}
+                                                            className="p-1 text-sm rounded hover:bg-blue-600 transition"
+                                                        >
+                                                            <UserCog size={18}/>
+                                                        </button>
+                                                    )}
+                                                    {employee.role !== "ADMIN" && (
+                                                    <button
+                                                        onClick={() => confirmDeleteEmployee(employee)}
+                                                        className="p-1 rounded text-sm hover:bg-red-600"
+                                                    >
+                                                        <Trash2 size={18}/>
+                                                    </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -482,6 +706,108 @@ export default function Sidebar() {
             >
                 {collapsed ? <ArrowRight size={24}/> : <ArrowLeft size={24}/>}
             </button>
+            {modalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80 relative">
+                        <h2 className="text-lg font-bold mb-4">Додати співробітника</h2>
+
+                        <input
+                            type="text"
+                            placeholder="Ім'я"
+                            value={newEmployeeName}
+                            onChange={(e) => setNewEmployeeName(e.target.value)}
+                            className="w-full mb-3 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        />
+
+                        <select
+                            value={selectedUserId ?? ""}
+                            onChange={(e) => setSelectedUserId(Number(e.target.value))}
+                            className="w-full mb-4 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        >
+                            <option value="" disabled>Виберіть користувача</option>
+                            {users.map((user) => (
+                                <option key={user.id} value={user.id}>{user.id} {user.username}</option>
+                            ))}
+                        </select>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={handleAddEmployee}
+                                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 transition"
+                            >
+                                Додати
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {deleteModalOpen && (
+                <div className="fixed inset-0  flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80">
+                        <h2 className="text-lg font-bold mb-4">Видалити співробітника?</h2>
+                        <p className="mb-4">Ви впевнені, що хочете видалити {employeeToDelete?.name}?</p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={handleDeleteEmployee}
+                                className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 transition"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {roleDialogOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80">
+                        <h2 className="text-lg font-bold mb-4">Змінити роль</h2>
+
+                        <p className="mb-3">
+                            Роль співробітника: {employeeForRole?.role}
+                        </p>
+
+                        <select
+                            value={selectedRole}
+                            onChange={(e) => setSelectedRole(e.target.value)}
+                            className="w-full mb-4 px-3 py-2 rounded bg-gray-700 text-white outline-none"
+                        >
+                            <option value="MANAGER">MANAGER</option>
+                            <option value="ADMIN">ADMIN</option>
+                            <option value="OFFERS_MANAGER">Offers Manager</option>
+                            <option value="TECH_MANAGER">Tech Manager</option>
+                            <option value="HEAD_OF_AFFILIATE">Head Of Affiliate</option>
+                        </select>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setRoleDialogOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+
+                            <button
+                                onClick={handleChangeRole}
+                                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 transition"
+                            >
+                                Зберегти
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

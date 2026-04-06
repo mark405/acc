@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #e5e7eb; /* Tailwind gray-200 */
+    --background: #1f2937; /* Tailwind gray-800 hex */
   --foreground: #171717;
 }
 
@@ -49,6 +49,16 @@ body {
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: #818cf8 #1f1f1f; /* thumb & track */
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
 }
 
 

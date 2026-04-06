@@ -10,6 +10,8 @@ import {
     ResponsiveContainer,
     CartesianGrid,
 } from "recharts";
+import {useParams} from "next/navigation";
+import Pagination from "@/app/components/Pagination";
 
 interface MonthStats {
     month: number;
@@ -25,10 +27,11 @@ export default function AdminDashboard() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [stats, setStats] = useState<MonthStats[]>([]);
     const [type, setType] = useState<"EXPENSE" | "INCOME">("INCOME");
+    const projectId = useParams().projectId;
 
     useEffect(() => {
         instance
-            .get<StatisticsResponse>("/stats", { params: { year, type } })
+            .get<StatisticsResponse>("/stats", { params: { project_id: projectId, year: year, type: type } })
             .then((res) => {
                 if (res.status === HttpStatusCode.Ok) {
                     setStats(res.data.statistics);
@@ -58,14 +61,14 @@ export default function AdminDashboard() {
     const chartData = Array.from({ length: 12 }, (_, i) => {
         const m = stats.find((s) => s.month === i + 1);
         return {
-            monthName: monthNames[i],
+            monthName: monthNames[i].slice(0, 3),
             amount: m?.amount ?? 0,
         };
     });
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold mb-6 text-center">Статистика</h1>
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
+            <h1 className="text-4xl font-bold mb-6 text-center text-white">Статистика</h1>
 
             {/* Tabs */}
             <div className="flex justify-center gap-5 mb-6 bg-gray-800 p-3 rounded-4xl w-max mx-auto">
@@ -89,17 +92,17 @@ export default function AdminDashboard() {
 
             <div className="flex gap-6 items-start h-132">
                 {/* Table */}
-                <div className="border border-gray-300 shadow bg-white w-1/3 h-full">
+                <div className="border  shadow  w-1/3 h-full">
                     <table className="w-full text-center">
-                        <thead className="bg-gray-100 border-b">
-                        <tr className="bg-gray-900  text-white">
-                            <th className="py-2 px-4">Місяць</th>
-                            <th className="py-2 px-4">Сума</th>
-                        </tr>
+                        <thead >
+                        <tr className="border border-gray-300 text-white">
+                                <th className="py-2 px-4">Місяць</th>
+                                <th className="py-2 px-4">Сума</th>
+                            </tr>
                         </thead>
                         <tbody>
                         {stats.map((m) => (
-                            <tr key={m.month} className="border-b bg-gray-800  text-white hover:bg-gray-700">
+                            <tr key={m.month} className="border-b border-gray-300  text-white hover:bg-gray-700">
                                 <td className="py-2 px-4">{monthNames[m.month - 1]}</td>
                                 <td className="py-2 px-4 font-medium">{m.amount.toFixed(2)} $</td>
                             </tr>
@@ -156,18 +159,21 @@ export default function AdminDashboard() {
 
             </div>
 
-            {/* Year navigation */}
-            <div className="flex justify-center items-center gap-4 mt-6">
+            <div className="flex items-center justify-center gap-4 mt-10">
                 <button
+                    disabled={false}
                     onClick={() => setYear(year - 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white hover:scale-105 active:scale-95 transition"
                 >
                     ← Попередній
                 </button>
-                <span className="text-xl font-semibold">{year}</span>
+
+                <span className="text-xl font-semibold text-white">{year}</span>
+
                 <button
+                    disabled={false}
                     onClick={() => setYear(year + 1)}
-                    className="px-3 py-1 border rounded disabled:opacity-50 bg-gray-800 text-white"
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white  hover:scale-105 active:scale-95 transition"
                 >
                     Наступний →
                 </button>

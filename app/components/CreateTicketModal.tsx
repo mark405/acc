@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { UserResponse } from "@/app/types";
+import {EmployeeResponse, UserResponse} from "@/app/types";
 import { instance } from "@/app/api/instance";
+import {useParams} from "next/navigation";
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -14,16 +15,16 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
     const [text, setText] = useState("");
     const [type, setType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST">("TECH_GOAL");
     const [assignedTo, setAssignedTo] = useState<number[]>([]);
-    const [users, setUsers] = useState<UserResponse[]>([]);
+    const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const dropRef = useRef<HTMLDivElement>(null);
-    const fetchUsers = async (roleFilter: string) => {
+    const projectId = useParams().projectId;
+    const fetchEmployees = async (roleFilter: string) => {
         try {
-            const response = await instance.get("/users", { params: { role: roleFilter } });
-            setUsers(response.data.content);
+            const response = await instance.get("/employees", { params: { role: roleFilter, project_id: projectId } });
+            setEmployees(response.data.content);
         } catch (e) {
             console.error("Error fetching users", e);
         }
@@ -35,8 +36,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
         if (type === "TECH_GOAL") {
             const fetchTechManagers = async () => {
                 try {
-                    const res = await instance.get("/users", { params: { role: "TECH_MANAGER" } });
-                    setUsers(res.data.content);
+                    const res = await instance.get("/employees", { params: { role: "TECH_MANAGER", project_id: projectId } });
+                    setEmployees(res.data.content);
                     setAssignedTo(res.data.content.map((u: UserResponse) => u.id));
                 } catch (err) {
                     console.error("Failed to fetch TECH_MANAGER", err);
@@ -45,7 +46,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
             fetchTechManagers();
         } else {
             // Для ADVERTISER_REQUEST загружаем OFFERS_MANAGER для выбора
-            fetchUsers("OFFERS_MANAGER");
+            fetchEmployees("OFFERS_MANAGER");
             setAssignedTo([]); // сброс выбранных пользователей
         }
     }, [isOpen, type]);
@@ -186,7 +187,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                                 {assignedTo.length === 0
                                     ? "Кому ▾"
                                     : assignedTo
-                                        .map((id) => users.find((u) => u.id === id)?.username)
+                                        .map((id) => employees.find((u) => u.id === id)?.name)
                                         .join(", ")}
                                 <span className="ml-2 text-gray-400">▾</span>
                             </button>
@@ -196,7 +197,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                                     ref={dropdownRef}
                                     className="absolute top-full mt-1 w-full max-h-48 overflow-auto bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
                                 >
-                                    {users.map((user) => (
+                                    {employees.map((user) => (
                                         <div
                                             key={user.id}
                                             className={`px-3 py-2 cursor-pointer hover:bg-gray-700 flex justify-between items-center text-sm rounded
@@ -207,7 +208,7 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                                             }`}
                                             onClick={() => toggleUser(user.id)}
                                         >
-                                            <span>{user.username}</span>
+                                            <span>{user.name}</span>
                                             {assignedTo.includes(user.id) && (
                                                 <span className="focus:ring-purple-900  font-bold">✓</span>
                                             )}
@@ -219,9 +220,9 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                     ) : (
                         <div className="text-sm text-gray-400">
                             Призначено:{" "}
-                            {users
+                            {employees
                                 .filter((u) => assignedTo.includes(u.id))
-                                .map((u) => u.username)
+                                .map((u) => u.name)
                                 .join(", ")}
                         </div>
                     )}
@@ -281,6 +282,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onCreate }: CreateTicketMod
                     <button
                         className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 text-white transition"
                         onClick={handleCreate}
+                        disabled={type == "TECH_GOAL" && assignedTo.length === 0}
+                        hidden={type == "TECH_GOAL" && assignedTo.length === 0}
                     >
                         Створити
                     </button>

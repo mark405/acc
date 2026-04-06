@@ -7,6 +7,8 @@ import {instance} from "@/app/api/instance";
 import {Check, Edit2, Plus, Trash, X} from "lucide-react";
 import DatePicker from "react-datepicker";
 import Pagination from "@/app/components/Pagination";
+import {useParams} from "next/navigation";
+import TotalPanel from "@/app/components/TotalPanel";
 
 interface BoardProps {
     board: BoardResponse;
@@ -44,7 +46,7 @@ export default function Board({
                               }: Readonly<BoardProps>) {
     const [adding, setAdding] = useState(false);
     const [newOperation, setNewOperation] = useState({
-        date: "",
+        date: new Date().toISOString(),
         categoryId: 0,
         comment: "",
         amount: 0,
@@ -58,8 +60,8 @@ export default function Board({
         comment: "",
         date: null as Date | null,
     });
-
-
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const projectId = useParams().projectId;
     const handleCreate = async () => {
         const newErrors = {
             amount: newOperation.amount === undefined || newOperation.amount < 0, // allow 0
@@ -71,15 +73,16 @@ export default function Board({
         if (newErrors.amount || newErrors.categoryId) return;
         try {
             await instance.post("/operations/create", {
+                project_id: projectId,
                 board_id: board.id,
                 category_id: newOperation.categoryId,
                 comment: newOperation.comment,
                 amount: Number(newOperation.amount),
-                operation_type: newOperation.operationType,
+                operation_type: board.operation_type,
                 date: newOperation.date ? new Date(newOperation.date).toISOString() : undefined,
             });
             setAdding(false);
-            setNewOperation({date: "", categoryId: 0, comment: "", amount: 0, operationType: "EXPENSE"});
+            setNewOperation({date: new Date().toISOString(), categoryId: 0, comment: "", amount: 0, operationType: "EXPENSE"});
             fetchOperations();
         } catch (err) {
             console.error("Failed to create operation", err);
@@ -123,10 +126,10 @@ export default function Board({
     };
 
     return (
-        <div className="overflow-x-auto flex-1">
-            <table className="min-w-full table-fixed border-collapse border border-gray-300">
+        <div className="overflow-x-auto flex-1 ">
+            <table className="min-w-full table-fixed border-collapse border border-gray-600 rounded-lg shadow-lg">
                 <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr className="bg-gray-700/50 text-white">
                     {columns.map((field) => (
                         <th
                             key={field}
@@ -148,7 +151,7 @@ export default function Board({
 
                 <tbody>
                 {adding && (
-                    <tr className="border-t border-gray-300 hover:bg-gray-800 transition hover:text-white">
+                    <tr className="border-t border-gray-300 bg-gray-700/50 transition hover:text-white">
                         <td className="px-2 py-1">
                             <input
                                 type="text"
@@ -160,7 +163,7 @@ export default function Board({
                                         setNewOperation({ ...newOperation, amount: value === "" ? 0 : Number(value) });
                                     }
                                 }}
-                                className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                                className={`text-white w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                                     errors.amount ? "border-red-800" : "border-gray-300"
                                 }`}
                             />
@@ -169,15 +172,15 @@ export default function Board({
                             <select
                                 value={newOperation.categoryId || ""}
                                 onChange={(e) => setNewOperation({ ...newOperation, categoryId: Number(e.target.value) })}
-                                className={`w-full px-2 py-1 border rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-                                    errors.categoryId ? "border-red-800" : "border-gray-300"
+                                className={`w-full px-2 py-1 border rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                                    errors.categoryId ? "border-red-800" : "border-gray-700"
                                 }`}
                             >
-                                <option value="" disabled className="text-gray-400">
+                                <option value="" disabled>
                                     Виберіть категорію
                                 </option>
                                 {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id} className="bg-gray-800 text-white">
+                                    <option key={cat.id} value={cat.id}>
                                         {cat.name}
                                     </option>
                                 ))}
@@ -188,7 +191,7 @@ export default function Board({
                                 type="text"
                                 value={newOperation.comment}
                                 onChange={(e) => setNewOperation({...newOperation, comment: e.target.value})}
-                                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="w-full px-2 py-1 border text-white border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
                         </td>
                         <td className="px-2 py-1">
@@ -201,7 +204,7 @@ export default function Board({
                                 timeFormat="HH:mm"
                                 timeIntervals={1}
                                 dateFormat="yyyy-MM-dd HH:mm"
-                                className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 "
+                                className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
                             />
                         </td>
                         <td className="px-2 py-1 flex gap-2 justify-center">
@@ -223,7 +226,7 @@ export default function Board({
 
                 {operations.length > 0 ? (
                     operations.map((op) => (
-                        <tr key={op.id} className="border-t border-gray-300 hover:bg-gray-800 hover:text-white transition">
+                        <tr key={op.id} className=" bg-gray-700/50 hover:bg-gray-800 hover:text-white transition">
                             {editingId === op.id ? (
                                 <>
                                     <td className="px-4 py-2">
@@ -231,14 +234,14 @@ export default function Board({
                                             type="number"
                                             value={editingOperation.amount}
                                             onChange={(e) => setEditingOperation({...editingOperation, amount: Number(e.target.value)})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2">
                                         <select
                                             value={editingOperation.categoryId}
                                             onChange={(e) => setEditingOperation({...editingOperation, categoryId: Number(e.target.value)})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full bg-gray-700 text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         >
                                             {categories.map((cat) => (
                                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -250,7 +253,7 @@ export default function Board({
                                             type="text"
                                             value={editingOperation.comment}
                                             onChange={(e) => setEditingOperation({...editingOperation, comment: e.target.value})}
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2">
@@ -263,7 +266,7 @@ export default function Board({
                                             timeFormat="HH:mm"
                                             timeIntervals={1}
                                             dateFormat="yyyy-MM-dd HH:mm"
-                                            className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
                                     <td className="px-4 py-2 flex gap-2 justify-center">
@@ -283,10 +286,10 @@ export default function Board({
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-2 ">{op.amount.toFixed(2)}</td>
-                                    <td className="px-4 py-2">{op.category?.name}</td>
-                                    <td className="px-4 py-2">{op.comment || <span className="italic text-gray-500">—</span>}</td>
-                                    <td className="px-4 py-2">
+                                    <td className="px-4 py-2 text-white">{op.amount.toFixed(2)}</td>
+                                    <td className="px-4 py-2 text-white">{op.category?.name}</td>
+                                    <td className="px-4 py-2 text-white">{op.comment || <span className="italic text-gray-500">—</span>}</td>
+                                    <td className="px-4 py-2 text-white">
                                         {new Date(op.date).toLocaleString("en-GB", {
                                             year: "numeric",
                                             month: "2-digit",
@@ -301,7 +304,7 @@ export default function Board({
                                         <button onClick={() => handleEdit(op)} className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
                                             <Edit2 size={18} />
                                         </button>
-                                        <button onClick={() => handleDelete(op.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
+                                        <button onClick={() => setConfirmDeleteId(op.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
                                             <Trash size={18} />
                                         </button>
                                     </td>
@@ -318,13 +321,42 @@ export default function Board({
                 )}
                 </tbody>
             </table>
-
+            <TotalPanel
+                boardId={board.id}
+                type={board.operation_type}
+            />
             {/* Pagination */}
             <Pagination
                 page={page}
                 totalPages={totalPages}
                 onChange={onPageChange}
             />
+            {confirmDeleteId !== null && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 p-6 w-80 rounded shadow-lg text-white ">
+                        <p className="text-lg mb-4">Ви впевнені, що хочете цей запис?</p>
+                        <div className="flex gap-4 justify-end">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-4 py-2 bg-gray-600 rounded"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (confirmDeleteId !== null) {
+                                        await handleDelete(confirmDeleteId);
+                                        setConfirmDeleteId(null);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-600 rounded"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

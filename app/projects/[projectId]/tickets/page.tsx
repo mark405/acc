@@ -2,12 +2,13 @@
 
 
 import React, {useEffect, useState} from "react";
-import {TicketResponse} from "@/app/types";
+import {EmployeeResponse, TicketResponse} from "@/app/types";
 import {instance} from "@/app/api/instance";
 import {CreateTicketModal} from "@/app/components/CreateTicketModal";
-import {useAuth} from "@/app/components/AuthProvider";
 import {motion} from "framer-motion";
 import Pagination from "@/app/components/Pagination";
+import {useParams} from "next/navigation";
+import {HttpStatusCode} from "axios";
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -16,31 +17,41 @@ export default function TicketsPage() {
     const [statusType, setStatusType] = useState<"OPENED" | "CLOSED" | "ALL">("ALL");
     const [preview, setPreview] = useState<string | null>(null);
 
-    const [sortBy, setSortBy] = useState("id");
-    const [direction, setDirection] = useState("desc");
+    const [sortBy] = useState("id");
+    const [direction] = useState("desc");
     const [page, setPage] = useState(0);
     const [size] = useState(25);
     const [totalPages, setTotalPages] = useState(1);
+    const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
 
-    const {user} = useAuth();
+    const projectId = useParams().projectId;
+    const fetchEmployee = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setEmployee(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
 
     const fetchTickets = async () => {
         let createdBy;
         let assignedTo;
         let types;
-
-        if (user?.role == "MANAGER") {
-            createdBy = user?.id;
+        if (employee?.role == "MANAGER") {
+            createdBy = employee?.id;
         }
-        if (user?.role == "OFFERS_MANAGER") {
-            assignedTo = user?.id;
+        if (employee?.role == "OFFERS_MANAGER") {
+            assignedTo = employee?.id;
             types = ["ADVERTISER_REQUEST", "OFFERS_REQUEST"];
         }
         if (user?.role == "TECH_MANAGER") {
             assignedTo = user?.id;
             createdBy = user?.id;
         }
-        if (user?.role == "ADMIN" || user?.role == "MANAGER" || user?.role == "HEAD_OF_AFFILIATE") {
+        if (employee?.role == "ADMIN" || employee?.role == "MANAGER" || employee?.role == "HEAD_OF_AFFILIATE") {
             types = filterType !== "ALL" ? [filterType] : undefined;
         }
 
@@ -51,6 +62,7 @@ export default function TicketsPage() {
             size,
             created_by: createdBy,
             assigned_to: assignedTo,
+            project_id: projectId,
         };
 
         if (types) params.types = types;
@@ -73,7 +85,7 @@ export default function TicketsPage() {
         formData.append("type", type);
         assignedTo.forEach(id => formData.append("assignedTo", id.toString()));
         files.forEach(file => formData.append("files", file));
-
+        formData.append("projectId", String(projectId));
         await instance.post("/tickets/create", formData, {
             headers: {"Content-Type": "multipart/form-data"},
         });
@@ -83,8 +95,13 @@ export default function TicketsPage() {
     };
 
     useEffect(() => {
+        fetchEmployee();
+    }, []);
+
+    useEffect(() => {
+        if (!employee) return;
         fetchTickets();
-    }, [page, filterType, statusType]);
+    }, [employee, page, filterType, statusType]);
 
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",
@@ -94,14 +111,14 @@ export default function TicketsPage() {
 
     return (
 
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                <h1 className="text-4xl font-bold mb-4 text-center">Тікети</h1>
+                <h1 className="text-4xl font-bold mb-4 text-center text-white">Тікети</h1>
 
                 <div className="flex items-center gap-3">
-                    {(user?.role === "ADMIN" || user?.role === "HEAD_OF_AFFILIATE" || user?.role === "MANAGER") && (
-                        <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                    {(employee?.role === "ADMIN" || employee?.role === "HEAD_OF_AFFILIATE" || employee?.role === "MANAGER") && (
+                        <div className="flex items-center gap-2 bg-indigo-600 text-white shadow rounded-xl px-4 py-2">
                             <select
                                 value={filterType}
                                 onChange={(e) => {
@@ -110,7 +127,7 @@ export default function TicketsPage() {
                                     );
                                     setPage(0);
                                 }}
-                                className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                                className="bg-indigo-600 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                             >
                                 <option value="ALL">Всі типи</option>
                                 <option value="TECH_GOAL">Tech Goal</option>
@@ -119,7 +136,7 @@ export default function TicketsPage() {
                             </select>
                         </div>
                     )}
-                    <div className="flex items-center gap-2 bg-gray-800 text-white shadow rounded-xl px-4 py-2">
+                    <div className="flex items-center gap-2 bg-indigo-600 text-white shadow rounded-xl px-4 py-2">
                         <select
                             value={statusType}
                             onChange={(e) => {
@@ -128,7 +145,7 @@ export default function TicketsPage() {
                                 );
                                 setPage(0);
                             }}
-                            className="bg-gray-800 text-white font-medium outline-none focus:ring-0 focus:outline-none"
+                            className="bg-indigo-600 text-white font-medium outline-none focus:ring-0 focus:outline-none"
                         >
                             <option value="ALL">Всі статуси</option>
                             <option value="OPENED">Відкриті</option>
@@ -136,7 +153,7 @@ export default function TicketsPage() {
                         </select>
                     </div>
 
-                    {(user?.role === "MANAGER" || user?.role === "TECH_MANAGER" || user?.role === "HEAD_OF_AFFILIATE") && (
+                    {(employee?.role === "MANAGER" || employee?.role === "TECH_MANAGER" || employee?.role === "HEAD_OF_AFFILIATE") && (
                         <button
                             onClick={() => setShowModal(true)}
                             className="h-12 w-12 rounded-2xl text-2xl font-bold text-white bg-gradient-to-br bg-gray-700 shadow hover:scale-105 active:scale-95 transition"
@@ -155,13 +172,15 @@ export default function TicketsPage() {
                         initial={{opacity: 0, y: 15}}
                         animate={{opacity: 1, y: 0}}
                         transition={{delay: i * 0.03}}
-                        onClick={() => window.location.href = `/tickets/${ticket.id}`}
-                        className="group border-3 border-gray-600  rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
+                        onClick={() =>
+                            (window.location.href = `/projects/${projectId}/tickets/${ticket.id}`)
+                        }
+                        className="group border-3 border-gray-400 bg-gray-700/50 rounded-2xl p-6  shadow-sm hover:shadow-xl transition cursor-pointer"
                     >
                         {/* top */}
                         <div className="flex flex-wrap justify-between items-start gap-4">
                             <div className="space-y-1">
-                                <div className="text-xl font-bold">#{ticket.id}</div>
+                                <div className="text-xl font-bold text-white">#{ticket.id}</div>
 
                                 <div className="text-sm text-gray-500">
                                     {new Date(ticket.created_at).toLocaleString("uk-UA")}
@@ -183,7 +202,7 @@ export default function TicketsPage() {
                                     {ticket.status === "IN_PROGRESS" &&
                                         ticket.operated_by && (
                                             <span className="ml-1 text-gray-600">
-                                        · {ticket.operated_by.username}
+                                        · {ticket.operated_by.name}
                                       </span>
                                         )}
                                 </span>
@@ -210,13 +229,13 @@ export default function TicketsPage() {
                         </div>
 
                         {/* body */}
-                        <div className="text-gray-900 text-lg whitespace-pre-wrap leading-relaxed">
+                        <div className="text-gray-200 text-lg whitespace-pre-wrap leading-relaxed">
                             {ticket.text}
                         </div>
                         {/* files */}
                         {ticket.files?.length > 0 && (
                             <div className="mt-5 border-t pt-4">
-                                <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                                <div className="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">
                                     Файли
                                 </div>
 
@@ -256,11 +275,11 @@ export default function TicketsPage() {
 
                             </div>
                         )}
-                        <div className="mt-6 flex justify-between border-t items-center pt-4">
+                        <div className="mt-6 flex justify-between border-t border-gray-500 items-center pt-4">
                             {/* слева: информация о создателе и назначенных */}
-                            <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+                            <div className="text-sm text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
         <span>
-            Створив <b>{ticket.created_by.username}</b>
+            Створив <b>{ticket.created_by.name}</b>
         </span>
 
                                 {ticket.assigned_to.length > 0 && (
@@ -268,7 +287,7 @@ export default function TicketsPage() {
                 Для{" "}
                                         {ticket.assigned_to.map((u, i) => (
                                             <span key={u.id}>
-                        <b>{u.username}</b>
+                        <b>{u.name}</b>
                                                 {i < ticket.assigned_to.length - 1 && ", "}
                     </span>
                                         ))}

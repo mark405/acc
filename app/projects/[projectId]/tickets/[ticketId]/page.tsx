@@ -3,15 +3,15 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
-import {CommentResponse, TicketResponse} from "@/app/types";
+import {CommentResponse, EmployeeResponse, TicketResponse} from "@/app/types";
 import {useAuth} from "@/app/components/AuthProvider";
 import {EditTicketModal} from "@/app/components/EditTicketModal";
 import {motion} from "framer-motion";
 import {EditCommentModal} from "@/app/components/EditTicketCommentModal";
+import {HttpStatusCode} from "axios";
 
 export default function TicketDetailsPage() {
     const {ticketId} = useParams();
-    const {user} = useAuth();
 
     const [ticket, setTicket] = useState<TicketResponse | null>(null);
     const [comments, setComments] = useState<CommentResponse[]>([]);
@@ -19,7 +19,7 @@ export default function TicketDetailsPage() {
     // Для нового комментария
     const [text, setText] = useState("");
     const [files, setFiles] = useState<File[]>([]);
-
+    const [ticketToDelete, setTicketToDelete] = useState<TicketResponse | null>(null);
     // Для редактирования комментария
     const [editingId, setEditingId] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -28,8 +28,10 @@ export default function TicketDetailsPage() {
     const [preview, setPreview] = useState<string | null>(null);
 
     const [editModalTicket, setEditModalTicket] = useState<TicketResponse | null>(null);
+    const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
 
     const router = useRouter();
+    const projectId = useParams().projectId;
 
     // Загрузка тикета и комментариев
     const load = async () => {
@@ -38,8 +40,18 @@ export default function TicketDetailsPage() {
         setTicket(t.data);
         setComments(c.data);
     };
-
+    const fetchEmployee = async () => {
+        try {
+            const res = await instance.get("/employees/by_user/" + projectId);
+            if (res.status === HttpStatusCode.Ok) {
+                setEmployee(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch employee:", err);
+        }
+    };
     useEffect(() => {
+        fetchEmployee();
         load();
     }, [ticketId]);
 
@@ -143,7 +155,7 @@ export default function TicketDetailsPage() {
     const handleDeleteTicket = async (id: number) => {
         try {
             await instance.delete(`/tickets/${id}`);
-            router.push("/tickets");
+            router.push(`/projects/${projectId}/tickets`);
         } catch (err) {
             console.error("Помилка при видаленні тікета:", err);
         }
@@ -154,7 +166,7 @@ export default function TicketDetailsPage() {
         CLOSED: "Закрито",
     };
 
-    const isWorker = user?.role === "OFFERS_MANAGER" || user?.role === "TECH_MANAGER";
+    const isWorker = employee?.role === "OFFERS_MANAGER" || employee?.role === "TECH_MANAGER";
 
     const statusButtonMap: Record<string, string> = {
         OPENED: "Взяти в роботу",
@@ -183,7 +195,18 @@ export default function TicketDetailsPage() {
         document.addEventListener("paste", handleDocumentPaste);
         return () => document.removeEventListener("paste", handleDocumentPaste);
     }, [ticketId]);
+    const confirmDeleteTicket = async () => {
+        if (!ticketToDelete) return;
 
+        try {
+            await instance.delete(`/tickets/${ticketToDelete.id}`);
+            router.push(`/projects/${projectId}/tickets`);
+        } catch (err) {
+            console.error("Помилка при видаленні тікета:", err);
+        } finally {
+            setTicketToDelete(null);
+        }
+    };
     if (!ticket) {
         return <div></div>;
     }
@@ -194,13 +217,13 @@ export default function TicketDetailsPage() {
             <motion.div
                 initial={{opacity: 0, y: 10}}
                 animate={{opacity: 1, y: 0}}
-                className="border-3 border-gray-600rounded-2xl shadow rounded-2xl p-6 relative"
+                className="border-3 border-gray-400 shadow rounded-2xl p-6 relative bg-gray-700/50"
             >
                 {/* header */}
                 <div className="flex flex-wrap justify-between gap-4 mb-4">
                     <div>
-                        <div className="text-2xl font-bold">#{ticket.id}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-2xl font-bold text-white">#{ticket.id}</div>
+                        <div className="text-xs text-gray-400">
                             {new Date(ticket.created_at).toLocaleString("uk-UA")}
                         </div>
                     </div>
@@ -219,7 +242,7 @@ export default function TicketDetailsPage() {
           {statusLabels[ticket.status]}
             {ticket.status === "IN_PROGRESS" && ticket.operated_by && (
                 <span className="ml-1 text-gray-600">
-              · {ticket.operated_by.username}
+              · {ticket.operated_by.name}
             </span>
             )}
         </span>
@@ -246,7 +269,7 @@ export default function TicketDetailsPage() {
                 </div>
 
                 {/* text */}
-                <div className="text-gray-900 text-lg font-semibold whitespace-pre-wrap leading-relaxed">
+                <div className="text-gray-200 text-lg font-semibold whitespace-pre-wrap leading-relaxed">
                     {ticket.text}
                 </div>
                 {ticket.files?.length > 0 && (
@@ -290,11 +313,11 @@ export default function TicketDetailsPage() {
                     </div>
                 )}
                 {/* footer карточки */}
-                <div className="mt-6 flex justify-between border-t items-center pt-4">
+                <div className="mt-6 flex justify-between border-t items-center pt-4 border-gray-500">
                     {/* слева: информация о создателе и назначенных */}
-                    <div className="text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+                    <div className="text-sm text-gray-300 flex flex-wrap gap-x-4 gap-y-1">
         <span>
-            Створив <b>{ticket.created_by.username}</b>
+            Створив <b>{ticket.created_by.name}</b>
         </span>
 
                         {ticket.assigned_to.length > 0 && (
@@ -302,7 +325,7 @@ export default function TicketDetailsPage() {
                 Для{" "}
                                 {ticket.assigned_to.map((u, i) => (
                                     <span key={u.id}>
-                        <b>{u.username}</b>
+                        <b>{u.name}</b>
                                         {i < ticket.assigned_to.length - 1 && ", "}
                     </span>
                                 ))}
@@ -312,7 +335,7 @@ export default function TicketDetailsPage() {
 
                     {/* справа: кнопки */}
                     <div className="flex gap-2">
-                        {user?.role === "MANAGER" && (
+                        {employee?.role === "MANAGER" && (
                             <>
                                 <button
                                     onClick={() => setEditModalTicket(ticket)}
@@ -321,17 +344,17 @@ export default function TicketDetailsPage() {
                                     Редагувати
                                 </button>
                                 <button
-                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    onClick={() => setTicketToDelete(ticket)}
                                     className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
                                 >
                                     Видалити
                                 </button>
                             </>
                         )}
-                        {user?.role === "ADMIN" && (
+                        {employee?.role === "ADMIN" && (
                             <>
                                 <button
-                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    onClick={() => setTicketToDelete(ticket)}
                                     className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
                                 >
                                     Видалити
@@ -362,17 +385,17 @@ export default function TicketDetailsPage() {
 
             {/* Comments */}
             <div>
-                <h2 className="text-lg font-bold mb-4">Коментарі</h2>
+                <h2 className="text-lg font-bold mb-4 text-white">Коментарі</h2>
 
                 <div className="space-y-4">
                     {comments.map((c) => (
                         <div
                             key={c.id}
-                            className={`relative rounded-xl border p-4 shadow-sm  transition
+                            className={`relative rounded-xl border p-4 shadow-sm  transition bg-gray-700/50 border-gray-400 text-white
             ${editingId === c.id ? "ring-2 ring-yellow-300" : ""}`}
                         >
                             {/* actions */}
-                            {user?.id === c.created_by.id && (
+                            {employee?.id === c.created_by.id && (
                                 <div className="absolute right-3 top-3 flex gap-2">
                                     {editingId !== c.id && (
                                         <>
@@ -392,7 +415,7 @@ export default function TicketDetailsPage() {
                                     )}
                                 </div>
                             )}
-                            <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                            <div className="text-sm text-white whitespace-pre-wrap">
                                 {c.text}
                             </div>
                             {c.attachments?.length > 0 && (
@@ -430,19 +453,19 @@ export default function TicketDetailsPage() {
                                     })}
                                 </div>
                             )}
-                            <div className="text-xs text-gray-500 mt-3">
-                                <b>{c.created_by.username}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
+                            <div className="text-xs text-gray-400 mt-3">
+                                <b>{c.created_by.name}</b> · {new Date(c.created_at).toLocaleString("uk-UA")}
                             </div>
                         </div>
                     ))}
                 </div>
 
                 {/* add comment */}
-                <div className="mt-6  border rounded-xl p-4 shadow-sm space-y-3">
+                <div className="mt-6  border rounded-xl p-4 shadow-sm space-y-3 bg-gray-700/50 border-gray-400">
   <textarea
       value={text}
       onChange={(e) => setText(e.target.value)}
-      className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-300 outline-none"
+      className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-300 outline-none text-white  border-gray-400 placeholder-white"
       placeholder="Написати коментар..."
   />
 
@@ -453,7 +476,7 @@ export default function TicketDetailsPage() {
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
                             onPaste={handlePasteNew}
-                            className="w-full min-h-[100px] border-2 border-dashed border-gray-700 rounded-lg  flex flex-col items-center justify-center text-gray-400 p-4 cursor-pointer hover:border-purple-900 transition"
+                            className="w-full min-h-[100px] border-2 border-dashed border-gray-400 rounded-lg  flex flex-col items-center justify-center text-white p-4 cursor-pointer hover:border-purple-900 transition"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             {files.length === 0 ? (
@@ -496,7 +519,7 @@ export default function TicketDetailsPage() {
 
                     <button
                         onClick={addComment}
-                        className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:scale-[1.02] active:scale-95 transition"
+                        className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:scale-[1.02] active:scale-95 transition"
                     >
                         Додати коментар
                     </button>
@@ -523,6 +546,31 @@ export default function TicketDetailsPage() {
                         setEditModalComment(null);
                     }}
                 />
+            )}
+            {ticketToDelete && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
+                        <h2 className="text-lg mb-4">
+                            Ви впевнені, що хочете видалити цей тікет?
+                        </h2>
+
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => setTicketToDelete(null)}
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                            >
+                                Скасувати
+                            </button>
+
+                            <button
+                                onClick={confirmDeleteTicket}
+                                className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

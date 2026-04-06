@@ -18,12 +18,13 @@ export interface UserResponse {
     role: string;
     created_at: number;
     modified_at: number;
+    projects: ProjectResponse[];
     offers_editable: boolean;
 }
 
 export interface HistoryResponse {
     id: number;
-    user: UserResponse;
+    employee: EmployeeResponse;
     type: string;
     body: string;
     date: number;
@@ -32,7 +33,21 @@ export interface HistoryResponse {
 export interface EmployeeResponse {
     id: number;
     name: string;
-    qfd: number;
+    role: string;
+    user: UserResponse;
+    columns: ColumnResponse[]
+}
+
+export interface ColumnResponse {
+    id: number;
+    name: string;
+    index: number;
+}
+
+export interface ValueResponse {
+    id: number;
+    value: string;
+    employee_column_id: number;
 }
 
 export interface BoardResponse {
@@ -46,10 +61,8 @@ export interface EmployeeFinanceResponse {
     id: number;
     start_date: number[];
     end_date: number[];
-    income_qfd: number;
-    paid_ref: number;
-    percent_qfd: number;
     advances: EmployeeAdvanceResponse[]
+    values: ValueResponse[];
 }
 
 export interface EmployeeAdvanceResponse {
@@ -63,9 +76,9 @@ export interface TicketResponse {
     text: string;
     type: "TECH_GOAL" | "ADVERTISER_REQUEST";
     status: "OPENED" | "CLOSED" | "IN_PROGRESS";
-    assigned_to: UserResponse[];
-    created_by: UserResponse;
-    operated_by?: UserResponse;
+    assigned_to: EmployeeResponse[];
+    created_by: EmployeeResponse;
+    operated_by?: EmployeeResponse;
     created_at: number;
     files: FileResponse[];
 }
@@ -80,8 +93,15 @@ export interface CommentResponse {
     id: number;
     text: string;
     created_at: number;
-    created_by: UserResponse;
+    created_by: EmployeeResponse;
     attachments: FileResponse[];
+}
+
+export interface ProjectResponse {
+    id: number;
+    name: string;
+    created_by: UserResponse;
+
 }
 
 export interface OfferResponse {

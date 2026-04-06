@@ -12,7 +12,7 @@ import {useRouter} from "next/navigation";
 import {ChangeRoleModal} from "@/app/components/ChangeRoleModal";
 import Pagination from "@/app/components/Pagination";
 
-const roles = ["MANAGER", "ADMIN", "OFFERS_MANAGER", "TECH_MANAGER", "HEAD_OF_AFFILIATE"];
+const roles = ["USER", "ADMIN"];
 
 export default function AccountsPage() {
     const router = useRouter();
@@ -133,22 +133,22 @@ export default function AccountsPage() {
     return (
         <>
             <div className="p-6 max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold mb-4 text-center">Облікові записи</h1>
+                <h1 className="text-4xl font-bold mb-4 text-center text-white">Облікові записи</h1>
 
                 {/* Filters */}
-                <div className="flex items-center space-x-4 mb-4 justify-center">
+                <div className="flex items-center space-x-4 mb-4 justify-center ">
                     <input
                         type="text"
                         placeholder="Шукати по логіну"
                         value={username}
                         onChange={(e) => setUserName(e.target.value)}
-                        className="border rounded px-2 py-1"
+                        className="border rounded px-2 py-1 border-indigo-600 text-white"
                         autoComplete="off"
                     />
                     <select
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
-                        className="border rounded px-2 py-1"
+                        className=" rounded px-2 py-1 bg-indigo-600 text-white"
                     >
                         <option value="">Усі ролі</option>
                         {roles.map((r) => (
@@ -174,12 +174,13 @@ export default function AccountsPage() {
                                 onClick={() => handleSort("createdAt")}>Створення {sortBy === "createdAt" && (direction === "asc" ? "↑" : "↓")}</th>
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer"
                                 onClick={() => handleSort("modifiedAt")}>Редагування {sortBy === "modifiedAt" && (direction === "asc" ? "↑" : "↓")}</th>
+                            <th className="w-1/4 px-4 py-2 text-left cursor-pointer">Проекти</th>
                             <th className="w-1/4 px-4 py-2 text-left cursor-pointer">Дії</th>
                         </tr>
                         </thead>
                         <tbody>
                         {users.map((u) => (
-                            <tr key={u.id} className="border-t border-gray-300 ">
+                            <tr key={u.id} className="border-t border-gray-300 text-white">
                                 <td className="px-4 py-2 text-left">{u.id}</td>
                                 <td className="px-4 py-2 text-left">{u.username}</td>
                                 <td className="px-4 py-2 text-left">{u.role}</td>
@@ -205,7 +206,10 @@ export default function AccountsPage() {
                                         timeZone: "Europe/Kiev",
                                     })}
                                 </td>
-                                {u.role != "ADMIN" && (
+                                <td className="px-4 py-2 text-left">
+                                    {u.projects.map(p => p.name).join(", ")}
+                                </td>
+                                {u.role === "USER" && (
                                     <td className="px-4 py-2 text-left flex gap-2">
                                         <UserStar
                                             size={18}
@@ -229,7 +233,7 @@ export default function AccountsPage() {
                                         />
                                     </td>
                                 )}
-                                {u.role !== "MANAGER" && (
+                                {u.role !== "USER" && (
                                     <td className="px-4 py-2 text-left flex gap-2">
                                         <Lock
                                             size={18}

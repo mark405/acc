@@ -7,6 +7,7 @@ import {useParams} from "next/navigation";
 import {BoardResponse, CategoryResponse, OperationResponse} from "@/app/types";
 import BoardFilters from "@/app/components/board/filters/BoardFilters";
 import Board from "@/app/components/board/Board";
+import TotalPanel from "@/app/components/TotalPanel";
 
 interface BoardPageProps {
     boardType: "EXPENSE" | "INCOME";
@@ -142,13 +143,13 @@ export default function BoardPage({
             setDirection("asc");
         }
     };
-
+    const projectId = useParams().projectId;
     const submitNewCategory = async () => {
         const name = newCategoryName.trim();
         if (!name) return;
 
         try {
-            const res = await instance.post("/categories", {name, board_id: boardId});
+            const res = await instance.post("/categories", {name, project_id: projectId, board_id: boardId});
             if (res.status === HttpStatusCode.Created) {
                 setNewCategoryName("");
                 setAddingCategory(false);
@@ -160,14 +161,13 @@ export default function BoardPage({
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            {board && (
+        <div className="p-4 max-w-6xl mx-auto scale-[0.95] origin-top">            {board && (
                 <>
-                    <h1 className="text-4xl font-bold mb-10 text-center">
+                    <h1 className="text-4xl font-bold mb-10 text-center text-white">
                         {board.operation_type == "EXPENSE" ? `Витрати: ${board.name}` : `Доходи: ${board.name}`}
                     </h1>
 
-                    <div className="flex gap-6">
+                    <div className="mb-6">
                         <BoardFilters
                             categories={categories}
                             categoryFilter={categoryFilter}
@@ -187,6 +187,8 @@ export default function BoardPage({
                             setAddingCategory={setAddingCategory}
                             newCategoryName={newCategoryName}
                             setNewCategoryName={setNewCategoryName}/>
+                    </div>
+                    <div className="flex gap-6 items-start">
                         <Board
                             board={board}
                             categories={categories}

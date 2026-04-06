@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import {ReactNode, useEffect} from "react";
+import {usePathname, useRouter} from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Sidebar from "@/app/components/Sidebar";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -9,8 +9,8 @@ interface AuthWrapperProps {
     children: ReactNode;
 }
 
-export default function AuthWrapper({ children }: AuthWrapperProps) {
-    const { isLoggedIn, isAdmin } = useAuth();
+export default function AuthWrapper({children}: AuthWrapperProps) {
+    const {isLoggedIn, isAdmin} = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -29,10 +29,17 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
     if (publicPages.includes(pathname)) return <>{children}</>;
 
+    if (pathname === "/" || pathname == "/accounts") return (
+        <>
+            <Navbar/>
+            {children}
+        </>
+    );
+
     return (
         <>
-            <Navbar />
-            {isAdmin && <Sidebar />}
+            <Navbar/>
+            {isAdmin && <Sidebar/>}
             {children}
         </>
     );
