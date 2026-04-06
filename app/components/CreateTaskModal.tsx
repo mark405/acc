@@ -120,7 +120,7 @@ export const CreateTaskModal = ({isOpen, onClose, onCreate}: CreateTicketModalPr
 
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50  pointer-events-auto">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-6 w-full max-w-2xl pointer-events-auto">
 
                 {/* Заголовок */}
