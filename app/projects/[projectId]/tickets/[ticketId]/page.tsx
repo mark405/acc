@@ -19,7 +19,7 @@ export default function TicketDetailsPage() {
     // Для нового комментария
     const [text, setText] = useState("");
     const [files, setFiles] = useState<File[]>([]);
-
+    const [ticketToDelete, setTicketToDelete] = useState<TicketResponse | null>(null);
     // Для редактирования комментария
     const [editingId, setEditingId] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -195,7 +195,18 @@ export default function TicketDetailsPage() {
         document.addEventListener("paste", handleDocumentPaste);
         return () => document.removeEventListener("paste", handleDocumentPaste);
     }, [ticketId]);
+    const confirmDeleteTicket = async () => {
+        if (!ticketToDelete) return;
 
+        try {
+            await instance.delete(`/tickets/${ticketToDelete.id}`);
+            router.push(`/projects/${projectId}/tickets`);
+        } catch (err) {
+            console.error("Помилка при видаленні тікета:", err);
+        } finally {
+            setTicketToDelete(null);
+        }
+    };
     if (!ticket) {
         return <div></div>;
     }
@@ -333,7 +344,7 @@ export default function TicketDetailsPage() {
                                     Редагувати
                                 </button>
                                 <button
-                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    onClick={() => setTicketToDelete(ticket)}
                                     className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
                                 >
                                     Видалити
@@ -343,7 +354,7 @@ export default function TicketDetailsPage() {
                         {employee?.role === "ADMIN" && (
                             <>
                                 <button
-                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                    onClick={() => setTicketToDelete(ticket)}
                                     className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
                                 >
                                     Видалити
@@ -535,6 +546,31 @@ export default function TicketDetailsPage() {
                         setEditModalComment(null);
                     }}
                 />
+            )}
+            {ticketToDelete && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
+                        <h2 className="text-lg mb-4">
+                            Ви впевнені, що хочете видалити цей тікет?
+                        </h2>
+
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => setTicketToDelete(null)}
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                            >
+                                Скасувати
+                            </button>
+
+                            <button
+                                onClick={confirmDeleteTicket}
+                                className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -60,7 +60,7 @@ export default function Board({
         comment: "",
         date: null as Date | null,
     });
-
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const projectId = useParams().projectId;
     const handleCreate = async () => {
         const newErrors = {
@@ -247,22 +247,6 @@ export default function Board({
                                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                                             ))}
                                         </select>
-                                        {/*<select*/}
-                                        {/*    value={newOperation.categoryId || ""}*/}
-                                        {/*    onChange={(e) => setNewOperation({ ...newOperation, categoryId: Number(e.target.value) })}*/}
-                                        {/*    className={`w-full px-2 py-1 border rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 ${*/}
-                                        {/*        errors.categoryId ? "border-red-800" : "border-gray-700"*/}
-                                        {/*    }`}*/}
-                                        {/*>*/}
-                                        {/*    <option value="" disabled>*/}
-                                        {/*        Виберіть категорію*/}
-                                        {/*    </option>*/}
-                                        {/*    {categories.map((cat) => (*/}
-                                        {/*        <option key={cat.id} value={cat.id}>*/}
-                                        {/*            {cat.name}*/}
-                                        {/*        </option>*/}
-                                        {/*    ))}*/}
-                                        {/*</select>*/}
                                     </td>
                                     <td className="px-4 py-2">
                                         <input
@@ -320,7 +304,7 @@ export default function Board({
                                         <button onClick={() => handleEdit(op)} className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
                                             <Edit2 size={18} />
                                         </button>
-                                        <button onClick={() => handleDelete(op.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
+                                        <button onClick={() => setConfirmDeleteId(op.id)} className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
                                             <Trash size={18} />
                                         </button>
                                     </td>
@@ -347,6 +331,32 @@ export default function Board({
                 totalPages={totalPages}
                 onChange={onPageChange}
             />
+            {confirmDeleteId !== null && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 p-6 w-80 rounded shadow-lg text-white ">
+                        <p className="text-lg mb-4">Ви впевнені, що хочете цей запис?</p>
+                        <div className="flex gap-4 justify-end">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-4 py-2 bg-gray-600 rounded"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (confirmDeleteId !== null) {
+                                        await handleDelete(confirmDeleteId);
+                                        setConfirmDeleteId(null);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-600 rounded"
+                            >
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

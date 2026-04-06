@@ -94,6 +94,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
         startDate?: boolean;
         endDate?: boolean;
     }>({});
+    const [financeToDelete, setFinanceToDelete] = useState<EmployeeFinanceResponse | null>(null);
     const [columnToDelete, setColumnToDelete] = useState<ColumnResponse | null>(null);
     const [isColumnModalOpen, setColumnModalOpen] = useState(false);
     const [columnName, setColumnName] = useState("");
@@ -138,7 +139,19 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
 
     const openAdvanceModal = () => setAdvanceModalOpen(true);
     const closeAdvanceModal = () => setAdvanceModalOpen(false);
+    const confirmDeleteFinance = async () => {
+        if (!financeToDelete) return;
 
+        try {
+            await instance.delete(`/employee-finances/${financeToDelete.id}`);
+            setFinances(prev => prev.filter(f => f.id !== financeToDelete.id));
+            fetchFinances();
+        } catch (err) {
+            console.error("Failed to delete finance", err);
+        } finally {
+            setFinanceToDelete(null);
+        }
+    };
     const isAdvanceDateValid = (date: string) => {
         if (!date) return false;
         const selected = new Date(date);
@@ -720,7 +733,7 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
                                                                 className="p-2 bg-gray-700 text-white rounded hover:bg-indigo-500">
                                                             <Edit2 size={18}/>
                                                         </button>
-                                                        <button onClick={() => handleDelete(f.id)}
+                                                        <button onClick={() => setFinanceToDelete(f)}
                                                                 className="p-2 bg-red-950 text-white rounded hover:bg-red-800">
                                                             <Trash size={18}/>
                                                         </button>
@@ -935,6 +948,31 @@ export default function EmployeeFinancesPage({employeeId}: { employeeId: number 
 
                                 <button
                                     onClick={confirmDeleteColumn}
+                                    className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded"
+                                >
+                                    Видалити
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {financeToDelete && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50">
+                        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-[320px] border border-gray-700">
+                            <h2 className="text-lg mb-4">
+                                Ви впевнені, що хочете видалити цей фінансовий запис?
+                            </h2>
+
+                            <div className="flex gap-2 justify-end">
+                                <button
+                                    onClick={() => setFinanceToDelete(null)}
+                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+                                >
+                                    Скасувати
+                                </button>
+
+                                <button
+                                    onClick={confirmDeleteFinance}
                                     className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded"
                                 >
                                     Видалити
