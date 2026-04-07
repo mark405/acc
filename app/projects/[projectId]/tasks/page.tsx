@@ -45,6 +45,8 @@ export default function TasksPage() {
             size,
             types: ["TASK"],
             project_id: projectId,
+            created_by: employee?.id,
+            assigned_to: employee?.id,
         };
 
         if (types) params.types = types;

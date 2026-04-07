@@ -125,7 +125,6 @@ export default function ProjectsPage() {
                                             className="absolute inset-0 z-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 animate-gradient"></div>
 
                                         <h2 className="text-3xl font-bold relative z-10">{project.name}</h2>
-                                        <p className="mt-6 text-xl relative z-10 text-gray-200">Створив {project.created_by.username}</p>
                                     </div>
                                 </Link>
                             ))}
