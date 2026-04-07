@@ -119,10 +119,13 @@ export interface NodeResponse {
     role: string;
     x: number;
     y: number;
+    color: string;
 }
 
 export interface  EdgeResponse  {
     id: number;
     source: number;
     target: number;
+    source_handle: string;
+    target_handle: string;
 }

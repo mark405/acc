@@ -54,7 +54,17 @@ export default function Sidebar() {
     const [roleDialogOpen, setRoleDialogOpen] = useState(false);
     const [employeeForRole, setEmployeeForRole] = useState<EmployeeResponse | null>(null);
     const [selectedRole, setSelectedRole] = useState<string>("MANAGER");
+    const [boardToDelete, setBoardToDelete] = useState<{
+        id: number;
+        type: "EXPENSE" | "INCOME";
+        name: string;
+    } | null>(null);
 
+    const [deleteBoardModalOpen, setDeleteBoardModalOpen] = useState(false);
+    const confirmDeleteBoard = (id: number, type: "EXPENSE" | "INCOME", name: string) => {
+        setBoardToDelete({ id, type, name });
+        setDeleteBoardModalOpen(true);
+    };
     const confirmDeleteEmployee = (employee: EmployeeResponse) => {
         setEmployeeToDelete(employee);
         setDeleteModalOpen(true);
@@ -118,7 +128,25 @@ export default function Sidebar() {
             console.error("Failed to fetch users", err);
         }
     };
+    const handleDeleteBoard = async () => {
+        if (!boardToDelete) return;
 
+        try {
+            const res = await instance.delete(`/boards/${boardToDelete.id}`);
+            if (res.status === HttpStatusCode.NoContent) {
+                await fetchBoards(boardToDelete.type);
+
+                if (params.boardId === boardToDelete.id.toString()) {
+                    router.push("/");
+                }
+            }
+        } catch (err) {
+            console.error("Failed to delete board", err);
+        } finally {
+            setDeleteBoardModalOpen(false);
+            setBoardToDelete(null);
+        }
+    };
     const handleAddEmployee = async () => {
         if (!newEmployeeName.trim() || !selectedUserId) return;
         try {
@@ -407,7 +435,7 @@ export default function Sidebar() {
                                                         </button>
 
                                                         <button
-                                                            onClick={() => deleteBoard(board.id, "EXPENSE")}
+                                                            onClick={() => confirmDeleteBoard(board.id, "EXPENSE", board.name)}
                                                             className="p-1 rounded hover:bg-red-600"
                                                         >
                                                             <Trash2 size={18}/>
@@ -536,7 +564,7 @@ export default function Sidebar() {
                                                         </button>
 
                                                         <button
-                                                            onClick={() => deleteBoard(board.id, "INCOME")}
+                                                            onClick={() => confirmDeleteBoard(board.id, "INCOME", board.name)}
                                                             className="p-1 rounded hover:bg-red-600"
                                                         >
                                                             <Trash2 size={18}/>
@@ -824,6 +852,31 @@ export default function Sidebar() {
                                 className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 transition"
                             >
                                 Зберегти
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {deleteBoardModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 text-white rounded-lg p-6 w-80">
+                        <h2 className="text-lg font-bold mb-4">Видалити дошку?</h2>
+                        <p className="mb-4">
+                            Ви впевнені, що хочете видалити &#34;{boardToDelete?.name}&#34;?
+                        </p>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setDeleteBoardModalOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition"
+                            >
+                                Скасувати
+                            </button>
+                            <button
+                                onClick={handleDeleteBoard}
+                                className="px-4 py-2 rounded bg-red-600 hover:bg-red-500 transition"
+                            >
+                                Видалити
                             </button>
                         </div>
                     </div>

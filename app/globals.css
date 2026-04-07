@@ -74,7 +74,10 @@ body {
     border-bottom: 1px solid #374151;
     color: white;
 }
-
+.react-flow__node.selected {
+    border: 1px solid #facc15;
+    box-shadow: 0 0 0 2px #facc15;
+}
 .react-flow__controls button:hover {
     background: #6366f1; /* indigo */
 }

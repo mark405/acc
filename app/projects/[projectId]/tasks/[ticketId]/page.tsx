@@ -199,6 +199,7 @@ export default function TaskDetailsPage() {
         return <div></div>;
     }
 
+    // @ts-ignore
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
             {/* Ticket Card */}
@@ -304,20 +305,22 @@ export default function TaskDetailsPage() {
 
                     {/* справа: кнопки */}
                     <div className="flex gap-2">
-                        <>
-                            <button
-                                onClick={() => setEditModalTicket(ticket)}
-                                className="px-3 py-1 text-xs rounded-lg bg-purple-50 text-blue-700 hover:scale-105 active:scale-95 transition"
-                            >
-                                Редагувати
-                            </button>
-                            <button
-                                onClick={() => setTicketToDelete(ticket)}
-                                className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
-                            >
-                                Видалити
-                            </button>
-                        </>
+                        {!ticket.assigned_to?.some(it => it.id === employee?.id) && (
+                            <>
+                                <button
+                                    onClick={() => setEditModalTicket(ticket)}
+                                    className="px-3 py-1 text-xs rounded-lg bg-purple-50 text-blue-700 hover:scale-105 active:scale-95 transition"
+                                >
+                                    Редагувати
+                                </button>
+                                <button
+                                    onClick={() => setTicketToDelete(ticket)}
+                                    className="px-3 py-1 text-xs rounded-lg bg-red-50 text-red-700 hover:scale-105 active:scale-95 transition"
+                                >
+                                    Видалити
+                                </button>
+                            </>
+                        )}
                         <>
                         </>
 
