@@ -31,30 +31,90 @@ type EmployeeNodeProps = {
     data: EmployeeNodeData;
 };
 
-/**
- * Custom Node Component
- */
-function EmployeeNode({data}: EmployeeNodeProps) {
+function EmployeeNode({ data }: EmployeeNodeProps) {
+    const sourceStyle = {
+        background: "#22c55e",
+        width: 8,
+        height: 8,
+    };
+
+    const targetStyle = {
+        background: "#ef4444",
+        width: 8,
+        height: 8,
+    };
+
     return (
         <div
-            className="relative bg-gray-800 text-white border border-indigo-600 rounded-lg px-3 py-6 shadow-md min-w-[150px] text-center"
+            className="relative bg-gray-800 text-white border rounded-lg px-3 py-6 shadow-md min-w-[150px] text-center"
             style={{
                 border: `2px solid ${data.borderColor || "#6366f1"}`
-            }}>
-            <Handle id="top-source" type="source" position={Position.Top}/>
+            }}
+        >
+            {/* LEFT side: separated source & target */}
+            <Handle
+                id="left-source"
+                type="source"
+                position={Position.Left}
+                style={{ top: "35%", ...sourceStyle }}
+            />
 
+            <Handle
+                id="left-target"
+                type="target"
+                position={Position.Left}
+                style={{ top: "65%", ...targetStyle }}
+            />
+
+            {/* RIGHT side */}
+            <Handle
+                id="right-source"
+                type="source"
+                position={Position.Right}
+                style={{ top: "35%", ...sourceStyle }}
+            />
+
+            <Handle
+                id="right-target"
+                type="target"
+                position={Position.Right}
+                style={{ top: "65%", ...targetStyle }}
+            />
+
+            {/* TOP */}
+            <Handle
+                id="top-source"
+                type="source"
+                position={Position.Top}
+                style={{ left: "40%", ...sourceStyle }}
+            />
+            <Handle
+                id="top-target"
+                type="target"
+                position={Position.Top}
+                style={{ left: "60%", ...targetStyle }}
+            />
+
+            {/* BOTTOM */}
+            <Handle
+                id="bottom-source"
+                type="source"
+                position={Position.Bottom}
+                style={{ left: "40%", ...sourceStyle }}
+            />
+            <Handle
+                id="bottom-target"
+                type="target"
+                position={Position.Bottom}
+                style={{ left: "60%", ...targetStyle }}
+            />
+
+            {/* CONTENT */}
             <div className="font-semibold">{data.name}</div>
             <div className="text-sm text-gray-400">{data.role}</div>
-
-            {/* TARGETS */}
-            <Handle id="right-target" type="target" position={Position.Right}/>
-            <Handle id="left-target" type="target" position={Position.Left}/>
-            <Handle id="bottom-target" type="target" position={Position.Bottom}/>
-
         </div>
     );
 }
-
 const nodeTypes = {
     employee: EmployeeNode,
 };

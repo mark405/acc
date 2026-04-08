@@ -5,14 +5,14 @@ import Link from "next/link";
 import {
     ArrowLeft,
     ArrowRight,
-    BarChart2,
     Check,
     ChevronDown,
     ChevronUp,
     Edit2,
     Plus,
     Trash2,
-    UserCog, Users,
+    UserCog,
+    Users,
     X
 } from "lucide-react";
 import {instance} from "@/app/api/instance";
@@ -62,7 +62,7 @@ export default function Sidebar() {
 
     const [deleteBoardModalOpen, setDeleteBoardModalOpen] = useState(false);
     const confirmDeleteBoard = (id: number, type: "EXPENSE" | "INCOME", name: string) => {
-        setBoardToDelete({ id, type, name });
+        setBoardToDelete({id, type, name});
         setDeleteBoardModalOpen(true);
     };
     const confirmDeleteEmployee = (employee: EmployeeResponse) => {
@@ -418,30 +418,29 @@ export default function Sidebar() {
                                                 >
                                                     {board.name}
                                                 </Link>
-                                                {board.level_type !== "MAIN" && (
-                                                    <div
-                                                        className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
-                                                        <button
-                                                            onClick={() =>
-                                                                setRenamingBoard({
-                                                                    id: board.id,
-                                                                    type: "EXPENSE",
-                                                                    name: board.name
-                                                                })
-                                                            }
-                                                            className="p-1 rounded hover:bg-gray-600"
-                                                        >
-                                                            <Edit2 size={18}/>
-                                                        </button>
-
+                                                <div
+                                                    className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
+                                                    <button
+                                                        onClick={() =>
+                                                            setRenamingBoard({
+                                                                id: board.id,
+                                                                type: "EXPENSE",
+                                                                name: board.name
+                                                            })
+                                                        }
+                                                        className="p-1 rounded hover:bg-gray-600"
+                                                    >
+                                                        <Edit2 size={18}/>
+                                                    </button>
+                                                    {board.level_type !== "MAIN" && (
                                                         <button
                                                             onClick={() => confirmDeleteBoard(board.id, "EXPENSE", board.name)}
                                                             className="p-1 rounded hover:bg-red-600"
                                                         >
                                                             <Trash2 size={18}/>
                                                         </button>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -547,30 +546,29 @@ export default function Sidebar() {
                                                 >
                                                     {board.name}
                                                 </Link>
-                                                {board.level_type !== "MAIN" && (
-                                                    <div
-                                                        className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
-                                                        <button
-                                                            onClick={() =>
-                                                                setRenamingBoard({
-                                                                    id: board.id,
-                                                                    type: "INCOME",
-                                                                    name: board.name
-                                                                })
-                                                            }
-                                                            className="p-1 rounded hover:bg-gray-600"
-                                                        >
-                                                            <Edit2 size={18}/>
-                                                        </button>
-
+                                                <div
+                                                    className="flex items-center gap-1 pr-5 opacity-0 group-hover:opacity-100 transition">
+                                                    <button
+                                                        onClick={() =>
+                                                            setRenamingBoard({
+                                                                id: board.id,
+                                                                type: "INCOME",
+                                                                name: board.name
+                                                            })
+                                                        }
+                                                        className="p-1 rounded hover:bg-gray-600"
+                                                    >
+                                                        <Edit2 size={18}/>
+                                                    </button>
+                                                    {board.level_type !== "MAIN" && (
                                                         <button
                                                             onClick={() => confirmDeleteBoard(board.id, "INCOME", board.name)}
                                                             className="p-1 rounded hover:bg-red-600"
                                                         >
                                                             <Trash2 size={18}/>
                                                         </button>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -699,7 +697,8 @@ export default function Sidebar() {
                                                     className="block w-full mb-2  px-2 py-1 rounded transition"
                                                 >
                                                     <span>
-                                                        <span className="text-purple-400 font-semibold underline decoration-purple-400">
+                                                        <span
+                                                            className="text-purple-400 font-semibold underline decoration-purple-400">
                                                             #{employee.user.id}
                                                         </span>{" "}
                                                         {employee.name}{" "}
@@ -727,12 +726,12 @@ export default function Sidebar() {
                                                         </button>
                                                     )}
                                                     {employee.role !== "ADMIN" && (
-                                                    <button
-                                                        onClick={() => confirmDeleteEmployee(employee)}
-                                                        className="p-1 rounded text-sm hover:bg-red-600"
-                                                    >
-                                                        <Trash2 size={18}/>
-                                                    </button>
+                                                        <button
+                                                            onClick={() => confirmDeleteEmployee(employee)}
+                                                            className="p-1 rounded text-sm hover:bg-red-600"
+                                                        >
+                                                            <Trash2 size={18}/>
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>

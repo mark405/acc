@@ -118,7 +118,7 @@ export default function ProjectsPage() {
                                     <div
                                         key={project.id}
                                         onContextMenu={(e) => handleRightClick(e, project)}
-                                        className="relative overflow-hidden rounded-2xl shadow-2xl p-12 text-white w-120 min-h-[300px] flex flex-col justify-between cursor-pointer"
+                                        className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white w-82 min-h-[250px] flex flex-col justify-between cursor-pointer"
                                     >
                                         {/* Animated gradient background */}
                                         <div
