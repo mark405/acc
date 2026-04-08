@@ -213,7 +213,6 @@ export default function EmployeeHierarchyPage() {
     // Create Edge
     // =====================
     const onConnect = async (params: Connection) => {
-        debugger;
         const payload = {
             source: Number(params.source),
             target: Number(params.target),

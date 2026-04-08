@@ -8,7 +8,7 @@ import {Edit3, Eye, Trash2} from "lucide-react";
 import {useEffect, useState} from "react";
 import {instance} from "@/app/api/instance";
 import {OfferResponse} from "@/app/types";
-import {useRouter} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {useAuth} from "@/app/components/AuthProvider";
 
 export default function OfferPage() {
@@ -44,6 +44,7 @@ export default function OfferPage() {
             console.error("Failed to fetch offers", err);
         }
     };
+    const projectId = useParams().projectId;
 
     useEffect(() => {
         setPage(0);
@@ -129,7 +130,7 @@ export default function OfferPage() {
                                     <Eye
                                         size={18}
                                         className="cursor-pointer text-green-600 hover:text-green-400"
-                                        onClick={() => router.push(`/offers/${o.id}`)}
+                                        onClick={() => router.push(`/projects/${projectId}/offers/${o.id}`)}
                                     />
                                     {user?.offers_editable && (
                                         <>

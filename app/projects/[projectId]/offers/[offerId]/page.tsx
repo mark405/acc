@@ -27,7 +27,7 @@ export default function OfferDetailsPage() {
             console.error("Failed to fetch offer", err);
         }
     };
-
+    const projectId = useParams().projectId;
     useEffect(() => {
         fetchOffer();
     }, [offerId]);
@@ -37,7 +37,7 @@ export default function OfferDetailsPage() {
         try {
             const res = await instance.delete(`/offers/${offerId}`);
             if (res.status === HttpStatusCode.NoContent) {
-                router.push("/offers");
+                router.push(`/projects/${projectId}/offers`);
             }
         } catch (err) {
             console.error("Failed to delete offer", err);

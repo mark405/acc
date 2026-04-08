@@ -154,14 +154,16 @@ export default function Board({
                     <tr className="border-t border-gray-300 bg-gray-700/50 transition hover:text-white">
                         <td className="px-2 py-1">
                             <input
-                                type="text"
-                                inputMode="decimal"
-                                value={newOperation.amount}
+                                type="number"
+                                step="any"
+                                value={newOperation.amount ?? ""}
                                 onChange={(e) => {
                                     const value = e.target.value;
-                                    if (/^\d*\.?\d*$/.test(value)) {
-                                        setNewOperation({ ...newOperation, amount: value === "" ? 0 : Number(value) });
-                                    }
+
+                                    setNewOperation({
+                                        ...newOperation,
+                                        amount: value === "" ? 0 : parseFloat(value),
+                                    });
                                 }}
                                 className={`text-white w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                                     errors.amount ? "border-red-800" : "border-gray-300"
@@ -232,8 +234,11 @@ export default function Board({
                                     <td className="px-4 py-2">
                                         <input
                                             type="number"
+                                            step="any"
                                             value={editingOperation.amount}
-                                            onChange={(e) => setEditingOperation({...editingOperation, amount: Number(e.target.value)})}
+                                            onChange={(e) => {
+                                                setEditingOperation({...editingOperation, amount: Number(e.target.value)})
+                                            }}
                                             className="w-full text-white px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                         />
                                     </td>
@@ -286,7 +291,7 @@ export default function Board({
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-2 text-white">{op.amount.toFixed(2)}</td>
+                                    <td className="px-4 py-2 text-white">{op.amount}</td>
                                     <td className="px-4 py-2 text-white">{op.category?.name}</td>
                                     <td className="px-4 py-2 text-white">{op.comment || <span className="italic text-gray-500">—</span>}</td>
                                     <td className="px-4 py-2 text-white">

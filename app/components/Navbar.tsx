@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {useEffect, useRef, useState} from "react";
-import {useParams, usePathname, useRouter} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
 import {useAuth} from "@/app/components/AuthProvider";
@@ -108,6 +108,14 @@ export default function Navbar() {
             <div className="flex items-center space-x-8 ml-auto relative">
                 {(!isAdmin && projectId != null) && (
                     <>
+                        {project?.id == 1 &&
+                        <Link
+                            href={`/projects/${projectId}/offers`}
+                            className="text-white text-lg font-medium hover:text-gray-300 transition"
+                        >
+                            Офери
+                        </Link>
+                        }
                         <Link
                             href={`/projects/${projectId}/tasks`}
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
@@ -131,12 +139,6 @@ export default function Navbar() {
                 {(isAdmin && projectId == null) && (
                     <>
                         <Link
-                            href="/offers"
-                            className="text-white text-lg font-medium hover:text-gray-300 transition"
-                        >
-                            Офери
-                        </Link>
-                        <Link
                             href={`/accounts`}
                             className="text-white text-lg font-medium hover:text-gray-300 transition"
                         >
@@ -144,21 +146,12 @@ export default function Navbar() {
                         </Link>
                     </>
                 )}
-                {(!isAdmin && projectId == null) && (
-                    <>
-                        <Link
-                            href="/offers"
-                            className="text-white text-lg font-medium hover:text-gray-300 transition"
-                        >
-                            Офери
-                        </Link>
-                    </>
-                )}
 
-                {isAdmin && (
+                {(isAdmin && projectId != null) && (
                     <>
                         {[
                             {href: `/projects/${projectId}/`, label: "Статистика", hideOnProjectPage: true},
+                            {href: `/projects/${projectId}/offers`, label: "Оффери", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/tickets`, label: "Тікети", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/tasks`, label: "Задачі", hideOnProjectPage: true},
                             {href: `/projects/${projectId}/history`, label: "Історія", hideOnProjectPage: true},
