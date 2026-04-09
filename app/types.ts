@@ -101,7 +101,8 @@ export interface ProjectResponse {
     id: number;
     name: string;
     created_by: UserResponse;
-
+    comment: string;
+    index: number;
 }
 
 export interface OfferResponse {

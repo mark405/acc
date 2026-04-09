@@ -2,11 +2,41 @@
 
 import {instance} from "@/app/api/instance";
 import {HttpStatusCode} from "axios";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {ProjectResponse} from "@/app/types";
 import {useAuth} from "@/app/components/AuthProvider";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
+import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {
+    arrayMove,
+    rectSortingStrategy,
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import {CSS} from "@dnd-kit/utilities";
+type SortableProjectProps = {
+    project: ProjectResponse;
+    children: React.ReactNode;
+};
+function SortableProject({project, children}: SortableProjectProps) {
+    const {attributes, listeners, setNodeRef, transform, transition} = useSortable({
+        id: project.id,
+        animateLayoutChanges: ({isSorting}) => isSorting
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {children}
+        </div>
+    );
+}
 
 export default function ProjectsPage() {
     const {isAdmin} = useAuth();
@@ -14,12 +44,22 @@ export default function ProjectsPage() {
     const [newProjectName, setNewProjectName] = useState("");
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; project: ProjectResponse } | null>(null);
     const router = useRouter();
-    const handleClick = (projectId: string) => {
-        router.push(`/projects/${projectId}`);
-    };
     // Modal state
-    const [editModal, setEditModal] = useState<{ project: ProjectResponse; name: string } | null>(null);
+    const [editModal, setEditModal] = useState<{
+        project: ProjectResponse;
+        name: string;
+        comment: string;
+    } | null>(null);
     const [deleteModal, setDeleteModal] = useState<ProjectResponse | null>(null);
+    const isDraggingRef = useRef(false);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5, // start dragging after 5px movement
+            },
+        })
+    );
 
     useEffect(() => {
         const loadProjects = async () => {
@@ -52,7 +92,9 @@ export default function ProjectsPage() {
     const handleEditSave = async () => {
         if (!editModal) return;
         try {
-            const res = await instance.put(`/projects/${editModal.project.id}`, {name: editModal.name});
+            const res = await instance.put(`/projects/${editModal.project.id}`, {
+                name: editModal.name, comment: editModal.comment, index: editModal.project.index, // 👈 include index
+            });
             if (res.status === HttpStatusCode.Ok) {
                 setProjects((prev) =>
                     prev.map((p) => (p.id === editModal.project.id ? res.data : p))
@@ -61,6 +103,40 @@ export default function ProjectsPage() {
             }
         } catch (err) {
             console.error("Failed to update project", err);
+        }
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = sortedProjects.findIndex(p => p.id === active.id);
+        const newIndex = sortedProjects.findIndex(p => p.id === over.id);
+
+        const newOrder = arrayMove(sortedProjects, oldIndex, newIndex);
+
+        const updated = newOrder.map((p, index) => ({
+            ...p,
+            index: index + 1,
+        }));
+
+        // update UI immediately (feels fast, users happy)
+        setProjects(updated);
+
+        try {
+            // fire all updates in parallel
+            await Promise.all(
+                updated.map(p =>
+                    instance.put(`/projects/${p.id}`, {
+                        name: p.name,
+                        comment: p.comment,
+                        index: p.index,
+                    })
+                )
+            );
+        } catch (e) {
+            console.error("Failed to reorder", e);
         }
     };
 
@@ -85,6 +161,8 @@ export default function ProjectsPage() {
 
     const closeContextMenu = () => setContextMenu(null);
 
+    const sortedProjects = [...projects].sort((a, b) => a.index - b.index);
+
     return (
         <div className="p-6 bg-gray-800 min-h-screen flex flex-col items-center" onClick={closeContextMenu}>
             <h1 className="text-4xl font-bold mb-8 text-white">Проекти</h1>
@@ -106,31 +184,44 @@ export default function ProjectsPage() {
                     </button>
                 </div>
             )}
-
-            {/* Projects Grid */}
-            <div className="w-full flex flex-col gap-8">
-                {Array.from({length: Math.ceil(projects.length / 3)}).map((_, rowIndex) => (
-                    <div key={rowIndex} className="grid grid-flow-col auto-cols-max gap-8 justify-center">
-                        {projects
-                            .slice(rowIndex * 3, rowIndex * 3 + 3)
-                            .map((project) => (
-                                <Link key={project.id} href={`/projects/${project.id}`}>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={() => isDraggingRef.current = true}
+                onDragEnd={(event) => {
+                    isDraggingRef.current = false;
+                    handleDragEnd(event);
+                }}
+            >
+                <SortableContext
+                    items={sortedProjects.map(p => p.id)}
+                    strategy={rectSortingStrategy} // or horizontalGridSortingStrategy if needed
+                >
+                    <div className="grid grid-cols-3 gap-8 w-full max-w-4xl">
+                        {sortedProjects.map((project) => (
+                            <SortableProject key={project.id} project={project}>
                                     <div
-                                        key={project.id}
+                                        onClick={() => {
+                                            if (!isDraggingRef.current) {
+                                                router.push(`/projects/${project.id}`);
+                                            }
+                                        }}
                                         onContextMenu={(e) => handleRightClick(e, project)}
-                                        className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white w-82 min-h-[250px] flex flex-col justify-between cursor-pointer"
+                                        className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white min-h-[250px] cursor-pointer flex flex-col"
                                     >
-                                        {/* Animated gradient background */}
-                                        <div
-                                            className="absolute inset-0 z-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 animate-gradient"></div>
-
+                                        <div className="absolute inset-0 z-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 animate-gradient"></div>
                                         <h2 className="text-3xl font-bold relative z-10">{project.name}</h2>
+
+                                        <p className="text-gray-200 mt-auto text-md relative z-10 line-clamp-3 break-words whitespace-normal">
+                                            {project.comment || ""}
+                                        </p>
                                     </div>
-                                </Link>
-                            ))}
+                            </SortableProject>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </SortableContext>
+            </DndContext>
+            {/* Projects Grid */}
 
             {/* Context Menu */}
             {contextMenu && (
@@ -141,7 +232,11 @@ export default function ProjectsPage() {
                     <button
                         className="block px-4 py-2 hover:bg-gray-700 w-full text-left rounded-t-xl"
                         onClick={() => {
-                            setEditModal({project: contextMenu.project, name: contextMenu.project.name});
+                            setEditModal({
+                                project: contextMenu.project,
+                                name: contextMenu.project.name,
+                                comment: contextMenu.project.comment || "",
+                            });
                             closeContextMenu();
                         }}
                     >
@@ -170,6 +265,15 @@ export default function ProjectsPage() {
                             value={editModal.name}
                             onChange={(e) => setEditModal({...editModal, name: e.target.value})}
                             className="border border-gray-600 rounded p-2 w-full mb-4 bg-gray-700 text-white placeholder-gray-400"
+                        />
+                        <textarea
+                            value={editModal.comment}
+                            onChange={(e) =>
+                                setEditModal({...editModal, comment: e.target.value})
+                            }
+                            placeholder="Comment"
+                            className="border border-gray-600 rounded p-2 w-full mb-4 bg-gray-700 text-white placeholder-gray-400 resize-none"
+                            rows={3}
                         />
                         <div className="flex justify-end gap-2">
                             <button
