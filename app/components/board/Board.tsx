@@ -49,7 +49,7 @@ export default function Board({
         date: new Date().toISOString(),
         categoryId: 0,
         comment: "",
-        amount: 0,
+        amount: "",
         operationType: board.operation_type,
     });
     const [errors, setErrors] = useState<{ amount?: boolean; categoryId?: boolean }>({});
@@ -64,7 +64,7 @@ export default function Board({
     const projectId = useParams().projectId;
     const handleCreate = async () => {
         const newErrors = {
-            amount: newOperation.amount === undefined || newOperation.amount < 0, // allow 0
+            amount: newOperation.amount === "" || Number(newOperation.amount) < 0, // allow 0
             categoryId: !newOperation.categoryId,
         };
         setErrors(newErrors);
@@ -82,7 +82,7 @@ export default function Board({
                 date: newOperation.date ? new Date(newOperation.date).toISOString() : undefined,
             });
             setAdding(false);
-            setNewOperation({date: new Date().toISOString(), categoryId: 0, comment: "", amount: 0, operationType: "EXPENSE"});
+            setNewOperation({date: new Date().toISOString(), categoryId: 0, comment: "", amount: "", operationType: "EXPENSE"});
             fetchOperations();
         } catch (err) {
             console.error("Failed to create operation", err);
@@ -156,14 +156,9 @@ export default function Board({
                             <input
                                 type="number"
                                 step="any"
-                                value={newOperation.amount ?? ""}
+                                value={newOperation.amount}
                                 onChange={(e) => {
-                                    const value = e.target.value;
-
-                                    setNewOperation({
-                                        ...newOperation,
-                                        amount: value === "" ? 0 : parseFloat(value),
-                                    });
+                                    setNewOperation({...newOperation, amount: e.target.value});
                                 }}
                                 className={`text-white w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
                                     errors.amount ? "border-red-800" : "border-gray-300"
