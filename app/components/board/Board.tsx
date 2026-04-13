@@ -125,6 +125,10 @@ export default function Board({
         }
     };
 
+    const pageTotal = operations.reduce((sum, op) => {
+        return sum + (op.amount || 0);
+    }, 0);
+
     return (
         <div className="overflow-x-auto flex-1 ">
             <table className="min-w-full table-fixed border-collapse border border-gray-600 rounded-lg shadow-lg">
@@ -322,8 +326,7 @@ export default function Board({
                 </tbody>
             </table>
             <TotalPanel
-                boardId={board.id}
-                type={board.operation_type}
+                total={pageTotal}
             />
             {/* Pagination */}
             <Pagination
