@@ -83,6 +83,20 @@ export default function TicketDetailsPage() {
         setEditingId(null);
     };
 
+    const toggleArchive = async () => {
+        if (!ticket) return;
+
+        try {
+            await instance.put(`/tickets/archive/${ticket.id}`, {
+                is_archived: !ticket.is_archived
+            });
+
+            load(); // reload ticket
+        } catch (err) {
+            console.error("Помилка при архівації:", err);
+        }
+    };
+
     // Добавление нового комментария
     const addComment = async () => {
         const fd = new FormData();
@@ -148,16 +162,6 @@ export default function TicketDetailsPage() {
                 const unique = images.filter(f => !existing.has(f.name + f.size));
                 return [...prev, ...unique];
             });
-        }
-    };
-
-
-    const handleDeleteTicket = async (id: number) => {
-        try {
-            await instance.delete(`/tickets/${id}`);
-            router.push(`/projects/${projectId}/tickets`);
-        } catch (err) {
-            console.error("Помилка при видаленні тікета:", err);
         }
     };
     const statusLabels: Record<string, string> = {
@@ -335,6 +339,14 @@ export default function TicketDetailsPage() {
 
                     {/* справа: кнопки */}
                     <div className="flex gap-2">
+                        {((employee?.id === ticket.created_by.id || employee?.role === "ADMIN") && ticket.status === "CLOSED") && (
+                            <button
+                                onClick={toggleArchive}
+                                className="px-3 py-1 text-xs rounded-lg bg-gray-200 text-gray-800 hover:scale-105 active:scale-95 transition"
+                            >
+                                {ticket.is_archived ? "Розархівувати" : "В архів"}
+                            </button>
+                        )}
                         {employee?.role === "MANAGER" && (
                             <>
                                 <button

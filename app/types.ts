@@ -81,6 +81,7 @@ export interface TicketResponse {
     operated_by?: EmployeeResponse;
     created_at: number;
     files: FileResponse[];
+    is_archived: boolean;
 }
 
 export interface FileResponse {

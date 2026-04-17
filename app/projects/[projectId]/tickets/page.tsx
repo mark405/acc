@@ -16,7 +16,7 @@ export default function TicketsPage() {
     const [filterType, setFilterType] = useState<"TECH_GOAL" | "ADVERTISER_REQUEST" | "OFFERS_REQUEST" | "ALL">("ALL");
     const [statusType, setStatusType] = useState<"OPENED" | "CLOSED" | "ALL">("ALL");
     const [preview, setPreview] = useState<string | null>(null);
-
+    const [showArchived, setShowArchived] = useState(false);
     const [sortBy] = useState("id");
     const [direction] = useState("desc");
     const [page, setPage] = useState(0);
@@ -63,6 +63,7 @@ export default function TicketsPage() {
             created_by: createdBy,
             assigned_to: assignedTo,
             project_id: projectId,
+            is_archived: showArchived
         };
 
         if (types) params.types = types;
@@ -101,7 +102,7 @@ export default function TicketsPage() {
     useEffect(() => {
         if (!employee) return;
         fetchTickets();
-    }, [employee, page, filterType, statusType]);
+    }, [employee, page, filterType, statusType, showArchived]);
 
     const statusLabels: Record<string, string> = {
         OPENED: "Відкрито",
@@ -115,8 +116,16 @@ export default function TicketsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                 <h1 className="text-4xl font-bold mb-4 text-center text-white">Тікети</h1>
-
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => {
+                            setShowArchived(prev => !prev);
+                            setPage(0);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-indigo-600 text-white"
+                    >
+                        {showArchived ? "Показати активні" : "Показати архів"}
+                    </button>
                     {(employee?.role === "ADMIN" || employee?.role === "HEAD_OF_AFFILIATE" || employee?.role === "MANAGER") && (
                         <div className="flex items-center gap-2 bg-indigo-600 text-white shadow rounded-xl px-4 py-2">
                             <select
