@@ -74,6 +74,20 @@ export default function TicketsPage() {
         setTotalPages(response.data.total_pages);
     };
 
+    const toggleArchive = async (ticketId: number, isArchived: boolean) => {
+        if (!ticketId) return;
+
+        try {
+            await instance.put(`/tickets/archive/${ticketId}`, {
+                is_archived: !isArchived
+            });
+
+            fetchTickets(); // reload ticket
+        } catch (err) {
+            console.error("Помилка при архівації:", err);
+        }
+    };
+
 
     const handleCreateTicket = async (
         text: string,
@@ -287,22 +301,32 @@ export default function TicketsPage() {
                         <div className="mt-6 flex justify-between border-t border-gray-500 items-center pt-4">
                             {/* слева: информация о создателе и назначенных */}
                             <div className="text-sm text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
-        <span>
-            Створив <b>{ticket.created_by.name}</b>
-        </span>
-
+                                <span>
+                                    Створив <b>{ticket.created_by.name}</b>
+                                </span>
                                 {ticket.assigned_to.length > 0 && (
                                     <span>
-                Для{" "}
+                                         Для{" "}
                                         {ticket.assigned_to.map((u, i) => (
                                             <span key={u.id}>
-                        <b>{u.name}</b>
+                                                <b>{u.name}</b>
                                                 {i < ticket.assigned_to.length - 1 && ", "}
-                    </span>
+                                            </span>
                                         ))}
-            </span>
+                            </span>
                                 )}
                             </div>
+                            {((employee?.id === ticket.created_by.id || employee?.role === "ADMIN") && ticket.status === "CLOSED") && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleArchive(ticket.id, ticket.is_archived);
+                                    }}
+                                    className="px-3 py-1 text-xs rounded-lg bg-gray-200 text-gray-800 hover:scale-105 active:scale-95 transition"
+                                >
+                                    {ticket.is_archived ? "Розархівувати" : "В архів"}
+                                </button>
+                            )}
                         </div>
                     </motion.div>
                 ))}
